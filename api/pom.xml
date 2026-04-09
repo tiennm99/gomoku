@@ -21,7 +21,7 @@
 		<pageHelper.version>1.2.3</pageHelper.version>
 		<ourbatis.version>1.0.6</ourbatis.version>
 		<noson.version>1.1.4</noson.version>
-		<swagger.version>2.6.1</swagger.version>
+		<swagger.version>2.10.0</swagger.version>
 		<main.class>com.isnico.api.Application</main.class>
 	</properties>
 
