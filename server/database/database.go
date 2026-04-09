@@ -2,7 +2,6 @@ package database
 
 import (
 	"sort"
-	"strconv"
 	stringx "strings"
 	"sync/atomic"
 	"time"
@@ -25,16 +24,6 @@ var roomPlayers = hashmap.New()
 var roomSpectators = hashmap.New()
 var roomKickedPlayers = hashmap.New()
 var roomPropsSetter = map[string]func(r *Room, v string){
-	consts.RoomPropsSkill: func(r *Room, v string) {
-		r.EnableSkill = v == "on"
-		r.EnableLandlord = !r.EnableSkill
-	},
-	consts.RoomPropsLaiZi: func(r *Room, v string) {
-		r.EnableLaiZi = v == "on"
-	},
-	consts.RoomPropsDotShuffle: func(r *Room, v string) {
-		r.EnableDontShuffle = v == "on"
-	},
 	consts.RoomPropsPassword: func(r *Room, v string) {
 		if v == "off" {
 			r.Password = ""
@@ -42,21 +31,8 @@ var roomPropsSetter = map[string]func(r *Room, v string){
 			r.Password = v
 		}
 	},
-	consts.RoomPropsChat: func(r *Room, v string) {
-		r.EnableChat = v == "on"
-	},
-	consts.RoomPropsPlayerNum: func(r *Room, v string) {
-		n, _ := strconv.Atoi(v)
-		if n < 2 || n > 50 {
-			n = consts.MaxPlayers
-		}
-		r.MaxPlayers = n
-	},
 	consts.RoomPropsShowIP: func(r *Room, v string) {
 		r.EnableShowIP = v == "on"
-	},
-	consts.RoomPropsJokerAsTarget: func(r *Room, v string) {
-		r.EnableJokerAsTarget = v == "on"
 	},
 }
 
@@ -91,37 +67,13 @@ func Connected(conn *network.Conn, info *modelx.AuthInfo) *Player {
 
 func CreateRoom(creator int64, t int) *Room {
 	room := &Room{
-		ID:             atomic.AddInt64(&roomIds, 1),
-		Type:           t,
-		State:          consts.RoomStateWaiting,
-		Creator:        creator,
-		ActiveTime:     time.Now(),
-		MaxPlayers:     consts.MaxPlayers,
-		EnableLandlord: true,
-		EnableChat:     true,
-		EnableShowIP:   false,
-	}
-	switch room.Type {
-	case consts.GameTypeLaiZi:
-		room.EnableLaiZi = true
-	case consts.GameTypeSkill:
-		room.EnableLaiZi = true
-		room.EnableDontShuffle = true
-		room.EnableSkill = true
-		room.EnableLandlord = false
-	case consts.GameTypeRunFast:
-		room.MaxPlayers = 3
-		room.EnableLaiZi = false
-		room.EnableLandlord = false
-		room.EnableDontShuffle = true
-	case consts.GameTypeTexas:
-		room.MaxPlayers = 10
-	case consts.GameTypeLiar:
-		room.MaxPlayers = 4
-		room.EnableJokerAsTarget = true
-	case consts.GameTypeGomoku:
-		room.MaxPlayers = 2
-		room.EnableLandlord = false
+		ID:         atomic.AddInt64(&roomIds, 1),
+		Type:       t,
+		State:      consts.RoomStateWaiting,
+		Creator:    creator,
+		ActiveTime: time.Now(),
+		MaxPlayers: 2,
+		EnableChat: true,
 	}
 	roomPlayers.Set(room.ID, map[int64]bool{})
 	roomSpectators.Set(room.ID, map[int64]int{})
@@ -183,46 +135,11 @@ func SetRoomProps(room *Room, k, v string) {
 	}
 }
 
-// 根据游戏类型返回允许设置的属性列表
+// getAllowedPropsByGameType returns allowed room properties for each game type.
 func getAllowedPropsByGameType(gameType int) map[string]bool {
-	switch gameType {
-	case consts.GameTypeLiar:
-		// 对于骗子酒馆，只允许设置指示牌规则和显示IP
-		return map[string]bool{
-			consts.RoomPropsJokerAsTarget: true,
-			consts.RoomPropsShowIP:        true,
-			consts.RoomPropsPassword:      true,
-		}
-	case consts.GameTypeGomoku:
-		return map[string]bool{
-			consts.RoomPropsShowIP:   true,
-			consts.RoomPropsPassword: true,
-		}
-	case consts.GameTypeUno, consts.GameTypeMahjong:
-		// 对于Uno和麻将，允许设置玩家数量和显示IP
-		return map[string]bool{
-			consts.RoomPropsPlayerNum: true,
-			consts.RoomPropsShowIP:    true,
-			consts.RoomPropsPassword:  true,
-		}
-	case consts.GameTypeTexas:
-		// 对于德州扑克，允许设置玩家数量和显示IP
-		return map[string]bool{
-			consts.RoomPropsPlayerNum: true,
-			consts.RoomPropsShowIP:    true,
-			consts.RoomPropsPassword:  true,
-		}
-	default:
-		// 其他游戏类型允许所有常规属性
-		return map[string]bool{
-			consts.RoomPropsLaiZi:      true,
-			consts.RoomPropsDotShuffle: true,
-			consts.RoomPropsSkill:      true,
-			consts.RoomPropsPassword:   true,
-			consts.RoomPropsPlayerNum:  true,
-			consts.RoomPropsChat:       true,
-			consts.RoomPropsShowIP:     true,
-		}
+	return map[string]bool{
+		consts.RoomPropsShowIP:   true,
+		consts.RoomPropsPassword: true,
 	}
 }
 

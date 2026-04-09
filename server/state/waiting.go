@@ -3,16 +3,13 @@ package state
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
-
-	"github.com/ratel-online/server/state/game/texas"
-	"github.com/spf13/cast"
 
 	"github.com/ratel-online/core/log"
 	"github.com/ratel-online/server/consts"
 	"github.com/ratel-online/server/database"
-	"github.com/ratel-online/server/rule"
 	"github.com/ratel-online/server/state/game"
 )
 
@@ -31,18 +28,6 @@ func (s *waiting) Next(player *database.Player) (consts.StateID, error) {
 	}
 	if access {
 		switch room.Type {
-		default:
-			return consts.StateGame, nil
-		case consts.GameTypeRunFast:
-			return consts.StateRunFastGame, nil
-		case consts.GameTypeUno:
-			return consts.StateUnoGame, nil
-		case consts.GameTypeMahjong:
-			return consts.StateMahjongGame, nil
-		case consts.GameTypeTexas:
-			return consts.StateTexasGame, nil
-		case consts.GameTypeLiar:
-			return consts.StateLiarGame, nil
 		case consts.GameTypeGomoku:
 			return consts.StateGomokuGame, nil
 		}
@@ -86,7 +71,6 @@ func (*waiting) Kicking(player *database.Player) {
 
 func (s *waiting) waitingForStart(player *database.Player, room *database.Room) (bool, error) {
 	access := false
-	//对局类别
 	player.StartTransaction()
 	defer player.StopTransaction()
 	loopCount := 0
@@ -124,10 +108,6 @@ func (s *waiting) waitingForStart(player *database.Player, room *database.Room) 
 						_ = player.WriteError(consts.ErrorsGamePlayersInsufficient)
 						continue
 					}
-					if room.Type == consts.GameTypeRunFast && room.Players != 3 {
-						_ = player.WriteError(consts.ErrorsGamePlayersInvalid)
-						continue
-					}
 					err = startGame(player, room)
 					if err != nil {
 						return access, err
@@ -139,18 +119,16 @@ func (s *waiting) waitingForStart(player *database.Player, room *database.Room) 
 		} else if len(segments) == 2 {
 			if segments[0] == "kicking" || segments[0] == "kill" || segments[0] == "k" {
 				if room.Creator == player.ID {
-					kickedId := cast.ToInt64(segments[1])
+					kickedId, _ := strconv.ParseInt(segments[1], 10, 64)
 					if kickedId == player.ID {
 						_ = player.WriteError(consts.ErrorsCannotKickYourself)
 						continue
 					}
-
 					kickedPlayer := database.GetPlayer(kickedId)
 					if kickedPlayer == nil || kickedPlayer.RoomID != room.ID {
 						_ = player.WriteError(consts.ErrorsPlayerNotInRoom)
 						continue
 					}
-
 					s.Kicking(kickedPlayer)
 					continue
 				}
@@ -177,18 +155,6 @@ func startGame(player *database.Player, room *database.Room) (err error) {
 	room.Lock()
 	defer room.Unlock()
 	switch room.Type {
-	default:
-		room.Game, err = game.InitGame(room)
-	case consts.GameTypeUno:
-		room.Game, err = game.InitUnoGame(room)
-	case consts.GameTypeRunFast:
-		room.Game, err = game.InitRunFastGame(room, rule.RunFastRules)
-	case consts.GameTypeMahjong:
-		room.Game, err = game.InitMahjongGame(room)
-	case consts.GameTypeTexas:
-		room.Game, err = texas.Init(room)
-	case consts.GameTypeLiar:
-		room.Game, err = game.InitLiarGame(room)
 	case consts.GameTypeGomoku:
 		room.Game, err = game.InitGomokuGame(room)
 	}
@@ -224,30 +190,16 @@ func viewRoomPlayers(room *database.Room, currPlayer *database.Player) {
 	}
 
 	buf.WriteString("\nSettings:\n")
-	switch room.Type {
-	case consts.GameTypeUno, consts.GameTypeMahjong:
-		buf.WriteString(fmt.Sprintf("%-5s%-5v\n", "ip:", sprintPropsState(room.EnableShowIP)))
-	case consts.GameTypeTexas:
-		buf.WriteString(fmt.Sprintf("%-5s%-5v\n", "pn:", room.MaxPlayers))
-		buf.WriteString(fmt.Sprintf("%-5s%-5v\n", "ip:", sprintPropsState(room.EnableShowIP)))
-	case consts.GameTypeLiar:
-		buf.WriteString(fmt.Sprintf("%-5s%-5v\n", "jt:", sprintPropsState(room.EnableJokerAsTarget)))
-		buf.WriteString(fmt.Sprintf("%-5s%-5v\n", "ip:", sprintPropsState(room.EnableShowIP)))
-	default:
-		buf.WriteString(fmt.Sprintf("%-5s%-5v%-5s%-5v\n", "lz:", sprintPropsState(room.EnableLaiZi)))
-		buf.WriteString(fmt.Sprintf("%-5s%-5v%-5s%-5v\n", "ds:", sprintPropsState(room.EnableDontShuffle)+",", "sk:", sprintPropsState(room.EnableSkill)))
-		buf.WriteString(fmt.Sprintf("%-5s%-5v%-5s%-5v\n", "pn:", room.MaxPlayers, "ct:", sprintPropsState(room.EnableChat)))
-		buf.WriteString(fmt.Sprintf("%-5s%-5v\n", "ip:", sprintPropsState(room.EnableShowIP)))
-		pwd := room.Password
-		if pwd != "" {
-			if room.Creator != currPlayer.ID {
-				pwd = "********"
-			}
-		} else {
-			pwd = "off"
+	buf.WriteString(fmt.Sprintf("%-5s%-5v\n", "ip:", sprintPropsState(room.EnableShowIP)))
+	pwd := room.Password
+	if pwd != "" {
+		if room.Creator != currPlayer.ID {
+			pwd = "********"
 		}
-		buf.WriteString(fmt.Sprintf("%-5s%-20v\n", "pwd", pwd))
+	} else {
+		pwd = "off"
 	}
+	buf.WriteString(fmt.Sprintf("%-5s%-20v\n", "pwd", pwd))
 	_ = currPlayer.WriteString(buf.String())
 }
 
