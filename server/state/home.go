@@ -6,6 +6,7 @@ import (
 	"github.com/ratel-online/server/database"
 )
 
+// home is the main menu. Player chooses to join an existing room or create a new one.
 type home struct{}
 
 func (*home) Next(player *database.Player) (consts.StateID, error) {

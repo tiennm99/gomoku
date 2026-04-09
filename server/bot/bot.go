@@ -1,3 +1,5 @@
+// Package bot provides optional QQ group messaging via the Milky SDK.
+// Used to send game notifications to a QQ chat group. Not required for gameplay.
 package bot
 
 import (
@@ -6,13 +8,13 @@ import (
 	"github.com/ratel-online/core/log"
 )
 
-// Session 全局机器人会话
+// Session is the global bot connection. Nil when bot is not configured.
 var Session *Milky_go_sdk.Session
 
-// GroupID 群ID
+// GroupID is the QQ group to send messages to.
 var GroupID int64
 
-// Logger 实现 Milky_go_sdk 的 Logger 接口
+// Logger adapts the core logger to the Milky SDK's Logger interface.
 type Logger struct{}
 
 func (l *Logger) Infof(format string, args ...interface{}) {
@@ -48,7 +50,7 @@ func (l *Logger) Warn(args ...interface{}) {
 	log.Info(fmt.Sprint(args...))
 }
 
-// SendGroupMessage 发送群消息
+// SendGroupMessage sends a text message to the configured QQ group.
 func SendGroupMessage(groupID int64, content string) error {
 	if Session == nil {
 		return fmt.Errorf("bot not connected")
@@ -59,23 +61,23 @@ func SendGroupMessage(groupID int64, content string) error {
 	return err
 }
 
-// Connect 连接机器人
+// Connect establishes a WebSocket connection to the Milky bot service.
 func Connect(addr, token string, groupID int64) error {
 	GroupID = groupID
 	m, err := Milky_go_sdk.New("ws://"+addr+"/event", "http://"+addr+"/api", token, &Logger{})
 	if err != nil {
-		return fmt.Errorf("创建Bot会话失败: %v", err)
+		return fmt.Errorf("failed to create bot session: %v", err)
 	}
 	err = m.Open()
 	if err != nil {
-		return fmt.Errorf("连接Bot失败: %v", err)
+		return fmt.Errorf("failed to connect bot: %v", err)
 	}
 	Session = m
-	log.Infof("Bot已连接: %s", addr)
+	log.Infof("Bot connected: %s", addr)
 	return nil
 }
 
-// Close 关闭机器人连接
+// Close gracefully shuts down the bot connection.
 func Close() {
 	if Session != nil {
 		Session.Close()

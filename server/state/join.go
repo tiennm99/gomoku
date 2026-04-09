@@ -8,6 +8,8 @@ import (
 	"strconv"
 )
 
+// join displays the room list and lets the player pick one to join.
+// If the room has a password, the player must enter it before joining.
 type join struct{}
 
 func (s *join) Next(player *database.Player) (consts.StateID, error) {
@@ -44,7 +46,6 @@ func (s *join) Next(player *database.Player) (consts.StateID, error) {
 		return 0, player.WriteError(consts.ErrorsRoomInvalid)
 	}
 
-	//房间存在密码，要求输入密码
 	pwd := room.Password
 	if pwd != "" {
 		err = verifyPassword(player, pwd)
@@ -68,7 +69,7 @@ func (*join) Exit(player *database.Player) consts.StateID {
 	return consts.StateHome
 }
 
-// 校验密码
+// verifyPassword prompts the player for the room password and validates it.
 func verifyPassword(player *database.Player, pwd string) error {
 	err := player.WriteString("Please input room password: \n")
 	if err != nil {

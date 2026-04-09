@@ -14,6 +14,7 @@ import (
 	"github.com/ratel-online/server/consts"
 )
 
+// Role represents a player's role within a room.
 type Role string
 
 const (
@@ -22,6 +23,12 @@ const (
 	RoleSpectator Role = "spectator"
 )
 
+// Player represents a connected user. Public fields are serializable state;
+// private fields manage the network connection and state machine lifecycle.
+//
+// The `data` channel receives packets from the client when `read` is true
+// (between StartTransaction/StopTransaction). The state machine goroutine
+// reads from this channel via AskFor* methods.
 type Player struct {
 	ID     int64  `json:"id"`
 	IP     string `json:"ip"`
@@ -32,11 +39,11 @@ type Player struct {
 	RoomID int64  `json:"roomId"`
 	Role   Role   `json:"role"`
 
-	conn   *network.Conn
-	data   chan *protocol.Packet
-	read   bool
-	state  consts.StateID
-	online bool
+	conn   *network.Conn          // underlying network connection
+	data   chan *protocol.Packet   // buffered channel for client input
+	read   bool                    // true when accepting input (inside a transaction)
+	state  consts.StateID          // current state machine state
+	online bool                    // false after disconnect
 }
 
 func (p *Player) Write(bytes []byte) error {
@@ -49,6 +56,8 @@ func (p *Player) IsOnline() bool {
 	return p.online
 }
 
+// Offline marks the player as disconnected, closes the connection, and
+// cleans up room membership. Called when the network read loop exits.
 func (p *Player) Offline() {
 	p.online = false
 	_ = p.conn.Close()
@@ -65,6 +74,9 @@ func (p *Player) Offline() {
 	}
 }
 
+// Listening is the main read loop. It reads packets from the network connection
+// and forwards them to the data channel when the state machine is accepting input.
+// Blocks until the connection is closed or errors.
 func (p *Player) Listening() error {
 	loopCount := 0
 	for {
@@ -83,7 +95,8 @@ func (p *Player) Listening() error {
 	}
 }
 
-// 向客户端发生消息
+// WriteString sends a text message to the client. The 30ms sleep prevents
+// message flooding when the server sends multiple messages in rapid succession.
 func (p *Player) WriteString(data string) error {
 	time.Sleep(30 * time.Millisecond)
 	return p.conn.Write(protocol.Packet{
@@ -165,11 +178,14 @@ func (p *Player) AskForStringWithoutTransaction(timeout ...time.Duration) (strin
 	return packet.String(), nil
 }
 
+// StartTransaction enables input acceptance and sends the INTERACTIVE_SIGNAL_START
+// marker to the client. The web client uses this to know when to enable the input field.
 func (p *Player) StartTransaction() {
 	p.read = true
 	_ = p.WriteString(consts.IsStart)
 }
 
+// StopTransaction disables input acceptance and sends INTERACTIVE_SIGNAL_STOP.
 func (p *Player) StopTransaction() {
 	p.read = false
 	_ = p.WriteString(consts.IsStop)
@@ -200,10 +216,14 @@ func (p Player) String() string {
 	return fmt.Sprintf("%s[%d]", p.Name, p.ID)
 }
 
+// RoomGame is implemented by each game type's state struct (e.g., Gomoku).
+// Clean() is called when the room is deleted to close channels and free resources.
 type RoomGame interface {
 	Clean()
 }
 
+// Room represents a game room. Players join a room, wait for enough players,
+// then the owner starts the game. The Game field holds the active game state.
 type Room struct {
 	sync.Mutex
 

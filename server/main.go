@@ -29,13 +29,13 @@ func main() {
 	flag.Int64Var(&BotGroup, "bot-group", 0, "Bot group ID")
 
 	flag.Parse()
-	// 连接机器人
+	// Connect QQ bot if configured
 	if BotAddr != "" && BotToken != "" && BotGroup != 0 {
 		err := bot.Connect(BotAddr, BotToken, BotGroup)
 		if err != nil {
 			log.Panic(fmt.Sprintf("连接Bot失败: %v", err))
 		}
-		// 发送测试消息到 BotGroup 群
+		// Send test message to the bot group
 		err = bot.SendGroupMessage(BotGroup, "Server started!")
 		if err != nil {
 			log.Errorf("发送群消息失败: %v", err)

@@ -7,6 +7,7 @@ import (
 	"github.com/ratel-online/server/database"
 )
 
+// welcome is the initial state. Sends a greeting and transitions to home.
 type welcome struct{}
 
 func (*welcome) Next(player *database.Player) (consts.StateID, error) {

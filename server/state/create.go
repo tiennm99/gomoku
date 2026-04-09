@@ -9,6 +9,8 @@ import (
 	"github.com/ratel-online/server/database"
 )
 
+// create handles room creation. Prompts for game type, creates the room, and
+// automatically joins the creator. Transitions to waiting state.
 type create struct{}
 
 func (*create) Next(player *database.Player) (consts.StateID, error) {
@@ -16,7 +18,6 @@ func (*create) Next(player *database.Player) (consts.StateID, error) {
 	if err != nil {
 		return 0, err
 	}
-	// 创建房间
 	room := database.CreateRoom(player.ID, gameType)
 	err = player.WriteString(fmt.Sprintf("Create room successful, id : %d\n", room.ID))
 	if err != nil {
@@ -33,7 +34,7 @@ func (*create) Exit(_ *database.Player) consts.StateID {
 	return consts.StateHome
 }
 
-// 询问游戏类型
+// askForGameType displays the list of available game types and waits for the player's selection.
 func askForGameType(player *database.Player) (gameType int, err error) {
 	buf := bytes.Buffer{}
 	buf.WriteString("Please select game type\n")
@@ -52,7 +53,6 @@ func askForGameType(player *database.Player) (gameType int, err error) {
 		_ = player.WriteError(consts.ErrorsGameTypeInvalid)
 		return 0, consts.ErrorsGameTypeInvalid
 	}
-	// check game type.
 	if _, ok := consts.GameTypes[gameType]; !ok {
 		_ = player.WriteError(consts.ErrorsGameTypeInvalid)
 		return 0, consts.ErrorsGameTypeInvalid

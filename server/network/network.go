@@ -17,8 +17,9 @@ type Network interface {
 	Serve() error
 }
 
+// handle processes a new connection: wraps it, authenticates within 3 seconds,
+// creates a Player, starts the state machine goroutine, and blocks on Listening.
 func handle(rwc protocol.ReadWriteCloser) error {
-	// 给新进入的用户分配资源
 	c := network.Wrapper(rwc)
 	defer func() {
 		err := c.Close()
@@ -39,7 +40,8 @@ func handle(rwc protocol.ReadWriteCloser) error {
 	return player.Listening()
 }
 
-// 登陆验签
+// loginAuth reads an AuthInfo JSON packet from the connection within 3 seconds.
+// If the client doesn't authenticate in time, it returns ErrorsAuthFail.
 func loginAuth(c *network.Conn) (*model.AuthInfo, error) {
 	authChan := make(chan *model.AuthInfo)
 	defer close(authChan)

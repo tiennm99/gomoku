@@ -1,56 +1,45 @@
-# 构建阶段
-FROM golang:1.17-alpine AS builder
+# Build stage
+FROM golang:1.22-alpine AS builder
 
-# 设置工作目录
 WORKDIR /app
 
-# 安装必要的构建工具
 RUN apk add --no-cache git
 
-# 复制 go.mod 和 go.sum 文件
-COPY go.mod go.sum ./
+# Copy server source and build
+COPY server/go.mod server/go.sum ./server/
+RUN cd server && go mod download
 
-# 下载依赖
-RUN go mod download
+COPY server/ ./server/
+RUN cd server && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/gomoku-server main.go
 
-# 复制源代码
-COPY . .
+# Copy web client
+COPY web/ ./web/
 
-# 构建应用
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ratel-server main.go
-
-# 运行阶段
+# Runtime stage
 FROM alpine:latest
 
-# 安装必要的运行时依赖
 RUN apk --no-cache add ca-certificates tzdata
 
-# 设置时区为上海
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# 创建非root用户
-RUN addgroup -g 1000 -S ratel && \
-  adduser -u 1000 -S ratel -G ratel
+RUN addgroup -g 1000 -S gomoku && \
+  adduser -u 1000 -S gomoku -G gomoku
 
-# 设置工作目录
 WORKDIR /app
 
-# 从构建阶段复制二进制文件
-COPY --from=builder /app/ratel-server .
+COPY --from=builder /app/gomoku-server .
+COPY --from=builder /app/web ./web
 
-# 更改文件所有权
-RUN chown -R ratel:ratel /app
+RUN chown -R gomoku:gomoku /app
 
-# 切换到非root用户
-USER ratel
+USER gomoku
 
-# 暴露端口
+# WebSocket + web UI on 9998, TCP on 9999
 EXPOSE 9998 9999
 
-# 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD nc -z localhost 9998 && nc -z localhost 9999 || exit 1
 
-# 启动应用
-CMD ["./ratel-server"] 
+# -s ./web serves web client at http://host:9998/
+CMD ["./gomoku-server", "-w", "9998", "-t", "9999", "-s", "./web"]

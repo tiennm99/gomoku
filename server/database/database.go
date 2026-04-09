@@ -16,13 +16,14 @@ import (
 	"github.com/ratel-online/server/consts"
 )
 
+// In-memory data store. All state is volatile — server restart clears everything.
 var roomIds int64 = 0
-var players = hashmap.New() // 存储连接过服务器的全部用户
-var connPlayers = hashmap.New()
-var rooms = hashmap.New()
-var roomPlayers = hashmap.New()
-var roomSpectators = hashmap.New()
-var roomKickedPlayers = hashmap.New()
+var players = hashmap.New()         // all players ever connected (by ID)
+var connPlayers = hashmap.New()     // currently connected players
+var rooms = hashmap.New()           // active rooms (by room ID)
+var roomPlayers = hashmap.New()     // map[roomID] -> map[playerID]bool
+var roomSpectators = hashmap.New()  // map[roomID] -> map[playerID]int (join order)
+var roomKickedPlayers = hashmap.New() // map[roomID] -> map[playerID]bool
 var roomPropsSetter = map[string]func(r *Room, v string){
 	consts.RoomPropsPassword: func(r *Room, v string) {
 		if v == "off" {
@@ -59,9 +60,9 @@ func Connected(conn *network.Conn, info *modelx.AuthInfo) *Player {
 		Name:   strings.Desensitize(info.Name),
 		Amount: 2000,
 	}
-	player.Conn(conn)                  // 初始化play对象
-	players.Set(conn.ID(), player)     // 写入用户池
-	connPlayers.Set(conn.ID(), player) // 写入连接用户池
+	player.Conn(conn)
+	players.Set(conn.ID(), player)
+	connPlayers.Set(conn.ID(), player)
 	return player
 }
 
@@ -122,12 +123,11 @@ func getPlayer(playerId int64) *Player {
 }
 
 func SetRoomProps(room *Room, k, v string) {
-	// 根据房间类型限制可设置的属性
+	// Only allow properties appropriate for the game type
 	allowedProps := getAllowedPropsByGameType(room.Type)
 
-	// 检查属性是否允许设置
 	if !allowedProps[k] {
-		return // 不允许的属性直接返回，不执行设置
+		return
 	}
 
 	if setter, ok := roomPropsSetter[k]; ok {
@@ -181,9 +181,9 @@ func IsValidPlayer(roomId, playerId int64) bool {
 	return false
 }
 
-// 加入房间
+// JoinRoom adds a player to a room. If the room is full or running, the player
+// becomes a spectator instead. Returns an error if the player was previously kicked.
 func JoinRoom(roomId, playerId int64) error {
-	// 资源检查
 	player := getPlayer(playerId)
 	if player == nil {
 		return consts.ErrorsExist
@@ -193,7 +193,6 @@ func JoinRoom(roomId, playerId int64) error {
 		return consts.ErrorsRoomInvalid
 	}
 
-	// 加锁防止并发异常
 	room.Lock()
 	defer room.Unlock()
 
@@ -203,7 +202,6 @@ func JoinRoom(roomId, playerId int64) error {
 
 	room.ActiveTime = time.Now()
 
-	//房间人数及状态检查
 	if room.Players >= room.MaxPlayers || room.State == consts.RoomStateRunning {
 		spectatorsIds := getRoomSpectators(roomId)
 		spectatorsIds[playerId] = len(spectatorsIds)
