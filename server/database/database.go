@@ -119,6 +119,9 @@ func CreateRoom(creator int64, t int) *Room {
 	case consts.GameTypeLiar:
 		room.MaxPlayers = 4
 		room.EnableJokerAsTarget = true
+	case consts.GameTypeGomoku:
+		room.MaxPlayers = 2
+		room.EnableLandlord = false
 	}
 	roomPlayers.Set(room.ID, map[int64]bool{})
 	roomSpectators.Set(room.ID, map[int64]int{})
@@ -189,6 +192,11 @@ func getAllowedPropsByGameType(gameType int) map[string]bool {
 			consts.RoomPropsJokerAsTarget: true,
 			consts.RoomPropsShowIP:        true,
 			consts.RoomPropsPassword:      true,
+		}
+	case consts.GameTypeGomoku:
+		return map[string]bool{
+			consts.RoomPropsShowIP:   true,
+			consts.RoomPropsPassword: true,
 		}
 	case consts.GameTypeUno, consts.GameTypeMahjong:
 		// 对于Uno和麻将，允许设置玩家数量和显示IP

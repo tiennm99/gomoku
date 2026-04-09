@@ -8,7 +8,8 @@ import (
 )
 
 type Websocket struct {
-    addr string
+    addr      string
+    StaticDir string
 }
 
 var upgrader = websocket.Upgrader{
@@ -19,12 +20,16 @@ var upgrader = websocket.Upgrader{
     },
 }
 
-func NewWebsocketServer(addr string) Websocket {
-    return Websocket{addr: addr}
+func NewWebsocketServer(addr string, staticDir string) Websocket {
+    return Websocket{addr: addr, StaticDir: staticDir}
 }
 
 func (w Websocket) Serve() error {
     http.HandleFunc("/ws", serveWs)
+    if w.StaticDir != "" {
+        http.Handle("/", http.FileServer(http.Dir(w.StaticDir)))
+        log.Infof("Serving static files from %s\n", w.StaticDir)
+    }
     log.Infof("Websocket server listener on %s\n", w.addr)
     return http.ListenAndServe(w.addr, nil)
 }

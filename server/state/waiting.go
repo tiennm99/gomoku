@@ -43,6 +43,8 @@ func (s *waiting) Next(player *database.Player) (consts.StateID, error) {
 			return consts.StateTexasGame, nil
 		case consts.GameTypeLiar:
 			return consts.StateLiarGame, nil
+		case consts.GameTypeGomoku:
+			return consts.StateGomokuGame, nil
 		}
 	}
 	return s.Exit(player), nil
@@ -187,6 +189,8 @@ func startGame(player *database.Player, room *database.Room) (err error) {
 		room.Game, err = texas.Init(room)
 	case consts.GameTypeLiar:
 		room.Game, err = game.InitLiarGame(room)
+	case consts.GameTypeGomoku:
+		room.Game, err = game.InitGomokuGame(room)
 	}
 	if err != nil {
 		_ = player.WriteError(err)

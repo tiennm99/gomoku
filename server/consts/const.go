@@ -21,6 +21,7 @@ const (
 	StateMahjongGame
 	StateTexasGame
 	StateLiarGame
+	StateGomokuGame
 )
 
 type SkillID int
@@ -58,6 +59,10 @@ const (
 	GameTypeMahjong = 6
 	GameTypeLiar    = 7
 	GameTypeUno     = 8
+	GameTypeGomoku  = 9
+
+	GomokuBoardSize    = 15
+	GomokuPlayTimeout  = 60 * time.Second
 
 	RobTimeout         = 20 * time.Second
 	PlayTimeout        = 40 * time.Second
@@ -127,6 +132,7 @@ var (
 		//GameTypeUno:     "Uno",
 		GameTypeMahjong: "Mahjong",
 		GameTypeLiar:    "liar's bar",
+		GameTypeGomoku:  "Gomoku",
 	}
 	GameTypesIds = []int{
 		GameTypeClassic,
@@ -136,6 +142,7 @@ var (
 		GameTypeTexas,
 		GameTypeMahjong,
 		GameTypeLiar,
+		GameTypeGomoku,
 	}
 	RoomStates = map[int]string{
 		RoomStateWaiting: "Waiting",

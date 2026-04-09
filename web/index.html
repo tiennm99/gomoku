@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gomoku Online</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Gomoku Online</h1>
+      <span id="status-indicator">Disconnected</span>
+    </header>
+
+    <div id="main-content">
+      <!-- Connect Panel -->
+      <div id="connect-panel" class="panel">
+        <label for="player-name">Player Name</label>
+        <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+        <button id="connect-btn">Connect</button>
+      </div>
+
+      <!-- Home Panel -->
+      <div id="home-panel" class="panel hidden">
+        <button id="join-btn">Join Room</button>
+        <button id="new-btn">New Room</button>
+      </div>
+
+      <!-- Create Panel -->
+      <div id="create-panel" class="panel hidden">
+        <p>Select game type:</p>
+        <div id="game-type-list"></div>
+      </div>
+
+      <!-- Waiting Panel -->
+      <div id="waiting-panel" class="panel hidden">
+        <p id="room-info">Waiting for players...</p>
+        <button id="start-btn">Start Game</button>
+      </div>
+
+      <!-- Game Panel -->
+      <div id="game-panel" class="panel hidden">
+        <div id="game-info">
+          <span id="color-label"></span>
+          <span id="turn-indicator"></span>
+        </div>
+        <div id="canvas-container">
+          <canvas id="game-canvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Log + Input -->
+      <div id="sidebar">
+        <div id="log-panel"></div>
+        <div id="input-panel">
+          <input type="text" id="cmd-input" placeholder="Type command..." disabled>
+          <button id="send-btn" disabled>Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/ws-client.js"></script>
+  <script src="js/state-machine.js"></script>
+  <script src="js/board-renderer.js"></script>
+  <script src="js/game-controller.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

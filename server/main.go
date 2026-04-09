@@ -12,16 +12,18 @@ import (
 )
 
 var (
-	Wsport   int
-	Tcpport  int
-	BotAddr  string
-	BotToken string
-	BotGroup int64
+	Wsport    int
+	Tcpport   int
+	StaticDir string
+	BotAddr   string
+	BotToken  string
+	BotGroup  int64
 )
 
 func main() {
 	flag.IntVar(&Wsport, "w", 9998, "WebsocketServer Port")
 	flag.IntVar(&Tcpport, "t", 9999, "TcpServer Port")
+	flag.StringVar(&StaticDir, "s", "../web", "Static files directory")
 	flag.StringVar(&BotAddr, "bot", "", "Bot connection address")
 	flag.StringVar(&BotToken, "bot-token", "", "Bot token")
 	flag.Int64Var(&BotGroup, "bot-group", 0, "Bot group ID")
@@ -44,7 +46,7 @@ func main() {
 	}
 
 	async.Async(func() {
-		wsServer := network.NewWebsocketServer(":" + strconv.Itoa(Wsport))
+		wsServer := network.NewWebsocketServer(":" + strconv.Itoa(Wsport), StaticDir)
 		log.Panic(wsServer.Serve())
 	})
 
