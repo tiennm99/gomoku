@@ -236,6 +236,217 @@ func TestFlow_Rematch_BothPlayersTransition(t *testing.T) {
 	}
 }
 
+// TestFlow_CreateRoomAfterPvpLeave verifies that after a PVP game ends and
+// the player leaves via gameoverState → StateHome, they can immediately
+// create a new room. Regression guard for the reported bug where clicking
+// Create Room after a finished PVP game did nothing.
+func TestFlow_CreateRoomAfterPvpLeave(t *testing.T) {
+	black, white, room := setupFinishedPvpRoom(t)
+	_ = white
+
+	// Black's player goroutine is in gameoverState. Simulate: send ClientExit
+	// so black transitions back to home.
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_ClientExit{ClientExit: &protocol.ClientExitRequest{}},
+	}
+	next, err := runState(consts.StateGameOver, black)
+	if err != nil {
+		t.Fatalf("gameover exit: %v", err)
+	}
+	if next != consts.StateHome {
+		t.Fatalf("expected StateHome, got %d", next)
+	}
+
+	// Black should be out of the original room. White is still in it.
+	if black.RoomID != 0 {
+		t.Errorf("black.RoomID = %d after leave, want 0", black.RoomID)
+	}
+	if _, ok := lobby.GetRoom(room.ID); !ok {
+		t.Error("original room was deleted but white is still in it")
+	}
+
+	// Drain the ClientExit responses from earlier hops.
+	drainSend(black)
+
+	// Now black sends CreateRoom from home state.
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_CreateRoom{CreateRoom: &protocol.CreateRoomRequest{}},
+	}
+	next, err = runState(consts.StateHome, black)
+	if err != nil {
+		t.Fatalf("home create after pvp: %v", err)
+	}
+	if next != consts.StateWaiting {
+		t.Fatalf("expected StateWaiting after create, got %d", next)
+	}
+
+	// Black must have received RoomCreateSuccessResponse for the new room.
+	gotCreate := false
+	var newRoomID int64
+	for _, r := range drainSend(black) {
+		if cs := r.GetRoomCreateSuccess(); cs != nil {
+			gotCreate = true
+			newRoomID = int64(cs.GetId())
+			break
+		}
+	}
+	if !gotCreate {
+		t.Fatal("black did not receive RoomCreateSuccessResponse after CreateRoom")
+	}
+	if newRoomID == room.ID {
+		t.Errorf("new room should have a different ID than the old one (%d)", room.ID)
+	}
+	if newRoomID == 0 {
+		t.Error("new room ID is 0")
+	}
+
+	// Black should now be in the new room, not the old one.
+	if black.RoomID != newRoomID {
+		t.Errorf("black.RoomID = %d, want new room %d", black.RoomID, newRoomID)
+	}
+}
+
+// TestFlow_CreateRoomAfterPvpRematchLeave walks through a PVP game to the
+// gameoverState, triggers rematch (which closes RematchCh + resets the room),
+// then sends ClientExit through the NEW game round, and verifies the player
+// can still create a fresh room afterward. Catches residue from RematchCh /
+// GameOverCh that could wedge the state machine.
+func TestFlow_CreateRoomAfterPvpRematchLeave(t *testing.T) {
+	black, white, room := setupFinishedPvpRoom(t)
+	_ = white
+
+	// Rematch: black triggers GameReset from gameoverState.
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_GameReset{GameReset: &protocol.GameResetRequest{}},
+	}
+	next, err := runState(consts.StateGameOver, black)
+	if err != nil {
+		t.Fatalf("gameover reset: %v", err)
+	}
+	if next != consts.StateGamePvp {
+		t.Fatalf("expected StateGamePvp after reset, got %d", next)
+	}
+
+	// Room should be fresh and playing.
+	room.RLock()
+	if room.Status != lobby.RoomStatusPlaying {
+		room.RUnlock()
+		t.Fatalf("room not Playing after rematch, got %d", room.Status)
+	}
+	if room.RematchCh != nil {
+		room.RUnlock()
+		t.Error("RematchCh should be nil after close+reset, got non-nil")
+	}
+	room.RUnlock()
+
+	// Simulate game 2 finishing: force room to Finished state, clear CurrentTurn.
+	room.Lock()
+	room.Status = lobby.RoomStatusFinished
+	room.Unlock()
+
+	// Now black is conceptually back in gameoverState. Send ClientExit to leave.
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_ClientExit{ClientExit: &protocol.ClientExitRequest{}},
+	}
+	next, err = runState(consts.StateGameOver, black)
+	if err != nil {
+		t.Fatalf("gameover exit after rematch: %v", err)
+	}
+	if next != consts.StateHome {
+		t.Fatalf("expected StateHome, got %d", next)
+	}
+
+	// Critical: black should be able to create a new room immediately.
+	drainSend(black)
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_CreateRoom{CreateRoom: &protocol.CreateRoomRequest{}},
+	}
+	next, err = runState(consts.StateHome, black)
+	if err != nil {
+		t.Fatalf("home create after rematch+leave: %v", err)
+	}
+	if next != consts.StateWaiting {
+		t.Fatalf("expected StateWaiting after create, got %d", next)
+	}
+
+	// Verify the new room is different from the old one.
+	gotCreate := false
+	var newRoomID int64
+	for _, r := range drainSend(black) {
+		if cs := r.GetRoomCreateSuccess(); cs != nil {
+			gotCreate = true
+			newRoomID = int64(cs.GetId())
+			break
+		}
+	}
+	if !gotCreate {
+		t.Fatal("did not receive RoomCreateSuccessResponse")
+	}
+	if newRoomID == room.ID {
+		t.Errorf("new room reuses old room ID %d", room.ID)
+	}
+	if black.RoomID != newRoomID {
+		t.Errorf("black.RoomID = %d, want %d", black.RoomID, newRoomID)
+	}
+}
+
+// TestFlow_CreateRoomAfterOpponentForfeit: the other player disconnects
+// during the game via ClientExit. The remaining player sees GameOver via
+// forfeit broadcast + ClientExit notification. They end up in gameoverState
+// and must be able to leave + create a new room.
+func TestFlow_CreateRoomAfterOpponentForfeit(t *testing.T) {
+	black, white, room := setupFinishedPvpRoom(t)
+	_ = room
+
+	// Black clicks Leave from gameoverState — room still has white inside.
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_ClientExit{ClientExit: &protocol.ClientExitRequest{}},
+	}
+	if _, err := runState(consts.StateGameOver, black); err != nil {
+		t.Fatalf("black gameover exit: %v", err)
+	}
+	if black.RoomID != 0 {
+		t.Errorf("black.RoomID = %d, want 0", black.RoomID)
+	}
+
+	// White now sends ClientExit — room should be deleted.
+	white.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_ClientExit{ClientExit: &protocol.ClientExitRequest{}},
+	}
+	if _, err := runState(consts.StateGameOver, white); err != nil {
+		t.Fatalf("white gameover exit: %v", err)
+	}
+	if white.RoomID != 0 {
+		t.Errorf("white.RoomID = %d, want 0", white.RoomID)
+	}
+	if len(lobby.GetAllRooms()) != 0 {
+		t.Errorf("expected 0 rooms after both players exit, got %d", len(lobby.GetAllRooms()))
+	}
+
+	// Both players should now be able to create new rooms.
+	for _, p := range []*lobby.Player{black, white} {
+		drainSend(p)
+		p.CmdCh <- &protocol.Request{
+			Payload: &protocol.Request_CreateRoom{CreateRoom: &protocol.CreateRoomRequest{}},
+		}
+		next, err := runState(consts.StateHome, p)
+		if err != nil {
+			t.Fatalf("%s create after exit: %v", p.Name, err)
+		}
+		if next != consts.StateWaiting {
+			t.Errorf("%s expected StateWaiting, got %d", p.Name, next)
+		}
+		if p.RoomID == 0 {
+			t.Errorf("%s RoomID = 0, want non-zero", p.Name)
+		}
+	}
+
+	// Two new rooms in the store now.
+	if len(lobby.GetAllRooms()) != 2 {
+		t.Errorf("expected 2 rooms (one per player), got %d", len(lobby.GetAllRooms()))
+	}
+}
+
 // TestFlow_Rematch_NewGameAcceptsMovesFromBoth verifies that after rematch,
 // the fresh game actually accepts moves. Regression guard for the reported
 // bug where the board cleared but clicks did nothing.

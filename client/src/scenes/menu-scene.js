@@ -94,12 +94,14 @@ export class MenuScene extends Phaser.Scene {
   /**
    * Room created — show waiting room as owner.
    * Store the handle so ROOM_JOIN_SUCCESS can push live player-count updates.
-   * @param {{ roomId: number, ownerNickname: string }} data
+   * Proto field names (pbjs camelCase):
+   *   id (room id), roomOwner (owner nickname), roomType (enum)
+   * @param {{ id: number, roomOwner: string, roomType: string }} data
    * @private
    */
   _onRoomCreateSuccess(data) {
-    const ownerNickname = (data && data.ownerNickname) ? data.ownerNickname : '';
-    this._waitingHandle = showWaiting(true, ownerNickname, 1, null, null);
+    const roomOwner = (data && data.roomOwner) ? data.roomOwner : '';
+    this._waitingHandle = showWaiting(true, roomOwner, 1, null, null);
   }
 
   /**

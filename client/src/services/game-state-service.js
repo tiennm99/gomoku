@@ -99,6 +99,11 @@ class GameStateService {
       if (data && data.nickname) this.nickname = data.nickname;
     });
 
+    eventBus.on(ClientEventCode.ROOM_CREATE_SUCCESS, (data) => {
+      // Proto field is `id`, not `roomId`, for RoomCreateSuccessResponse.
+      if (data && data.id != null) this.roomId = data.id;
+    });
+
     eventBus.on(ClientEventCode.ROOM_JOIN_SUCCESS, (data) => {
       if (data && data.roomId != null) this.roomId = data.roomId;
     });
