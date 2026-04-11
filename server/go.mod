@@ -1,11 +1,12 @@
 module github.com/tiennm99/gomoku/server
 
-go 1.22
+go 1.23
 
 require (
 	github.com/awesome-cap/hashmap v0.0.0-20220308123617-f10e2b637d7d
 	github.com/gorilla/websocket v1.5.3
 	github.com/json-iterator/go v1.1.12
+	google.golang.org/protobuf v1.36.11
 )
 
 require (

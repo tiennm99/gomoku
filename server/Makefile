@@ -1,4 +1,4 @@
-.PHONY: help build run stop logs shell clean test
+.PHONY: help build run stop logs shell clean test proto
 
 # Detect Docker Compose command
 DOCKER_COMPOSE := $(shell which docker-compose 2>/dev/null)
@@ -42,3 +42,6 @@ clean:
 
 test:
 	go test ./...
+
+proto:
+	protoc --go_out=.. --go_opt=module=github.com/tiennm99/gomoku --proto_path=../common/proto ../common/proto/request.proto ../common/proto/response.proto
