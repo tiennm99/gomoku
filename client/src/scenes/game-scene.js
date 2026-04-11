@@ -12,6 +12,7 @@ import { eventBus } from '../services/event-bus.js';
 import { gameState } from '../services/game-state-service.js';
 import { connectionService } from '../services/connection-service.js';
 import { ClientEventCode } from '../config/protocol-constants.js';
+import { isSelfExit } from '../services/client-exit-helpers.js';
 import {
   showGameHud,
   updateTurnIndicator,
@@ -218,11 +219,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Opponent disconnected or client exited — return to menu lobby.
-   * MenuScene.create() checks gameState.nickname and shows the lobby directly.
+   * ClientExitResponse received. Distinguish self vs peer:
+   *   - self (exitClientId === 0 as an ack, OR === our clientId): transition to lobby
+   *   - peer: stay in GameScene; the corresponding GameOverResponse will
+   *     show the game-over modal via forfeit. Showing a toast here keeps
+   *     the player informed without silently desyncing their server state.
+   * @param {{ exitClientId?: number, exitClientNickname?: string }} data
    * @private
    */
-  _onClientExit() {
+  _onClientExit(data) {
+    if (!isSelfExit(data, gameState.clientId)) {
+      const who = (data && data.exitClientNickname) ? data.exitClientNickname : 'Opponent';
+      showToast(`${who} left the room`, 'info');
+      return;
+    }
     hideGameHud();
     this._cleanup();
     this.scene.start('MenuScene');

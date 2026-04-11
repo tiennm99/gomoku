@@ -11,6 +11,7 @@ import { ClientEventCode } from '../config/protocol-constants.js';
 import { showToast } from './game-ui.js';
 import { eventBus } from '../services/event-bus.js';
 import { showRoomList, showPveDifficultyPanel, showWaiting } from './menu-ui-rooms.js';
+import { isSelfExit } from '../services/client-exit-helpers.js';
 
 // Re-export showRoomList and showWaiting so menu-scene.js imports from one place
 export { showRoomList, showWaiting };
@@ -116,5 +117,8 @@ eventBus.on(ClientEventCode.NICKNAME_SET, (data) => {
   }
 });
 
-// Return to lobby when client exits or is kicked
-eventBus.on(ClientEventCode.CLIENT_EXIT, showLobby);
+// Return to lobby only when WE exit. Peer exits are rendered as toasts
+// by game-scene._onClientExit; they must not blow away our menu state.
+eventBus.on(ClientEventCode.CLIENT_EXIT, (data) => {
+  if (isSelfExit(data, gameState.clientId)) showLobby();
+});

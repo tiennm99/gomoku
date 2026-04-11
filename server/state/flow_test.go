@@ -675,15 +675,17 @@ func TestFlow_CreateRoomAfterPvpRematchLeave(t *testing.T) {
 	}
 }
 
-// TestFlow_CreateRoomAfterOpponentForfeit: the other player disconnects
-// during the game via ClientExit. The remaining player sees GameOver via
-// forfeit broadcast + ClientExit notification. They end up in gameoverState
-// and must be able to leave + create a new room.
-func TestFlow_CreateRoomAfterOpponentForfeit(t *testing.T) {
-	black, white, room := setupFinishedPvpRoom(t)
-	_ = room
+// TestFlow_OpponentExit_KicksPeerFromGameover verifies the regression fix
+// for the server log "gameover player N: unexpected Request_CreateRoom":
+// when one player leaves a finished PVP room, the remaining peer should
+// NOT be left sitting in gameoverState — kickStaleRoomPeers injects a
+// synthetic ClientExit so their goroutine auto-transitions to home.
+// Both players must then be free to create fresh rooms.
+func TestFlow_OpponentExit_KicksPeerFromGameover(t *testing.T) {
+	black, white, _ := setupFinishedPvpRoom(t)
 
-	// Black clicks Leave from gameoverState — room still has white inside.
+	// Black leaves the finished PVP room → kickStaleRoomPeers should push
+	// a synthetic ClientExit onto white.CmdCh.
 	black.CmdCh <- &protocol.Request{
 		Payload: &protocol.Request_ClientExit{ClientExit: &protocol.ClientExitRequest{}},
 	}
@@ -694,21 +696,24 @@ func TestFlow_CreateRoomAfterOpponentForfeit(t *testing.T) {
 		t.Errorf("black.RoomID = %d, want 0", black.RoomID)
 	}
 
-	// White now sends ClientExit — room should be deleted.
-	white.CmdCh <- &protocol.Request{
-		Payload: &protocol.Request_ClientExit{ClientExit: &protocol.ClientExitRequest{}},
+	// White's CmdCh should contain a synthetic ClientExit queued by
+	// kickStaleRoomPeers. Running gameoverState on white should consume
+	// it and transition to StateHome WITHOUT any test-driven input.
+	next, err := runState(consts.StateGameOver, white)
+	if err != nil {
+		t.Fatalf("white auto-exit from kick: %v", err)
 	}
-	if _, err := runState(consts.StateGameOver, white); err != nil {
-		t.Fatalf("white gameover exit: %v", err)
+	if next != consts.StateHome {
+		t.Fatalf("white expected StateHome after synthetic kick, got %d", next)
 	}
 	if white.RoomID != 0 {
-		t.Errorf("white.RoomID = %d, want 0", white.RoomID)
+		t.Errorf("white.RoomID = %d after auto-kick, want 0", white.RoomID)
 	}
 	if len(lobby.GetAllRooms()) != 0 {
-		t.Errorf("expected 0 rooms after both players exit, got %d", len(lobby.GetAllRooms()))
+		t.Errorf("expected 0 rooms after both players kicked, got %d", len(lobby.GetAllRooms()))
 	}
 
-	// Both players should now be able to create new rooms.
+	// Both players should now be able to create fresh rooms from home.
 	for _, p := range []*lobby.Player{black, white} {
 		drainSend(p)
 		p.CmdCh <- &protocol.Request{
@@ -726,7 +731,6 @@ func TestFlow_CreateRoomAfterOpponentForfeit(t *testing.T) {
 		}
 	}
 
-	// Two new rooms in the store now.
 	if len(lobby.GetAllRooms()) != 2 {
 		t.Errorf("expected 2 rooms (one per player), got %d", len(lobby.GetAllRooms()))
 	}

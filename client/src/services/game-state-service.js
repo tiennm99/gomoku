@@ -7,6 +7,7 @@
 
 import { eventBus } from './event-bus.js';
 import { ClientEventCode } from '../config/protocol-constants.js';
+import { isSelfExit } from './client-exit-helpers.js';
 
 /**
  * @typedef {Object} MoveEntry
@@ -141,7 +142,12 @@ class GameStateService {
       console.warn('[GameState] spectator cannot perform this action');
     });
 
-    eventBus.on(ClientEventCode.CLIENT_EXIT, () => this.reset());
+    // Only reset when WE exited, not when a peer leaves a shared room.
+    // Otherwise a peer's exit would blow away our own roomId and board,
+    // desyncing us from the server's gameoverState.
+    eventBus.on(ClientEventCode.CLIENT_EXIT, (data) => {
+      if (isSelfExit(data, this.clientId)) this.reset();
+    });
   }
 }
 

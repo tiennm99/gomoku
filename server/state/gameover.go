@@ -60,6 +60,12 @@ func (*gameOverState) Next(player *lobby.Player) (consts.StateID, error) {
 
 			case *protocol.Request_ClientExit:
 				leaveRoom(player, room)
+				// If this left a PVP peer alone in a now-unplayable room,
+				// push a synthetic ClientExit onto their CmdCh so their
+				// gameoverState goroutine wakes up and transitions home too
+				// (instead of silently sitting in gameover while the client
+				// believes it's in the lobby — the exact desync reported).
+				kickStaleRoomPeers(room)
 				return consts.StateHome, nil
 
 			default:

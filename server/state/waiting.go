@@ -96,7 +96,8 @@ func assignColors(room *lobby.Room) {
 // leaveRoom removes player from their current room cleanly.
 // Broadcasts ClientExitResponse to everyone in the room BEFORE removing the
 // player, so the exiting player also receives their own exit confirmation
-// (used by the client to transition UI back to the lobby).
+// (used by the client to transition UI back to the lobby). The client
+// distinguishes self vs peer via exit_client_id.
 func leaveRoom(player *lobby.Player, room *lobby.Room) {
 	exitResp := &protocol.Response{
 		Payload: &protocol.Response_ClientExit{
@@ -111,4 +112,42 @@ func leaveRoom(player *lobby.Player, room *lobby.Room) {
 	broadcastResponse(room, exitResp)
 	// Then remove from the room.
 	lobby.LeaveRoom(player)
+}
+
+// kickStaleRoomPeers pushes a synthetic ClientExitRequest onto every remaining
+// player's CmdCh if the room is now unplayable (PVP with fewer than 2 human
+// players). Used after leaveRoom in the gameover path to prevent peers from
+// sitting in gameoverState forever once the game cannot continue.
+//
+// Safe to call with a room that was already deleted from the store — the
+// caller holds a reference; we just drain room.Players for peers still around.
+func kickStaleRoomPeers(room *lobby.Room) {
+	room.RLock()
+	roomType := room.RoomType
+	peers := make([]*lobby.Player, 0, len(room.Players))
+	for _, p := range room.Players {
+		peers = append(peers, p)
+	}
+	room.RUnlock()
+
+	if roomType != lobby.RoomTypePvp {
+		return
+	}
+	if len(peers) >= 2 {
+		return // still playable
+	}
+
+	syntheticExit := &protocol.Request{
+		Payload: &protocol.Request_ClientExit{ClientExit: &protocol.ClientExitRequest{}},
+	}
+	for _, p := range peers {
+		if p.CmdCh == nil {
+			continue
+		}
+		select {
+		case p.CmdCh <- syntheticExit:
+		default:
+			// CmdCh full — idle reaper will clean up the room eventually.
+		}
+	}
 }
