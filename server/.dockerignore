@@ -1,0 +1,12 @@
+.git
+*.md
+plans/
+docs/
+docker-compose.yml
+docker-compose.yaml
+client/
+common/
+web/
+api/
+core/
+scripts/

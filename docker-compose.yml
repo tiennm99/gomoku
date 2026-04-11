@@ -1,0 +1,22 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: gomoku-server:local
+    container_name: gomoku-server
+    ports:
+      - "1999:1999"
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: gomoku-client:local
+    container_name: gomoku-client
+    ports:
+      - "8080:8080"
+    depends_on:
+      - server
+    restart: unless-stopped
