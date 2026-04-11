@@ -14,7 +14,7 @@ import (
 type gamePveState struct{}
 
 func (*gamePveState) Next(player *lobby.Player) (consts.StateID, error) {
-	room, ok := lobby.GetNewRoom(player.RoomID)
+	room, ok := lobby.GetRoom(player.RoomID)
 	if !ok {
 		log.Errorf("[pve] player %d: room not found\n", player.ID)
 		return consts.StateHome, nil
@@ -64,7 +64,7 @@ func (*gamePveState) Next(player *lobby.Player) (consts.StateID, error) {
 
 // applyHumanMove validates/applies the human's move then triggers AI response.
 // Returns (nextState, true) when the state should change; (0, false) on invalid move.
-func applyHumanMove(player *lobby.Player, room *lobby.NewRoom, humanPiece game.Piece, row, col int) (consts.StateID, bool) {
+func applyHumanMove(player *lobby.Player, room *lobby.Room, humanPiece game.Piece, row, col int) (consts.StateID, bool) {
 	if row < 0 || row >= game.BoardSize || col < 0 || col >= game.BoardSize {
 		_ = player.Send(&protocol.Response{
 			Payload: &protocol.Response_GameMoveOutOfBounds{
@@ -105,7 +105,7 @@ func applyHumanMove(player *lobby.Player, room *lobby.NewRoom, humanPiece game.P
 
 // runAIMove computes and applies the AI's next move, broadcasts it, and checks result.
 // Returns (nextState, true) if the game ends, (0, false) to continue.
-func runAIMove(room *lobby.NewRoom) (consts.StateID, bool) {
+func runAIMove(room *lobby.Room) (consts.StateID, bool) {
 	room.RLock()
 	ai := room.AI
 	board := room.Board.Clone() // safe value copy for AI computation

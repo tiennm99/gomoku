@@ -19,7 +19,7 @@ import (
 //   - Per-room mutations use room.Lock() / room.RLock() independently.
 var store = &roomStore{
 	players:      make(map[int64]*Player),
-	rooms:        make(map[int64]*NewRoom),
+	rooms:        make(map[int64]*Room),
 	nextPlayerID: 1,
 	nextRoomID:   1,
 }
@@ -27,7 +27,7 @@ var store = &roomStore{
 type roomStore struct {
 	mu           sync.RWMutex
 	players      map[int64]*Player
-	rooms        map[int64]*NewRoom
+	rooms        map[int64]*Room
 	nextPlayerID int64
 	nextRoomID   int64
 }
@@ -65,18 +65,18 @@ func RemovePlayer(id int64) {
 	}
 	store.mu.Unlock()
 	if ok && p.RoomID != 0 {
-		LeaveNewRoom(p)
+		LeaveRoom(p)
 	}
 }
 
 // --- Room creation ---
 
 // CreatePvpRoom creates a PVP room owned by the given player.
-func CreatePvpRoom(owner *Player) (*NewRoom, error) {
+func CreatePvpRoom(owner *Player) (*Room, error) {
 	store.mu.Lock()
 	id := store.nextRoomID
 	store.nextRoomID++
-	r := &NewRoom{
+	r := &Room{
 		ID:            id,
 		OwnerID:       owner.ID,
 		OwnerNickname: owner.Name,
@@ -101,7 +101,7 @@ func CreatePvpRoom(owner *Player) (*NewRoom, error) {
 
 // CreatePveRoom creates a PVE room. difficulty must be 1, 2, or 3.
 // The human player is randomly assigned Black or White; the AI takes the other side.
-func CreatePveRoom(owner *Player, difficulty int) (*NewRoom, error) {
+func CreatePveRoom(owner *Player, difficulty int) (*Room, error) {
 	if difficulty < 1 || difficulty > 3 {
 		return nil, ErrInvalidDifficulty
 	}
@@ -133,7 +133,7 @@ func CreatePveRoom(owner *Player, difficulty int) (*NewRoom, error) {
 	store.mu.Lock()
 	id := store.nextRoomID
 	store.nextRoomID++
-	r := &NewRoom{
+	r := &Room{
 		ID:            id,
 		OwnerID:       owner.ID,
 		OwnerNickname: owner.Name,
@@ -158,8 +158,8 @@ func CreatePveRoom(owner *Player, difficulty int) (*NewRoom, error) {
 
 // --- Room lookups ---
 
-// GetNewRoom returns the room with the given ID, or (nil, false) if not found.
-func GetNewRoom(id int64) (*NewRoom, bool) {
+// GetRoom returns the room with the given ID, or (nil, false) if not found.
+func GetRoom(id int64) (*Room, bool) {
 	store.mu.RLock()
 	r, ok := store.rooms[id]
 	store.mu.RUnlock()
@@ -168,9 +168,9 @@ func GetNewRoom(id int64) (*NewRoom, bool) {
 
 // GetAllRooms returns a snapshot slice of all rooms sorted by ID ascending.
 // The slice is a copy; callers must not mutate rooms through it without locking.
-func GetAllRooms() []*NewRoom {
+func GetAllRooms() []*Room {
 	store.mu.RLock()
-	list := make([]*NewRoom, 0, len(store.rooms))
+	list := make([]*Room, 0, len(store.rooms))
 	for _, r := range store.rooms {
 		list = append(list, r)
 	}
@@ -179,17 +179,17 @@ func GetAllRooms() []*NewRoom {
 	return list
 }
 
-// deleteNewRoom removes a room from the store. Caller must hold store.mu.Lock().
-func deleteNewRoom(id int64) {
+// deleteRoom removes a room from the store. Caller must hold store.mu.Lock().
+func deleteRoom(id int64) {
 	delete(store.rooms, id)
 }
 
 // --- Room membership ---
 
-// JoinNewRoom adds a player to a room as a human participant.
+// JoinRoom adds a player to a room as a human participant.
 // Returns ErrRoomNotFound, ErrRoomFull, or ErrRoomPlaying on failure.
 // On success, sets player.RoomID.
-func JoinNewRoom(roomID int64, player *Player) error {
+func JoinRoom(roomID int64, player *Player) error {
 	store.mu.RLock()
 	r, ok := store.rooms[roomID]
 	store.mu.RUnlock()
@@ -221,10 +221,10 @@ func JoinNewRoom(roomID int64, player *Player) error {
 	return nil
 }
 
-// LeaveNewRoom removes a player from their current room (Players or Spectators).
+// LeaveRoom removes a player from their current room (Players or Spectators).
 // If the room becomes empty it is deleted from the store.
 // Broadcasts nothing — callers handle messaging.
-func LeaveNewRoom(player *Player) {
+func LeaveRoom(player *Player) {
 	if player.RoomID == 0 {
 		return
 	}
@@ -269,7 +269,7 @@ func LeaveNewRoom(player *Player) {
 		for _, sp := range r.Spectators {
 			spectatorsToEject = append(spectatorsToEject, sp)
 		}
-		// Clear spectator map so UnwatchNewRoom calls from their state machines are no-ops.
+		// Clear spectator map so UnwatchRoom calls from their state machines are no-ops.
 		r.Spectators = make(map[int64]*Player)
 	}
 
@@ -296,7 +296,7 @@ func LeaveNewRoom(player *Player) {
 
 	if empty {
 		store.mu.Lock()
-		deleteNewRoom(roomID)
+		deleteRoom(roomID)
 		store.mu.Unlock()
 	}
 }
@@ -334,9 +334,9 @@ func pushWatchGameExitToCmdCh(player *Player) {
 	}
 }
 
-// WatchNewRoom adds a player to a room's Spectators list.
+// WatchRoom adds a player to a room's Spectators list.
 // Returns ErrRoomNotFound if the room does not exist.
-func WatchNewRoom(roomID int64, player *Player) error {
+func WatchRoom(roomID int64, player *Player) error {
 	store.mu.RLock()
 	r, ok := store.rooms[roomID]
 	store.mu.RUnlock()
@@ -354,8 +354,8 @@ func WatchNewRoom(roomID int64, player *Player) error {
 	return nil
 }
 
-// UnwatchNewRoom removes a spectator from their room.
-func UnwatchNewRoom(player *Player) {
+// UnwatchRoom removes a spectator from their room.
+func UnwatchRoom(player *Player) {
 	if player.RoomID == 0 {
 		return
 	}
@@ -379,14 +379,7 @@ func UnwatchNewRoom(player *Player) {
 
 	if empty {
 		store.mu.Lock()
-		deleteNewRoom(roomID)
+		deleteRoom(roomID)
 		store.mu.Unlock()
 	}
-}
-
-// BroadcastToNewRoom is a placeholder kept for BroadcastEvent compatibility.
-// The new state machine uses state.broadcastResponse (typed protobuf) instead.
-// String-based broadcast is no longer supported after phase-06.
-func BroadcastToNewRoom(_ *NewRoom, _ string, _ ...int64) {
-	// no-op: all broadcasts now use typed *protocol.Response via player.Send
 }

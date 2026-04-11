@@ -25,13 +25,13 @@ func (*watchingState) Next(player *lobby.Player) (consts.StateID, error) {
 	req, ok := <-player.CmdCh
 	if !ok {
 		// Connection closed or channel drained — clean up quietly.
-		lobby.UnwatchNewRoom(player)
+		lobby.UnwatchRoom(player)
 		return 0, ErrClientExit
 	}
 
 	switch req.Payload.(type) {
 	case *protocol.Request_WatchGameExit:
-		lobby.UnwatchNewRoom(player)
+		lobby.UnwatchRoom(player)
 		_ = player.Send(&protocol.Response{
 			Payload: &protocol.Response_ShowOptions{
 				ShowOptions: &protocol.ShowOptionsResponse{},
@@ -40,7 +40,7 @@ func (*watchingState) Next(player *lobby.Player) (consts.StateID, error) {
 		return consts.StateHome, nil
 
 	case *protocol.Request_ClientExit:
-		lobby.UnwatchNewRoom(player)
+		lobby.UnwatchRoom(player)
 		return 0, ErrClientExit
 
 	case *protocol.Request_GameMove:

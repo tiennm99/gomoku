@@ -2,7 +2,6 @@ package lobby
 
 import (
 	"fmt"
-	"sync"
 	"testing"
 )
 
@@ -10,7 +9,7 @@ import (
 func resetStore() {
 	store.mu.Lock()
 	store.players = make(map[int64]*Player)
-	store.rooms = make(map[int64]*NewRoom)
+	store.rooms = make(map[int64]*Room)
 	store.nextPlayerID = 1
 	store.nextRoomID = 1
 	store.mu.Unlock()
@@ -104,7 +103,7 @@ func TestCreatePveRoom_InvalidDifficultyRejected(t *testing.T) {
 	}
 }
 
-// --- JoinNewRoom tests ---
+// --- JoinRoom tests ---
 
 func TestJoinRoom_FullRejected(t *testing.T) {
 	resetStore()
@@ -113,13 +112,13 @@ func TestJoinRoom_FullRejected(t *testing.T) {
 	p3 := makePlayer("frank")
 
 	r, _ := CreatePvpRoom(owner)
-	if err := JoinNewRoom(r.ID, owner); err != nil {
+	if err := JoinRoom(r.ID, owner); err != nil {
 		t.Fatalf("owner join: %v", err)
 	}
-	if err := JoinNewRoom(r.ID, p2); err != nil {
+	if err := JoinRoom(r.ID, p2); err != nil {
 		t.Fatalf("second player join: %v", err)
 	}
-	if err := JoinNewRoom(r.ID, p3); err != ErrRoomFull {
+	if err := JoinRoom(r.ID, p3); err != ErrRoomFull {
 		t.Errorf("expected ErrRoomFull, got %v", err)
 	}
 }
@@ -128,32 +127,32 @@ func TestJoinRoom_NotFoundRejected(t *testing.T) {
 	resetStore()
 	p := makePlayer("ghost")
 
-	err := JoinNewRoom(999, p)
+	err := JoinRoom(999, p)
 	if err != ErrRoomNotFound {
 		t.Errorf("expected ErrRoomNotFound, got %v", err)
 	}
 }
 
-// --- LeaveNewRoom tests ---
+// --- LeaveRoom tests ---
 
 func TestLeaveRoom_RemovesPlayerAndCleansEmptyRoom(t *testing.T) {
 	resetStore()
 	owner := makePlayer("grace")
 
 	r, _ := CreatePvpRoom(owner)
-	_ = JoinNewRoom(r.ID, owner)
+	_ = JoinRoom(r.ID, owner)
 
-	LeaveNewRoom(owner)
+	LeaveRoom(owner)
 
 	if owner.RoomID != 0 {
 		t.Errorf("player.RoomID should be 0 after leave, got %d", owner.RoomID)
 	}
-	if _, ok := GetNewRoom(r.ID); ok {
+	if _, ok := GetRoom(r.ID); ok {
 		t.Error("empty room should be deleted from store")
 	}
 }
 
-// --- WatchNewRoom / UnwatchNewRoom tests ---
+// --- WatchRoom / UnwatchRoom tests ---
 
 func TestWatchRoom_AddsSpectator(t *testing.T) {
 	resetStore()
@@ -161,10 +160,10 @@ func TestWatchRoom_AddsSpectator(t *testing.T) {
 	spectator := makePlayer("iris")
 
 	r, _ := CreatePvpRoom(owner)
-	_ = JoinNewRoom(r.ID, owner)
+	_ = JoinRoom(r.ID, owner)
 
-	if err := WatchNewRoom(r.ID, spectator); err != nil {
-		t.Fatalf("WatchNewRoom: %v", err)
+	if err := WatchRoom(r.ID, spectator); err != nil {
+		t.Fatalf("WatchRoom: %v", err)
 	}
 
 	r.RLock()
@@ -185,10 +184,10 @@ func TestUnwatchRoom_RemovesSpectator(t *testing.T) {
 	spectator := makePlayer("kim")
 
 	r, _ := CreatePvpRoom(owner)
-	_ = JoinNewRoom(r.ID, owner)
-	_ = WatchNewRoom(r.ID, spectator)
+	_ = JoinRoom(r.ID, owner)
+	_ = WatchRoom(r.ID, spectator)
 
-	UnwatchNewRoom(spectator)
+	UnwatchRoom(spectator)
 
 	r.RLock()
 	_, found := r.Spectators[spectator.ID]
@@ -227,61 +226,3 @@ func TestGetAllRooms_ReturnsSnapshot(t *testing.T) {
 	}
 }
 
-// --- Broadcast test ---
-
-func TestBroadcastToRoom_SkipsExcludedIDs(t *testing.T) {
-	resetStore()
-
-	type call struct{ id int64 }
-	var mu sync.Mutex
-	var calls []call
-
-	makeFakePlayer := func(name string) *Player {
-		p := RegisterPlayer(name)
-		// Override WriteString via a wrapper conn — simplest: capture via closure
-		// by replacing the data channel and using a custom approach.
-		// Since Player.WriteString uses p.conn which is nil in tests,
-		// we verify via BroadcastToNewRoom's internal path.
-		// We'll wire sendFn indirectly: use a testable broadcast helper.
-		_ = p // suppress unused warning
-		return p
-	}
-
-	// Use a direct test of BroadcastToNewRoom's exclude logic via targets list.
-	// We build a room, manually wire WriteString-compatible players,
-	// then assert excluded player never receives the message.
-
-	owner := makeFakePlayer("maya")
-	other := makeFakePlayer("ned")
-
-	r, _ := CreatePvpRoom(owner)
-	r.Lock()
-	r.Players[owner.ID] = owner
-	r.Players[other.ID] = other
-	r.Unlock()
-
-	// Replace WriteString with a recorder via a thin intercept.
-	// Since Player.WriteString calls p.conn.Write and conn is nil in tests,
-	// we test the exclude logic directly: collect targets without nil-conn panic.
-	r.RLock()
-	var targets []int64
-	for id := range r.Players {
-		targets = append(targets, id)
-	}
-	r.RUnlock()
-
-	excluded := map[int64]bool{owner.ID: true}
-	var reached []int64
-	mu.Lock()
-	for _, id := range targets {
-		if !excluded[id] {
-			reached = append(reached, id)
-		}
-	}
-	mu.Unlock()
-
-	if len(reached) != 1 || reached[0] != other.ID {
-		t.Errorf("expected only other.ID=%d in reached, got %v", other.ID, reached)
-	}
-	_ = calls // suppress unused
-}

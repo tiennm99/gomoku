@@ -17,7 +17,7 @@ import (
 type gameOverState struct{}
 
 func (*gameOverState) Next(player *lobby.Player) (consts.StateID, error) {
-	room, ok := lobby.GetNewRoom(player.RoomID)
+	room, ok := lobby.GetRoom(player.RoomID)
 	if !ok {
 		// Room gone (e.g. opponent left and room was deleted) — go home.
 		return consts.StateHome, nil
@@ -45,7 +45,7 @@ func (*gameOverState) Next(player *lobby.Player) (consts.StateID, error) {
 }
 
 // handleGameReset resets the room and starts a fresh game.
-func handleGameReset(room *lobby.NewRoom) (consts.StateID, error) {
+func handleGameReset(room *lobby.Room) (consts.StateID, error) {
 	seed := rand.Int63()
 	room.Lock()
 	room.Reset(seed)

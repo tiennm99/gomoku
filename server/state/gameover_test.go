@@ -11,7 +11,7 @@ import (
 )
 
 // setupFinishedPvpRoom creates a PVP room in Finished state for gameover tests.
-func setupFinishedPvpRoom(t *testing.T) (*lobby.Player, *lobby.Player, *lobby.NewRoom) {
+func setupFinishedPvpRoom(t *testing.T) (*lobby.Player, *lobby.Player, *lobby.Room) {
 	t.Helper()
 	black := makeRegisteredPlayer(t, "Black")
 	white := makeRegisteredPlayer(t, "White")
@@ -20,11 +20,11 @@ func setupFinishedPvpRoom(t *testing.T) (*lobby.Player, *lobby.Player, *lobby.Ne
 	if err != nil {
 		t.Fatalf("CreatePvpRoom: %v", err)
 	}
-	if err := lobby.JoinNewRoom(room.ID, black); err != nil {
-		t.Fatalf("JoinNewRoom black: %v", err)
+	if err := lobby.JoinRoom(room.ID, black); err != nil {
+		t.Fatalf("JoinRoom black: %v", err)
 	}
-	if err := lobby.JoinNewRoom(room.ID, white); err != nil {
-		t.Fatalf("JoinNewRoom white: %v", err)
+	if err := lobby.JoinRoom(room.ID, white); err != nil {
+		t.Fatalf("JoinRoom white: %v", err)
 	}
 
 	room.Lock()
@@ -82,8 +82,8 @@ func TestGameoverResetTransitionsToPve(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreatePveRoom: %v", err)
 	}
-	if err := lobby.JoinNewRoom(room.ID, human); err != nil {
-		t.Fatalf("JoinNewRoom: %v", err)
+	if err := lobby.JoinRoom(room.ID, human); err != nil {
+		t.Fatalf("JoinRoom: %v", err)
 	}
 
 	room.Lock()
@@ -154,8 +154,8 @@ func TestGameoverPveResetRandomizesColors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreatePveRoom: %v", err)
 	}
-	if err := lobby.JoinNewRoom(room.ID, human); err != nil {
-		t.Fatalf("JoinNewRoom: %v", err)
+	if err := lobby.JoinRoom(room.ID, human); err != nil {
+		t.Fatalf("JoinRoom: %v", err)
 	}
 
 	room.Lock()

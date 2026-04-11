@@ -38,7 +38,7 @@ func reapIdleRooms() {
 		if nPlayers == 0 && nSpectators == 0 && time.Since(lastActive) > idleRoomTimeout {
 			log.Infof("[cleanup] removing idle room %d (no activity for >%s)\n", id, idleRoomTimeout)
 			store.mu.Lock()
-			deleteNewRoom(id)
+			deleteRoom(id)
 			store.mu.Unlock()
 		}
 	}

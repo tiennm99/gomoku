@@ -9,7 +9,7 @@ import (
 // sendRoomSnapshot sends the current room state to a newly-joined spectator.
 // Order: WatchGameSuccessResponse → GameStartingResponse → one GameMoveSuccessResponse per history entry.
 // Uses Snapshot() to avoid holding a lock while calling player.Send.
-func sendRoomSnapshot(player *lobby.Player, room *lobby.NewRoom) {
+func sendRoomSnapshot(player *lobby.Player, room *lobby.Room) {
 	snap := room.Snapshot()
 
 	status := protocol.RoomStatus_WAITING
@@ -62,7 +62,7 @@ func sendRoomSnapshot(player *lobby.Player, room *lobby.NewRoom) {
 
 // buildGameStartingResponse constructs a GameStartingResponse from room state.
 // Acquires RLock internally for safety.
-func buildGameStartingResponse(room *lobby.NewRoom) *protocol.Response {
+func buildGameStartingResponse(room *lobby.Room) *protocol.Response {
 	room.RLock()
 	blackID := room.BlackPlayerID
 	whiteID := room.WhitePlayerID
@@ -87,7 +87,7 @@ func buildGameStartingResponse(room *lobby.NewRoom) *protocol.Response {
 }
 
 // resolveNickname maps a playerID to a nickname. Returns "AI" for -1 (PVE AI slot).
-func resolveNickname(room *lobby.NewRoom, playerID int64) string {
+func resolveNickname(room *lobby.Room, playerID int64) string {
 	if playerID == -1 {
 		return "AI"
 	}
@@ -141,7 +141,7 @@ func buildGameOverResponse(result game.GameResult, winnerNickname string) *proto
 
 // broadcastResponse sends resp to all players and spectators in the room.
 // Acquires RLock internally; must NOT be called while holding room.Lock().
-func broadcastResponse(room *lobby.NewRoom, resp *protocol.Response) {
+func broadcastResponse(room *lobby.Room, resp *protocol.Response) {
 	room.RLock()
 	targets := make([]*lobby.Player, 0, len(room.Players)+len(room.Spectators))
 	for _, p := range room.Players {
@@ -159,7 +159,7 @@ func broadcastResponse(room *lobby.NewRoom, resp *protocol.Response) {
 
 // playerPieceInRoom returns the game.Piece assigned to playerID in room.
 // Returns game.Empty if not assigned.
-func playerPieceInRoom(room *lobby.NewRoom, playerID int64) game.Piece {
+func playerPieceInRoom(room *lobby.Room, playerID int64) game.Piece {
 	room.RLock()
 	black := room.BlackPlayerID
 	white := room.WhitePlayerID
@@ -175,7 +175,7 @@ func playerPieceInRoom(room *lobby.NewRoom, playerID int64) game.Piece {
 
 // winnerNicknameFor returns the display name of the winner given a GameResult.
 // Returns empty string for a draw.
-func winnerNicknameFor(room *lobby.NewRoom, result game.GameResult) string {
+func winnerNicknameFor(room *lobby.Room, result game.GameResult) string {
 	room.RLock()
 	blackID := room.BlackPlayerID
 	whiteID := room.WhitePlayerID

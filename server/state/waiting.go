@@ -23,7 +23,7 @@ import (
 type waitingState struct{}
 
 func (*waitingState) Next(player *lobby.Player) (consts.StateID, error) {
-	room, ok := lobby.GetNewRoom(player.RoomID)
+	room, ok := lobby.GetRoom(player.RoomID)
 	if !ok {
 		log.Errorf("[waiting] player %d: room %d not found\n", player.ID, player.RoomID)
 		return consts.StateHome, nil
@@ -37,7 +37,7 @@ func (*waitingState) Next(player *lobby.Player) (consts.StateID, error) {
 }
 
 // ownerWait loops until the owner triggers a valid GameStartingRequest or exits.
-func ownerWait(player *lobby.Player, room *lobby.NewRoom) (consts.StateID, error) {
+func ownerWait(player *lobby.Player, room *lobby.Room) (consts.StateID, error) {
 	for {
 		req, ok := <-player.CmdCh
 		if !ok {
@@ -92,7 +92,7 @@ func ownerWait(player *lobby.Player, room *lobby.NewRoom) (consts.StateID, error
 }
 
 // joinerWait blocks until the owner starts the game (via StartCh) or the joiner exits.
-func joinerWait(player *lobby.Player, room *lobby.NewRoom) (consts.StateID, error) {
+func joinerWait(player *lobby.Player, room *lobby.Room) (consts.StateID, error) {
 	room.RLock()
 	startCh := room.StartCh
 	room.RUnlock()
@@ -134,7 +134,7 @@ func joinerWait(player *lobby.Player, room *lobby.NewRoom) (consts.StateID, erro
 
 // assignColors randomly assigns Black/White to the two players in a PVP room.
 // Caller must NOT hold room.Lock() before calling — acquires it internally.
-func assignColors(room *lobby.NewRoom) {
+func assignColors(room *lobby.Room) {
 	room.Lock()
 	playerIDs := make([]int64, 0, 2)
 	for id := range room.Players {
@@ -159,9 +159,9 @@ func assignColors(room *lobby.NewRoom) {
 
 // leaveRoom removes player from their current room cleanly.
 // Notifies remaining players via ClientExitResponse.
-func leaveRoom(player *lobby.Player, room *lobby.NewRoom) {
+func leaveRoom(player *lobby.Player, room *lobby.Room) {
 	roomID := room.ID
-	lobby.LeaveNewRoom(player)
+	lobby.LeaveRoom(player)
 
 	room.RLock()
 	targets := make([]*lobby.Player, 0, len(room.Players))

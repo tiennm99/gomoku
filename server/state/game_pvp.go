@@ -16,7 +16,7 @@ import (
 type gamePvpState struct{}
 
 func (*gamePvpState) Next(player *lobby.Player) (consts.StateID, error) {
-	room, ok := lobby.GetNewRoom(player.RoomID)
+	room, ok := lobby.GetRoom(player.RoomID)
 	if !ok {
 		log.Errorf("[pvp] player %d: room not found\n", player.ID)
 		return consts.StateHome, nil
@@ -74,7 +74,7 @@ func (*gamePvpState) Next(player *lobby.Player) (consts.StateID, error) {
 
 // signalGameOver closes room.GameOverCh exactly once so the other player goroutine
 // unblocks and transitions to StateGameOver.
-func signalGameOver(room *lobby.NewRoom) {
+func signalGameOver(room *lobby.Room) {
 	room.Lock()
 	ch := room.GameOverCh
 	if ch != nil {
@@ -88,7 +88,7 @@ func signalGameOver(room *lobby.NewRoom) {
 
 // applyPvpMove validates and applies a move. Returns (nextState, true) when
 // the state should change; (0, false) when move is rejected (stay in loop).
-func applyPvpMove(player *lobby.Player, room *lobby.NewRoom, row, col int) (consts.StateID, bool) {
+func applyPvpMove(player *lobby.Player, room *lobby.Room, row, col int) (consts.StateID, bool) {
 	myPiece := playerPieceInRoom(room, player.ID)
 	if myPiece == game.Empty {
 		log.Errorf("[pvp] player %d not assigned a piece in room %d\n", player.ID, room.ID)
@@ -151,7 +151,7 @@ func applyPvpMove(player *lobby.Player, room *lobby.NewRoom, row, col int) (cons
 }
 
 // broadcastForfeit sends a GameOver response declaring the opponent as winner.
-func broadcastForfeit(room *lobby.NewRoom, disconnected *lobby.Player) {
+func broadcastForfeit(room *lobby.Room, disconnected *lobby.Player) {
 	room.RLock()
 	var winner *lobby.Player
 	for id, p := range room.Players {

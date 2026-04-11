@@ -33,14 +33,14 @@ type GameMove struct {
 	Timestamp time.Time
 }
 
-// NewRoom is the new domain model for a game room.
+// Room is the new domain model for a game room.
 // It embeds game.Board directly and carries all fields from the caro Java domain:
 // blackPlayerId, whitePlayerId, currentTurn, moveHistory, watcherList, roomOwner,
 // type (PVP|PVE), difficultyCoefficient.
 //
 // sync.RWMutex protects Board, Players, Spectators, MoveHistory, and Status.
 // Never hold the lock while calling player.WriteString/sendFn — copy fields first, then release.
-type NewRoom struct {
+type Room struct {
 	sync.RWMutex
 
 	ID            int64
@@ -86,7 +86,7 @@ type NewRoom struct {
 
 // ApplyMove places a piece at (row, col), appends to MoveHistory, flips CurrentTurn,
 // and returns the new GameResult. Caller must hold room.Lock().
-func (r *NewRoom) ApplyMove(row, col int, piece game.Piece, playerID int64) (game.GameResult, error) {
+func (r *Room) ApplyMove(row, col int, piece game.Piece, playerID int64) (game.GameResult, error) {
 	if !r.Board.MakeMove(row, col, piece) {
 		return game.InProgress, ErrRoomFull // reuse as "invalid move" sentinel; phase-06 adds ErrInvalidMove
 	}
@@ -108,7 +108,7 @@ func (r *NewRoom) ApplyMove(row, col int, piece game.Piece, playerID int64) (gam
 
 // Reset clears the board and history, returning the room to WAITING status.
 // For PVE rooms it re-randomizes color assignment and creates a fresh AI.
-func (r *NewRoom) Reset(rng int64) {
+func (r *Room) Reset(rng int64) {
 	r.Board.Reset()
 	r.MoveHistory = nil
 	r.CurrentTurn = game.Black
@@ -141,7 +141,7 @@ type RoomSnapshot struct {
 
 // Snapshot returns a consistent read of room state safe to send without holding the lock.
 // Caller must NOT hold any lock when calling this — it acquires RLock internally.
-func (r *NewRoom) Snapshot() RoomSnapshot {
+func (r *Room) Snapshot() RoomSnapshot {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -170,11 +170,11 @@ func (r *NewRoom) Snapshot() RoomSnapshot {
 // PlayerCount returns the number of human players currently in the room.
 // Caller may or may not hold RLock — reads len which is safe under Go's memory model
 // only when protected; callers should hold at least RLock for correctness.
-func (r *NewRoom) PlayerCount() int {
+func (r *Room) PlayerCount() int {
 	return len(r.Players)
 }
 
 // IsOwner returns true if playerID is the room owner.
-func (r *NewRoom) IsOwner(playerID int64) bool {
+func (r *Room) IsOwner(playerID int64) bool {
 	return r.OwnerID == playerID
 }

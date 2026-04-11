@@ -49,7 +49,7 @@ func Run(player *lobby.Player) {
 	defer func() {
 		// Cleanup: remove from room if still in one.
 		if player.RoomID != 0 {
-			lobby.LeaveNewRoom(player)
+			lobby.LeaveRoom(player)
 		}
 		lobby.RemovePlayer(player.ID)
 		log.Infof("[state] player %d state machine exited\n", player.ID)

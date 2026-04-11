@@ -20,7 +20,7 @@ func makeRegisteredPlayer(t *testing.T, name string) *lobby.Player {
 }
 
 // setupPvpRoomWithOwner creates a PVP room with owner already joined.
-func setupPvpRoomWithOwner(t *testing.T) (*lobby.Player, *lobby.NewRoom) {
+func setupPvpRoomWithOwner(t *testing.T) (*lobby.Player, *lobby.Room) {
 	t.Helper()
 	owner := makeRegisteredPlayer(t, "Owner")
 
@@ -28,8 +28,8 @@ func setupPvpRoomWithOwner(t *testing.T) (*lobby.Player, *lobby.NewRoom) {
 	if err != nil {
 		t.Fatalf("CreatePvpRoom: %v", err)
 	}
-	if err := lobby.JoinNewRoom(room.ID, owner); err != nil {
-		t.Fatalf("JoinNewRoom owner: %v", err)
+	if err := lobby.JoinRoom(room.ID, owner); err != nil {
+		t.Fatalf("JoinRoom owner: %v", err)
 	}
 	return owner, room
 }
@@ -78,8 +78,8 @@ func TestWaitingOwnerGameStartingRequiresFullRoom(t *testing.T) {
 func TestWaitingOwnerStartsWhenFull(t *testing.T) {
 	owner, room := setupPvpRoomWithOwner(t)
 	joiner := makeRegisteredPlayer(t, "Joiner")
-	if err := lobby.JoinNewRoom(room.ID, joiner); err != nil {
-		t.Fatalf("JoinNewRoom joiner: %v", err)
+	if err := lobby.JoinRoom(room.ID, joiner); err != nil {
+		t.Fatalf("JoinRoom joiner: %v", err)
 	}
 
 	go func() {
@@ -118,8 +118,8 @@ func TestWaitingOwnerStartsWhenFull(t *testing.T) {
 func TestWaitingJoinerTransitionsOnStartCh(t *testing.T) {
 	owner, room := setupPvpRoomWithOwner(t)
 	joiner := makeRegisteredPlayer(t, "Joiner")
-	if err := lobby.JoinNewRoom(room.ID, joiner); err != nil {
-		t.Fatalf("JoinNewRoom joiner: %v", err)
+	if err := lobby.JoinRoom(room.ID, joiner); err != nil {
+		t.Fatalf("JoinRoom joiner: %v", err)
 	}
 
 	// Simulate owner triggering start: close StartCh and mark room playing.

@@ -11,7 +11,7 @@ import (
 )
 
 // setupPvpGame creates a fully-started PVP room (2 players, colors assigned, status=Playing).
-func setupPvpGame(t *testing.T) (black *lobby.Player, white *lobby.Player, room *lobby.NewRoom) {
+func setupPvpGame(t *testing.T) (black *lobby.Player, white *lobby.Player, room *lobby.Room) {
 	t.Helper()
 	black = makeRegisteredPlayer(t, "Black")
 	white = makeRegisteredPlayer(t, "White")
@@ -20,11 +20,11 @@ func setupPvpGame(t *testing.T) (black *lobby.Player, white *lobby.Player, room 
 	if err != nil {
 		t.Fatalf("CreatePvpRoom: %v", err)
 	}
-	if err := lobby.JoinNewRoom(room.ID, black); err != nil {
-		t.Fatalf("JoinNewRoom black: %v", err)
+	if err := lobby.JoinRoom(room.ID, black); err != nil {
+		t.Fatalf("JoinRoom black: %v", err)
 	}
-	if err := lobby.JoinNewRoom(room.ID, white); err != nil {
-		t.Fatalf("JoinNewRoom white: %v", err)
+	if err := lobby.JoinRoom(room.ID, white); err != nil {
+		t.Fatalf("JoinRoom white: %v", err)
 	}
 
 	// Assign colors deterministically.

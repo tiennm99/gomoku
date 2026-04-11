@@ -49,8 +49,8 @@ func handleCreateRoom(player *lobby.Player) (consts.StateID, error) {
 	}
 
 	// Owner joins as a player immediately.
-	if err := lobby.JoinNewRoom(room.ID, player); err != nil {
-		log.Errorf("[home] JoinNewRoom error player %d room %d: %v\n", player.ID, room.ID, err)
+	if err := lobby.JoinRoom(room.ID, player); err != nil {
+		log.Errorf("[home] JoinRoom error player %d room %d: %v\n", player.ID, room.ID, err)
 		return consts.StateHome, nil
 	}
 
@@ -90,8 +90,8 @@ func handleCreatePveRoom(player *lobby.Player, req *protocol.Request) (consts.St
 		return consts.StateHome, nil
 	}
 
-	if err := lobby.JoinNewRoom(room.ID, player); err != nil {
-		log.Errorf("[home] JoinNewRoom (PVE) error player %d room %d: %v\n", player.ID, room.ID, err)
+	if err := lobby.JoinRoom(room.ID, player); err != nil {
+		log.Errorf("[home] JoinRoom (PVE) error player %d room %d: %v\n", player.ID, room.ID, err)
 		return consts.StateHome, nil
 	}
 
@@ -110,12 +110,12 @@ func handleCreatePveRoom(player *lobby.Player, req *protocol.Request) (consts.St
 func handleJoinRoom(player *lobby.Player, req *protocol.Request) (consts.StateID, error) {
 	roomID := int64(req.GetJoinRoom().GetRoomId())
 
-	err := lobby.JoinNewRoom(roomID, player)
+	err := lobby.JoinRoom(roomID, player)
 	if err != nil {
 		switch err {
 		case lobby.ErrRoomFull, lobby.ErrRoomPlaying:
 			owner := ""
-			if r, ok := lobby.GetNewRoom(roomID); ok {
+			if r, ok := lobby.GetRoom(roomID); ok {
 				owner = r.OwnerNickname
 			}
 			_ = player.Send(&protocol.Response{
@@ -138,7 +138,7 @@ func handleJoinRoom(player *lobby.Player, req *protocol.Request) (consts.StateID
 		return consts.StateHome, nil
 	}
 
-	room, ok := lobby.GetNewRoom(roomID)
+	room, ok := lobby.GetRoom(roomID)
 	if !ok {
 		return consts.StateHome, nil
 	}
@@ -170,7 +170,7 @@ func handleJoinRoom(player *lobby.Player, req *protocol.Request) (consts.StateID
 func handleWatchGame(player *lobby.Player, req *protocol.Request) (consts.StateID, error) {
 	roomID := int64(req.GetWatchGame().GetRoomId())
 
-	room, ok := lobby.GetNewRoom(roomID)
+	room, ok := lobby.GetRoom(roomID)
 	if !ok {
 		_ = player.Send(&protocol.Response{
 			Payload: &protocol.Response_RoomPlayFailNotFound{
@@ -180,7 +180,7 @@ func handleWatchGame(player *lobby.Player, req *protocol.Request) (consts.StateI
 		return consts.StateHome, nil
 	}
 
-	if err := lobby.WatchNewRoom(roomID, player); err != nil {
+	if err := lobby.WatchRoom(roomID, player); err != nil {
 		_ = player.Send(&protocol.Response{
 			Payload: &protocol.Response_RoomPlayFailNotFound{
 				RoomPlayFailNotFound: &protocol.RoomPlayFailNotFoundResponse{},

@@ -7,9 +7,9 @@ import (
 	"github.com/tiennm99/gomoku/server/game"
 )
 
-// newTestRoom builds a minimal NewRoom for unit tests without going through the store.
-func newTestRoom(t RoomType, ownerID int64) *NewRoom {
-	r := &NewRoom{
+// newTestRoom builds a minimal Room for unit tests without going through the store.
+func newTestRoom(t RoomType, ownerID int64) *Room {
+	r := &Room{
 		ID:            1,
 		OwnerID:       ownerID,
 		OwnerNickname: "owner",

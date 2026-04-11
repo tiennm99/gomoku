@@ -12,7 +12,7 @@ import (
 
 // setupPveGame creates a PVE room with the human assigned Black (AI=White).
 // seed=42 gives deterministic AI behavior.
-func setupPveGame(t *testing.T, difficulty int) (human *lobby.Player, room *lobby.NewRoom) {
+func setupPveGame(t *testing.T, difficulty int) (human *lobby.Player, room *lobby.Room) {
 	t.Helper()
 	human = makeRegisteredPlayer(t, "Human")
 
@@ -20,8 +20,8 @@ func setupPveGame(t *testing.T, difficulty int) (human *lobby.Player, room *lobb
 	if err != nil {
 		t.Fatalf("CreatePveRoom: %v", err)
 	}
-	if err := lobby.JoinNewRoom(room.ID, human); err != nil {
-		t.Fatalf("JoinNewRoom human: %v", err)
+	if err := lobby.JoinRoom(room.ID, human); err != nil {
+		t.Fatalf("JoinRoom human: %v", err)
 	}
 
 	// Override AI with fixed seed for determinism.
@@ -180,8 +180,8 @@ func TestPveAIFirstWhenHumanIsWhite(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreatePveRoom: %v", err)
 	}
-	if err := lobby.JoinNewRoom(room.ID, human); err != nil {
-		t.Fatalf("JoinNewRoom: %v", err)
+	if err := lobby.JoinRoom(room.ID, human); err != nil {
+		t.Fatalf("JoinRoom: %v", err)
 	}
 
 	// Force human = White, AI = Black.
