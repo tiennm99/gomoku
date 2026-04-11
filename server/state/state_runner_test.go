@@ -5,14 +5,14 @@ import (
 	"time"
 
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/protocol"
 )
 
 // makeTestPlayer creates a Player with wired CmdCh and SendCh for use in tests.
 // The player is NOT registered in the store (so RemovePlayer is safe to no-op).
-func makeTestPlayer(id int64, name string) *database.Player {
-	p := &database.Player{
+func makeTestPlayer(id int64, name string) *lobby.Player {
+	p := &lobby.Player{
 		ID:     id,
 		Name:   name,
 		SendCh: make(chan *protocol.Response, 64),
@@ -22,7 +22,7 @@ func makeTestPlayer(id int64, name string) *database.Player {
 }
 
 // drainSend returns all responses currently buffered in SendCh without blocking.
-func drainSend(p *database.Player) []*protocol.Response {
+func drainSend(p *lobby.Player) []*protocol.Response {
 	var out []*protocol.Response
 	for {
 		select {
@@ -112,14 +112,14 @@ func TestSetNicknameStatefulRequestBeforeName(t *testing.T) {
 func TestRunnerExitsOnErrClientExit(t *testing.T) {
 	// Register a fake state that immediately exits.
 	const fakeState consts.StateID = 99
-	register(fakeState, stateFunc(func(_ *database.Player) (consts.StateID, error) {
+	register(fakeState, stateFunc(func(_ *lobby.Player) (consts.StateID, error) {
 		return 0, ErrClientExit
 	}))
 
 	p := makeTestPlayer(999, "runner-test")
 	// Redirect first state to fakeState by temporarily overriding welcome.
 	origWelcome := registry[consts.StateWelcome]
-	register(consts.StateWelcome, stateFunc(func(_ *database.Player) (consts.StateID, error) {
+	register(consts.StateWelcome, stateFunc(func(_ *lobby.Player) (consts.StateID, error) {
 		return fakeState, nil
 	}))
 	defer register(consts.StateWelcome, origWelcome)
@@ -139,9 +139,9 @@ func TestRunnerExitsOnErrClientExit(t *testing.T) {
 }
 
 // stateFunc is a helper to turn a function into a State for test overrides.
-type stateFunc func(*database.Player) (consts.StateID, error)
+type stateFunc func(*lobby.Player) (consts.StateID, error)
 
-func (f stateFunc) Next(p *database.Player) (consts.StateID, error) { return f(p) }
+func (f stateFunc) Next(p *lobby.Player) (consts.StateID, error) { return f(p) }
 
 // TestHomeExitOnClientExitRequest verifies homeState returns ErrClientExit.
 func TestHomeExitOnClientExitRequest(t *testing.T) {

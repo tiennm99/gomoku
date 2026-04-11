@@ -5,25 +5,25 @@ import (
 	"time"
 
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/game"
 	"github.com/tiennm99/gomoku/server/protocol"
 )
 
 // setupFinishedPvpRoom creates a PVP room in Finished state for gameover tests.
-func setupFinishedPvpRoom(t *testing.T) (*database.Player, *database.Player, *database.NewRoom) {
+func setupFinishedPvpRoom(t *testing.T) (*lobby.Player, *lobby.Player, *lobby.NewRoom) {
 	t.Helper()
 	black := makeRegisteredPlayer(t, "Black")
 	white := makeRegisteredPlayer(t, "White")
 
-	room, err := database.CreatePvpRoom(black)
+	room, err := lobby.CreatePvpRoom(black)
 	if err != nil {
 		t.Fatalf("CreatePvpRoom: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, black); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, black); err != nil {
 		t.Fatalf("JoinNewRoom black: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, white); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, white); err != nil {
 		t.Fatalf("JoinNewRoom white: %v", err)
 	}
 
@@ -31,7 +31,7 @@ func setupFinishedPvpRoom(t *testing.T) (*database.Player, *database.Player, *da
 	room.BlackPlayerID = black.ID
 	room.WhitePlayerID = white.ID
 	room.CurrentTurn = game.Black
-	room.Status = database.RoomStatusFinished
+	room.Status = lobby.RoomStatusFinished
 	room.Unlock()
 
 	return black, white, room
@@ -78,11 +78,11 @@ func TestGameoverResetTransitionsToPvp(t *testing.T) {
 func TestGameoverResetTransitionsToPve(t *testing.T) {
 	human := makeRegisteredPlayer(t, "Human")
 
-	room, err := database.CreatePveRoom(human, consts.DifficultyEasy)
+	room, err := lobby.CreatePveRoom(human, consts.DifficultyEasy)
 	if err != nil {
 		t.Fatalf("CreatePveRoom: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, human); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, human); err != nil {
 		t.Fatalf("JoinNewRoom: %v", err)
 	}
 
@@ -90,7 +90,7 @@ func TestGameoverResetTransitionsToPve(t *testing.T) {
 	room.BlackPlayerID = human.ID
 	room.WhitePlayerID = -1
 	room.CurrentTurn = game.Black
-	room.Status = database.RoomStatusFinished
+	room.Status = lobby.RoomStatusFinished
 	room.AI = game.NewAI(game.White, 99)
 	room.Unlock()
 
@@ -150,17 +150,17 @@ func TestGameoverExitOnClosedChan(t *testing.T) {
 func TestGameoverPveResetRandomizesColors(t *testing.T) {
 	human := makeRegisteredPlayer(t, "Human")
 
-	room, err := database.CreatePveRoom(human, consts.DifficultyEasy)
+	room, err := lobby.CreatePveRoom(human, consts.DifficultyEasy)
 	if err != nil {
 		t.Fatalf("CreatePveRoom: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, human); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, human); err != nil {
 		t.Fatalf("JoinNewRoom: %v", err)
 	}
 
 	room.Lock()
 	originalBlackID := room.BlackPlayerID
-	room.Status = database.RoomStatusFinished
+	room.Status = lobby.RoomStatusFinished
 	room.AI = game.NewAI(game.White, 1)
 	room.Unlock()
 

@@ -4,7 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/game"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 	"github.com/tiennm99/gomoku/server/protocol"
@@ -22,8 +22,8 @@ import (
 // can select on both CmdCh and the room's start signal without polling.
 type waitingState struct{}
 
-func (*waitingState) Next(player *database.Player) (consts.StateID, error) {
-	room, ok := database.GetNewRoom(player.RoomID)
+func (*waitingState) Next(player *lobby.Player) (consts.StateID, error) {
+	room, ok := lobby.GetNewRoom(player.RoomID)
 	if !ok {
 		log.Errorf("[waiting] player %d: room %d not found\n", player.ID, player.RoomID)
 		return consts.StateHome, nil
@@ -37,7 +37,7 @@ func (*waitingState) Next(player *database.Player) (consts.StateID, error) {
 }
 
 // ownerWait loops until the owner triggers a valid GameStartingRequest or exits.
-func ownerWait(player *database.Player, room *database.NewRoom) (consts.StateID, error) {
+func ownerWait(player *lobby.Player, room *lobby.NewRoom) (consts.StateID, error) {
 	for {
 		req, ok := <-player.CmdCh
 		if !ok {
@@ -70,7 +70,7 @@ func ownerWait(player *database.Player, room *database.NewRoom) (consts.StateID,
 
 			// Mark room as playing.
 			room.Lock()
-			room.Status = database.RoomStatusPlaying
+			room.Status = lobby.RoomStatusPlaying
 			room.CurrentTurn = game.Black
 			// Signal joiner via StartCh if present.
 			if room.StartCh != nil {
@@ -92,7 +92,7 @@ func ownerWait(player *database.Player, room *database.NewRoom) (consts.StateID,
 }
 
 // joinerWait blocks until the owner starts the game (via StartCh) or the joiner exits.
-func joinerWait(player *database.Player, room *database.NewRoom) (consts.StateID, error) {
+func joinerWait(player *lobby.Player, room *lobby.NewRoom) (consts.StateID, error) {
 	room.RLock()
 	startCh := room.StartCh
 	room.RUnlock()
@@ -103,7 +103,7 @@ func joinerWait(player *database.Player, room *database.NewRoom) (consts.StateID
 			room.RLock()
 			status := room.Status
 			room.RUnlock()
-			if status == database.RoomStatusPlaying {
+			if status == lobby.RoomStatusPlaying {
 				return consts.StateGamePvp, nil
 			}
 			// Fall back to CmdCh-only select.
@@ -134,7 +134,7 @@ func joinerWait(player *database.Player, room *database.NewRoom) (consts.StateID
 
 // assignColors randomly assigns Black/White to the two players in a PVP room.
 // Caller must NOT hold room.Lock() before calling — acquires it internally.
-func assignColors(room *database.NewRoom) {
+func assignColors(room *lobby.NewRoom) {
 	room.Lock()
 	playerIDs := make([]int64, 0, 2)
 	for id := range room.Players {
@@ -159,12 +159,12 @@ func assignColors(room *database.NewRoom) {
 
 // leaveRoom removes player from their current room cleanly.
 // Notifies remaining players via ClientExitResponse.
-func leaveRoom(player *database.Player, room *database.NewRoom) {
+func leaveRoom(player *lobby.Player, room *lobby.NewRoom) {
 	roomID := room.ID
-	database.LeaveNewRoom(player)
+	lobby.LeaveNewRoom(player)
 
 	room.RLock()
-	targets := make([]*database.Player, 0, len(room.Players))
+	targets := make([]*lobby.Player, 0, len(room.Players))
 	for _, p := range room.Players {
 		targets = append(targets, p)
 	}

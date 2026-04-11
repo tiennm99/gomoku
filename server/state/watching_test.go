@@ -5,30 +5,30 @@ import (
 	"time"
 
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/game"
 	"github.com/tiennm99/gomoku/server/protocol"
 )
 
 // setupWatchingPlayer creates a room with two players, then adds a spectator
 // and returns the spectator player + the room.
-func setupWatchingPlayer(t *testing.T) (*database.Player, *database.NewRoom) {
+func setupWatchingPlayer(t *testing.T) (*lobby.Player, *lobby.NewRoom) {
 	t.Helper()
 	owner := makeRegisteredPlayer(t, "Black")
-	room, err := database.CreatePvpRoom(owner)
+	room, err := lobby.CreatePvpRoom(owner)
 	if err != nil {
 		t.Fatalf("CreatePvpRoom: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, owner); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, owner); err != nil {
 		t.Fatalf("JoinNewRoom owner: %v", err)
 	}
 	joiner := makeRegisteredPlayer(t, "White")
-	if err := database.JoinNewRoom(room.ID, joiner); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, joiner); err != nil {
 		t.Fatalf("JoinNewRoom joiner: %v", err)
 	}
 
 	spectator := makeRegisteredPlayer(t, "Watcher")
-	if err := database.WatchNewRoom(room.ID, spectator); err != nil {
+	if err := lobby.WatchNewRoom(room.ID, spectator); err != nil {
 		t.Fatalf("WatchNewRoom: %v", err)
 	}
 	return spectator, room
@@ -174,15 +174,15 @@ func TestWatching_ClosedCmdChReturnsErrClientExit(t *testing.T) {
 // WatchGameSuccessResponse + GameStartingResponse + one MoveSuccessResponse per history entry.
 func TestSnapshot_SendsOwnerStartingAndHistory(t *testing.T) {
 	owner := makeRegisteredPlayer(t, "Black")
-	room, err := database.CreatePvpRoom(owner)
+	room, err := lobby.CreatePvpRoom(owner)
 	if err != nil {
 		t.Fatalf("CreatePvpRoom: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, owner); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, owner); err != nil {
 		t.Fatalf("JoinNewRoom owner: %v", err)
 	}
 	joiner := makeRegisteredPlayer(t, "White")
-	if err := database.JoinNewRoom(room.ID, joiner); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, joiner); err != nil {
 		t.Fatalf("JoinNewRoom joiner: %v", err)
 	}
 
@@ -190,7 +190,7 @@ func TestSnapshot_SendsOwnerStartingAndHistory(t *testing.T) {
 	room.Lock()
 	room.BlackPlayerID = owner.ID
 	room.WhitePlayerID = joiner.ID
-	room.Status = database.RoomStatusPlaying
+	room.Status = lobby.RoomStatusPlaying
 	room.CurrentTurn = game.Black
 	room.Unlock()
 
@@ -234,11 +234,11 @@ func TestSnapshot_SendsOwnerStartingAndHistory(t *testing.T) {
 // causes a snapshot to be sent and transitions to StateWatching.
 func TestHomeWatchGame_RouteToWatching(t *testing.T) {
 	owner := makeRegisteredPlayer(t, "Owner")
-	room, err := database.CreatePvpRoom(owner)
+	room, err := lobby.CreatePvpRoom(owner)
 	if err != nil {
 		t.Fatalf("CreatePvpRoom: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, owner); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, owner); err != nil {
 		t.Fatalf("JoinNewRoom: %v", err)
 	}
 
@@ -311,21 +311,21 @@ func TestHomeWatchGame_RoomNotFound(t *testing.T) {
 // spectators receive a ClientExitResponse and a WatchGameExit is pushed to CmdCh.
 func TestDeleteRoom_EjectsSpectators(t *testing.T) {
 	owner := makeRegisteredPlayer(t, "Owner")
-	room, err := database.CreatePvpRoom(owner)
+	room, err := lobby.CreatePvpRoom(owner)
 	if err != nil {
 		t.Fatalf("CreatePvpRoom: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, owner); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, owner); err != nil {
 		t.Fatalf("JoinNewRoom: %v", err)
 	}
 
 	spectator := makeRegisteredPlayer(t, "Watcher")
-	if err := database.WatchNewRoom(room.ID, spectator); err != nil {
+	if err := lobby.WatchNewRoom(room.ID, spectator); err != nil {
 		t.Fatalf("WatchNewRoom: %v", err)
 	}
 
 	// Owner leaves — should eject spectator.
-	database.LeaveNewRoom(owner)
+	lobby.LeaveNewRoom(owner)
 
 	// Give async sends a moment to land.
 	time.Sleep(20 * time.Millisecond)
@@ -357,19 +357,19 @@ func TestDeleteRoom_EjectsSpectators(t *testing.T) {
 // Indirectly via handleGetRooms by checking room field values directly.
 func TestRoomSummary_IncludesSpectators(t *testing.T) {
 	owner := makeRegisteredPlayer(t, "Owner")
-	room, err := database.CreatePvpRoom(owner)
+	room, err := lobby.CreatePvpRoom(owner)
 	if err != nil {
 		t.Fatalf("CreatePvpRoom: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, owner); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, owner); err != nil {
 		t.Fatalf("JoinNewRoom: %v", err)
 	}
 	joiner := makeRegisteredPlayer(t, "Joiner")
-	if err := database.JoinNewRoom(room.ID, joiner); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, joiner); err != nil {
 		t.Fatalf("JoinNewRoom joiner: %v", err)
 	}
 	spectator := makeRegisteredPlayer(t, "Watcher")
-	if err := database.WatchNewRoom(room.ID, spectator); err != nil {
+	if err := lobby.WatchNewRoom(room.ID, spectator); err != nil {
 		t.Fatalf("WatchNewRoom: %v", err)
 	}
 

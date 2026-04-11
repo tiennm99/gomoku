@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 	"github.com/tiennm99/gomoku/server/protocol"
 	"github.com/tiennm99/gomoku/server/state"
@@ -60,7 +60,7 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Register player with an empty nickname (set later via SetNicknameRequest).
-	player := database.RegisterPlayer("")
+	player := lobby.RegisterPlayer("")
 	player.SendCh = make(chan *protocol.Response, sendChSize)
 	player.CmdCh = make(chan *protocol.Request, cmdChSize)
 	player.LastHeartbeat = time.Now()

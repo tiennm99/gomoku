@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 	"github.com/tiennm99/gomoku/server/protocol"
 )
@@ -16,7 +16,7 @@ const (
 
 // handleHeartbeat refreshes the player's last-seen timestamp.
 // Caro sends no response for heartbeats — we match that behavior.
-func handleHeartbeat(player *database.Player, _ *protocol.Request) {
+func handleHeartbeat(player *lobby.Player, _ *protocol.Request) {
 	// LastHeartbeat is updated by the reader loop on every frame.
 	// No response needed per caro spec.
 }
@@ -24,7 +24,7 @@ func handleHeartbeat(player *database.Player, _ *protocol.Request) {
 // handleSetNickname validates and applies the requested nickname.
 // On success: sends NicknameSetResponse{invalid_length:0} + ShowOptionsResponse.
 // On failure: sends NicknameSetResponse{invalid_length: N} where N is the rune count.
-func handleSetNickname(player *database.Player, req *protocol.Request) {
+func handleSetNickname(player *lobby.Player, req *protocol.Request) {
 	nn := strings.TrimSpace(req.GetSetNickname().GetNickname())
 	runeCount := utf8.RuneCountInString(nn)
 
@@ -65,13 +65,13 @@ func handleSetNickname(player *database.Player, req *protocol.Request) {
 }
 
 // handleGetRooms builds a ShowRoomsResponse snapshot and sends it inline.
-func handleGetRooms(player *database.Player, _ *protocol.Request) {
-	rooms := database.GetAllRooms()
+func handleGetRooms(player *lobby.Player, _ *protocol.Request) {
+	rooms := lobby.GetAllRooms()
 	summaries := make([]*protocol.RoomSummary, 0, len(rooms))
 	for _, r := range rooms {
 		r.RLock()
 		roomType := protocol.RoomType_PVP
-		if r.RoomType == database.RoomTypePve {
+		if r.RoomType == lobby.RoomTypePve {
 			roomType = protocol.RoomType_PVE
 		}
 		summary := &protocol.RoomSummary{
@@ -93,14 +93,14 @@ func handleGetRooms(player *database.Player, _ *protocol.Request) {
 
 // handleSetClientInfo stores the client version string and logs it.
 // No response sent (stateless, informational only).
-func handleSetClientInfo(player *database.Player, req *protocol.Request) {
+func handleSetClientInfo(player *lobby.Player, req *protocol.Request) {
 	player.ClientVersion = req.GetSetClientInfo().GetVersion()
 	log.Infof("[handler] player %d client version: %q\n", player.ID, player.ClientVersion)
 }
 
 // handleClientExit sends a ClientExitResponse and closes the send channel
 // so the writer goroutine exits, which in turn closes the WS connection.
-func handleClientExit(player *database.Player, _ *protocol.Request) {
+func handleClientExit(player *lobby.Player, _ *protocol.Request) {
 	log.Infof("[handler] player %d requested exit\n", player.ID)
 	_ = player.Send(&protocol.Response{
 		Payload: &protocol.Response_ClientExit{

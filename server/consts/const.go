@@ -1,6 +1,6 @@
 // Package consts exposes cross-package constants used by the state machine
 // and room logic. Kept intentionally small — domain enums (RoomType, RoomStatus,
-// Piece, GameResult) live in their respective packages (database, game, protocol).
+// Piece, GameResult) live in their respective packages (lobby, game, protocol).
 package consts
 
 // StateID identifies a state in the per-player state machine.

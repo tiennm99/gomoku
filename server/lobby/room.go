@@ -1,4 +1,4 @@
-package database
+package lobby
 
 import (
 	"sync"

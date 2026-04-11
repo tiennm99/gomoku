@@ -2,7 +2,7 @@ package state
 
 import (
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/game"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 	"github.com/tiennm99/gomoku/server/protocol"
@@ -13,8 +13,8 @@ import (
 // If the human is White, AI moves first before entering the human-wait loop.
 type gamePveState struct{}
 
-func (*gamePveState) Next(player *database.Player) (consts.StateID, error) {
-	room, ok := database.GetNewRoom(player.RoomID)
+func (*gamePveState) Next(player *lobby.Player) (consts.StateID, error) {
+	room, ok := lobby.GetNewRoom(player.RoomID)
 	if !ok {
 		log.Errorf("[pve] player %d: room not found\n", player.ID)
 		return consts.StateHome, nil
@@ -64,7 +64,7 @@ func (*gamePveState) Next(player *database.Player) (consts.StateID, error) {
 
 // applyHumanMove validates/applies the human's move then triggers AI response.
 // Returns (nextState, true) when the state should change; (0, false) on invalid move.
-func applyHumanMove(player *database.Player, room *database.NewRoom, humanPiece game.Piece, row, col int) (consts.StateID, bool) {
+func applyHumanMove(player *lobby.Player, room *lobby.NewRoom, humanPiece game.Piece, row, col int) (consts.StateID, bool) {
 	if row < 0 || row >= game.BoardSize || col < 0 || col >= game.BoardSize {
 		_ = player.Send(&protocol.Response{
 			Payload: &protocol.Response_GameMoveOutOfBounds{
@@ -94,7 +94,7 @@ func applyHumanMove(player *database.Player, room *database.NewRoom, humanPiece 
 		winner := winnerNicknameFor(room, result)
 		broadcastResponse(room, buildGameOverResponse(result, winner))
 		room.Lock()
-		room.Status = database.RoomStatusFinished
+		room.Status = lobby.RoomStatusFinished
 		room.Unlock()
 		return consts.StateGameOver, true
 	}
@@ -105,7 +105,7 @@ func applyHumanMove(player *database.Player, room *database.NewRoom, humanPiece 
 
 // runAIMove computes and applies the AI's next move, broadcasts it, and checks result.
 // Returns (nextState, true) if the game ends, (0, false) to continue.
-func runAIMove(room *database.NewRoom) (consts.StateID, bool) {
+func runAIMove(room *lobby.NewRoom) (consts.StateID, bool) {
 	room.RLock()
 	ai := room.AI
 	board := room.Board.Clone() // safe value copy for AI computation
@@ -122,7 +122,7 @@ func runAIMove(room *database.NewRoom) (consts.StateID, bool) {
 		// Board full — draw.
 		broadcastResponse(room, buildGameOverResponse(game.Draw, ""))
 		room.Lock()
-		room.Status = database.RoomStatusFinished
+		room.Status = lobby.RoomStatusFinished
 		room.Unlock()
 		return consts.StateGameOver, true
 	}
@@ -153,7 +153,7 @@ func runAIMove(room *database.NewRoom) (consts.StateID, bool) {
 		winner := winnerNicknameFor(room, result)
 		broadcastResponse(room, buildGameOverResponse(result, winner))
 		room.Lock()
-		room.Status = database.RoomStatusFinished
+		room.Status = lobby.RoomStatusFinished
 		room.Unlock()
 		return consts.StateGameOver, true
 	}

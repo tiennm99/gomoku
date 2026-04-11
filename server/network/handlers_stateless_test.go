@@ -3,20 +3,20 @@ package network
 import (
 	"testing"
 
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/protocol"
 )
 
 // makeTestPlayer creates a minimal Player wired with SendCh and CmdCh for testing.
-func makeTestPlayer() *database.Player {
-	p := database.RegisterPlayer("tester")
+func makeTestPlayer() *lobby.Player {
+	p := lobby.RegisterPlayer("tester")
 	p.SendCh = make(chan *protocol.Response, 32)
 	p.CmdCh = make(chan *protocol.Request, 16)
 	return p
 }
 
 // drainSendCh collects all currently queued responses without blocking.
-func drainSendCh(p *database.Player) []*protocol.Response {
+func drainSendCh(p *lobby.Player) []*protocol.Response {
 	var out []*protocol.Response
 	for {
 		select {

@@ -1,6 +1,7 @@
-// Package database provides the in-memory domain model and store for the Gomoku server.
-// All state is volatile — server restart clears everything.
-package database
+// Package lobby provides the in-memory domain model (Player, Room) and a
+// global store managing who is in which room. All state is volatile —
+// server restart clears everything.
+package lobby
 
 import "errors"
 

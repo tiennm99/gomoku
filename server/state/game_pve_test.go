@@ -5,22 +5,22 @@ import (
 	"time"
 
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/game"
 	"github.com/tiennm99/gomoku/server/protocol"
 )
 
 // setupPveGame creates a PVE room with the human assigned Black (AI=White).
 // seed=42 gives deterministic AI behavior.
-func setupPveGame(t *testing.T, difficulty int) (human *database.Player, room *database.NewRoom) {
+func setupPveGame(t *testing.T, difficulty int) (human *lobby.Player, room *lobby.NewRoom) {
 	t.Helper()
 	human = makeRegisteredPlayer(t, "Human")
 
-	room, err := database.CreatePveRoom(human, difficulty)
+	room, err := lobby.CreatePveRoom(human, difficulty)
 	if err != nil {
 		t.Fatalf("CreatePveRoom: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, human); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, human); err != nil {
 		t.Fatalf("JoinNewRoom human: %v", err)
 	}
 
@@ -29,7 +29,7 @@ func setupPveGame(t *testing.T, difficulty int) (human *database.Player, room *d
 	room.BlackPlayerID = human.ID
 	room.WhitePlayerID = -1
 	room.CurrentTurn = game.Black
-	room.Status = database.RoomStatusPlaying
+	room.Status = lobby.RoomStatusPlaying
 	room.AI = game.NewAI(game.White, 42)
 	room.Unlock()
 
@@ -176,11 +176,11 @@ func TestPveGameOverOnHumanWin(t *testing.T) {
 func TestPveAIFirstWhenHumanIsWhite(t *testing.T) {
 	human := makeRegisteredPlayer(t, "HumanWhite")
 
-	room, err := database.CreatePveRoom(human, consts.DifficultyEasy)
+	room, err := lobby.CreatePveRoom(human, consts.DifficultyEasy)
 	if err != nil {
 		t.Fatalf("CreatePveRoom: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, human); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, human); err != nil {
 		t.Fatalf("JoinNewRoom: %v", err)
 	}
 
@@ -189,7 +189,7 @@ func TestPveAIFirstWhenHumanIsWhite(t *testing.T) {
 	room.WhitePlayerID = human.ID
 	room.BlackPlayerID = -1
 	room.CurrentTurn = game.Black
-	room.Status = database.RoomStatusPlaying
+	room.Status = lobby.RoomStatusPlaying
 	room.AI = game.NewAI(game.Black, 42)
 	room.Unlock()
 

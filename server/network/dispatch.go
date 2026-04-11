@@ -1,7 +1,7 @@
 package network
 
 import (
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 	"github.com/tiennm99/gomoku/server/protocol"
 )
@@ -16,7 +16,7 @@ import (
 //
 // Overflow policy: if CmdCh is full, the request is logged and dropped rather
 // than blocking the reader goroutine (prevents backpressure deadlocks).
-func Dispatch(player *database.Player, req *protocol.Request) {
+func Dispatch(player *lobby.Player, req *protocol.Request) {
 	switch req.Payload.(type) {
 	// --- Stateless handlers (inline) ---
 	case *protocol.Request_Heartbeat:
@@ -52,7 +52,7 @@ func Dispatch(player *database.Player, req *protocol.Request) {
 
 // pushToCmdCh enqueues req on player.CmdCh without blocking.
 // If the channel is full or nil, the request is dropped with a warning.
-func pushToCmdCh(player *database.Player, req *protocol.Request) {
+func pushToCmdCh(player *lobby.Player, req *protocol.Request) {
 	if player.CmdCh == nil {
 		log.Errorf("[dispatch] player %d: CmdCh is nil, dropping %T\n", player.ID, req.Payload)
 		return

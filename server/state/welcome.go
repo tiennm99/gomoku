@@ -2,7 +2,7 @@ package state
 
 import (
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 )
 
 // welcomeState is the entry point for every new connection.
@@ -10,6 +10,6 @@ import (
 // before spawning Run(), so this state just transitions immediately.
 type welcomeState struct{}
 
-func (*welcomeState) Next(_ *database.Player) (consts.StateID, error) {
+func (*welcomeState) Next(_ *lobby.Player) (consts.StateID, error) {
 	return consts.StateSetNickname, nil
 }

@@ -5,30 +5,30 @@ import (
 	"time"
 
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/protocol"
 )
 
 // makeRegisteredPlayer creates a player via the store and wires channels.
-func makeRegisteredPlayer(t *testing.T, name string) *database.Player {
+func makeRegisteredPlayer(t *testing.T, name string) *lobby.Player {
 	t.Helper()
-	p := database.RegisterPlayer(name)
+	p := lobby.RegisterPlayer(name)
 	p.SendCh = make(chan *protocol.Response, 64)
 	p.CmdCh = make(chan *protocol.Request, 16)
-	t.Cleanup(func() { database.RemovePlayer(p.ID) })
+	t.Cleanup(func() { lobby.RemovePlayer(p.ID) })
 	return p
 }
 
 // setupPvpRoomWithOwner creates a PVP room with owner already joined.
-func setupPvpRoomWithOwner(t *testing.T) (*database.Player, *database.NewRoom) {
+func setupPvpRoomWithOwner(t *testing.T) (*lobby.Player, *lobby.NewRoom) {
 	t.Helper()
 	owner := makeRegisteredPlayer(t, "Owner")
 
-	room, err := database.CreatePvpRoom(owner)
+	room, err := lobby.CreatePvpRoom(owner)
 	if err != nil {
 		t.Fatalf("CreatePvpRoom: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, owner); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, owner); err != nil {
 		t.Fatalf("JoinNewRoom owner: %v", err)
 	}
 	return owner, room
@@ -78,7 +78,7 @@ func TestWaitingOwnerGameStartingRequiresFullRoom(t *testing.T) {
 func TestWaitingOwnerStartsWhenFull(t *testing.T) {
 	owner, room := setupPvpRoomWithOwner(t)
 	joiner := makeRegisteredPlayer(t, "Joiner")
-	if err := database.JoinNewRoom(room.ID, joiner); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, joiner); err != nil {
 		t.Fatalf("JoinNewRoom joiner: %v", err)
 	}
 
@@ -118,7 +118,7 @@ func TestWaitingOwnerStartsWhenFull(t *testing.T) {
 func TestWaitingJoinerTransitionsOnStartCh(t *testing.T) {
 	owner, room := setupPvpRoomWithOwner(t)
 	joiner := makeRegisteredPlayer(t, "Joiner")
-	if err := database.JoinNewRoom(room.ID, joiner); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, joiner); err != nil {
 		t.Fatalf("JoinNewRoom joiner: %v", err)
 	}
 
@@ -130,7 +130,7 @@ func TestWaitingJoinerTransitionsOnStartCh(t *testing.T) {
 			close(room.StartCh)
 			room.StartCh = nil
 		}
-		room.Status = database.RoomStatusPlaying
+		room.Status = lobby.RoomStatusPlaying
 		room.Unlock()
 	}()
 

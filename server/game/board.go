@@ -1,5 +1,5 @@
 // Package game provides pure game logic for Gomoku: board state, win detection, and AI.
-// No dependency on network, state machine, or database layers.
+// No dependency on network, state machine, or lobby layers.
 package game
 
 // Piece represents a board cell value.

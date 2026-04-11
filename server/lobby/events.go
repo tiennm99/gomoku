@@ -1,4 +1,4 @@
-package database
+package lobby
 
 // RoomEvent is a message broadcast to all participants in a room (players + spectators).
 // Simplest form: a plain string payload. Phase-07 will expand this with typed events

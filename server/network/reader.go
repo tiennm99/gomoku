@@ -5,7 +5,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 )
 
@@ -22,7 +22,7 @@ const (
 // readLoop blocks until the connection closes or an unrecoverable read error occurs.
 // It decodes each binary WS frame into a Request and dispatches it.
 // On exit it closes the player's CmdCh and removes them from the store.
-func readLoop(conn *websocket.Conn, player *database.Player) {
+func readLoop(conn *websocket.Conn, player *lobby.Player) {
 	conn.SetReadLimit(maxMessageSize)
 	_ = conn.SetReadDeadline(time.Now().Add(readDeadline))
 
@@ -36,7 +36,7 @@ func readLoop(conn *websocket.Conn, player *database.Player) {
 		if player.CmdCh != nil {
 			close(player.CmdCh)
 		}
-		database.RemovePlayer(player.ID)
+		lobby.RemovePlayer(player.ID)
 		log.Infof("[reader] player %d disconnected\n", player.ID)
 	}()
 

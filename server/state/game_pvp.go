@@ -2,7 +2,7 @@ package state
 
 import (
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/game"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 	"github.com/tiennm99/gomoku/server/protocol"
@@ -15,8 +15,8 @@ import (
 // other goroutine unblocks and also transitions to StateGameOver.
 type gamePvpState struct{}
 
-func (*gamePvpState) Next(player *database.Player) (consts.StateID, error) {
-	room, ok := database.GetNewRoom(player.RoomID)
+func (*gamePvpState) Next(player *lobby.Player) (consts.StateID, error) {
+	room, ok := lobby.GetNewRoom(player.RoomID)
 	if !ok {
 		log.Errorf("[pvp] player %d: room not found\n", player.ID)
 		return consts.StateHome, nil
@@ -74,7 +74,7 @@ func (*gamePvpState) Next(player *database.Player) (consts.StateID, error) {
 
 // signalGameOver closes room.GameOverCh exactly once so the other player goroutine
 // unblocks and transitions to StateGameOver.
-func signalGameOver(room *database.NewRoom) {
+func signalGameOver(room *lobby.NewRoom) {
 	room.Lock()
 	ch := room.GameOverCh
 	if ch != nil {
@@ -88,7 +88,7 @@ func signalGameOver(room *database.NewRoom) {
 
 // applyPvpMove validates and applies a move. Returns (nextState, true) when
 // the state should change; (0, false) when move is rejected (stay in loop).
-func applyPvpMove(player *database.Player, room *database.NewRoom, row, col int) (consts.StateID, bool) {
+func applyPvpMove(player *lobby.Player, room *lobby.NewRoom, row, col int) (consts.StateID, bool) {
 	myPiece := playerPieceInRoom(room, player.ID)
 	if myPiece == game.Empty {
 		log.Errorf("[pvp] player %d not assigned a piece in room %d\n", player.ID, room.ID)
@@ -138,7 +138,7 @@ func applyPvpMove(player *database.Player, room *database.NewRoom, row, col int)
 		broadcastResponse(room, buildGameOverResponse(result, winner))
 
 		room.Lock()
-		room.Status = database.RoomStatusFinished
+		room.Status = lobby.RoomStatusFinished
 		room.Unlock()
 
 		// Signal the other player goroutine.
@@ -151,9 +151,9 @@ func applyPvpMove(player *database.Player, room *database.NewRoom, row, col int)
 }
 
 // broadcastForfeit sends a GameOver response declaring the opponent as winner.
-func broadcastForfeit(room *database.NewRoom, disconnected *database.Player) {
+func broadcastForfeit(room *lobby.NewRoom, disconnected *lobby.Player) {
 	room.RLock()
-	var winner *database.Player
+	var winner *lobby.Player
 	for id, p := range room.Players {
 		if id != disconnected.ID {
 			winner = p
@@ -171,6 +171,6 @@ func broadcastForfeit(room *database.NewRoom, disconnected *database.Player) {
 	broadcastResponse(room, buildGameOverResponse(game.BlackWin, winnerName))
 
 	room.Lock()
-	room.Status = database.RoomStatusFinished
+	room.Status = lobby.RoomStatusFinished
 	room.Unlock()
 }

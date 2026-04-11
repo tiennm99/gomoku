@@ -5,25 +5,25 @@ import (
 	"time"
 
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/game"
 	"github.com/tiennm99/gomoku/server/protocol"
 )
 
 // setupPvpGame creates a fully-started PVP room (2 players, colors assigned, status=Playing).
-func setupPvpGame(t *testing.T) (black *database.Player, white *database.Player, room *database.NewRoom) {
+func setupPvpGame(t *testing.T) (black *lobby.Player, white *lobby.Player, room *lobby.NewRoom) {
 	t.Helper()
 	black = makeRegisteredPlayer(t, "Black")
 	white = makeRegisteredPlayer(t, "White")
 
-	room, err := database.CreatePvpRoom(black)
+	room, err := lobby.CreatePvpRoom(black)
 	if err != nil {
 		t.Fatalf("CreatePvpRoom: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, black); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, black); err != nil {
 		t.Fatalf("JoinNewRoom black: %v", err)
 	}
-	if err := database.JoinNewRoom(room.ID, white); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, white); err != nil {
 		t.Fatalf("JoinNewRoom white: %v", err)
 	}
 
@@ -32,14 +32,14 @@ func setupPvpGame(t *testing.T) (black *database.Player, white *database.Player,
 	room.BlackPlayerID = black.ID
 	room.WhitePlayerID = white.ID
 	room.CurrentTurn = game.Black
-	room.Status = database.RoomStatusPlaying
+	room.Status = lobby.RoomStatusPlaying
 	room.Unlock()
 
 	return black, white, room
 }
 
 // sendMove enqueues a GameMoveRequest on the player's CmdCh.
-func sendMove(p *database.Player, row, col int32) {
+func sendMove(p *lobby.Player, row, col int32) {
 	p.CmdCh <- &protocol.Request{
 		Payload: &protocol.Request_GameMove{
 			GameMove: &protocol.GameMoveRequest{Row: row, Col: col},

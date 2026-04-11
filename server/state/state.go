@@ -7,7 +7,7 @@ import (
 	"errors"
 
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 )
 
@@ -18,7 +18,7 @@ var ErrClientExit = errors.New("client exit")
 // Next processes one iteration: reads from player.CmdCh, mutates state,
 // sends responses, and returns the next StateID (or ErrClientExit).
 type State interface {
-	Next(player *database.Player) (next consts.StateID, err error)
+	Next(player *lobby.Player) (next consts.StateID, err error)
 }
 
 var registry = map[consts.StateID]State{}
@@ -44,14 +44,14 @@ func init() {
 // unregistered state is encountered.
 //
 // On normal exit it removes the player from any room they occupy.
-func Run(player *database.Player) {
+func Run(player *lobby.Player) {
 	current := consts.StateWelcome
 	defer func() {
 		// Cleanup: remove from room if still in one.
 		if player.RoomID != 0 {
-			database.LeaveNewRoom(player)
+			lobby.LeaveNewRoom(player)
 		}
-		database.RemovePlayer(player.ID)
+		lobby.RemovePlayer(player.ID)
 		log.Infof("[state] player %d state machine exited\n", player.ID)
 	}()
 

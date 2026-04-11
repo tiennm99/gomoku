@@ -1,7 +1,7 @@
 package state
 
 import (
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/game"
 	"github.com/tiennm99/gomoku/server/protocol"
 )
@@ -9,14 +9,14 @@ import (
 // sendRoomSnapshot sends the current room state to a newly-joined spectator.
 // Order: WatchGameSuccessResponse → GameStartingResponse → one GameMoveSuccessResponse per history entry.
 // Uses Snapshot() to avoid holding a lock while calling player.Send.
-func sendRoomSnapshot(player *database.Player, room *database.NewRoom) {
+func sendRoomSnapshot(player *lobby.Player, room *lobby.NewRoom) {
 	snap := room.Snapshot()
 
 	status := protocol.RoomStatus_WAITING
 	switch room.Status { // read without lock: single int read, race-safe
-	case database.RoomStatusPlaying:
+	case lobby.RoomStatusPlaying:
 		status = protocol.RoomStatus_PLAYING
-	case database.RoomStatusFinished:
+	case lobby.RoomStatusFinished:
 		status = protocol.RoomStatus_FINISHED
 	}
 
@@ -62,7 +62,7 @@ func sendRoomSnapshot(player *database.Player, room *database.NewRoom) {
 
 // buildGameStartingResponse constructs a GameStartingResponse from room state.
 // Acquires RLock internally for safety.
-func buildGameStartingResponse(room *database.NewRoom) *protocol.Response {
+func buildGameStartingResponse(room *lobby.NewRoom) *protocol.Response {
 	room.RLock()
 	blackID := room.BlackPlayerID
 	whiteID := room.WhitePlayerID
@@ -87,7 +87,7 @@ func buildGameStartingResponse(room *database.NewRoom) *protocol.Response {
 }
 
 // resolveNickname maps a playerID to a nickname. Returns "AI" for -1 (PVE AI slot).
-func resolveNickname(room *database.NewRoom, playerID int64) string {
+func resolveNickname(room *lobby.NewRoom, playerID int64) string {
 	if playerID == -1 {
 		return "AI"
 	}
@@ -141,9 +141,9 @@ func buildGameOverResponse(result game.GameResult, winnerNickname string) *proto
 
 // broadcastResponse sends resp to all players and spectators in the room.
 // Acquires RLock internally; must NOT be called while holding room.Lock().
-func broadcastResponse(room *database.NewRoom, resp *protocol.Response) {
+func broadcastResponse(room *lobby.NewRoom, resp *protocol.Response) {
 	room.RLock()
-	targets := make([]*database.Player, 0, len(room.Players)+len(room.Spectators))
+	targets := make([]*lobby.Player, 0, len(room.Players)+len(room.Spectators))
 	for _, p := range room.Players {
 		targets = append(targets, p)
 	}
@@ -159,7 +159,7 @@ func broadcastResponse(room *database.NewRoom, resp *protocol.Response) {
 
 // playerPieceInRoom returns the game.Piece assigned to playerID in room.
 // Returns game.Empty if not assigned.
-func playerPieceInRoom(room *database.NewRoom, playerID int64) game.Piece {
+func playerPieceInRoom(room *lobby.NewRoom, playerID int64) game.Piece {
 	room.RLock()
 	black := room.BlackPlayerID
 	white := room.WhitePlayerID
@@ -175,7 +175,7 @@ func playerPieceInRoom(room *database.NewRoom, playerID int64) game.Piece {
 
 // winnerNicknameFor returns the display name of the winner given a GameResult.
 // Returns empty string for a draw.
-func winnerNicknameFor(room *database.NewRoom, result game.GameResult) string {
+func winnerNicknameFor(room *lobby.NewRoom, result game.GameResult) string {
 	room.RLock()
 	blackID := room.BlackPlayerID
 	whiteID := room.WhitePlayerID

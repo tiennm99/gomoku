@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/network"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 )
@@ -19,7 +19,7 @@ func main() {
 	flag.Parse()
 
 	// Start the idle-room reaper goroutine.
-	database.StartCleanup()
+	lobby.StartCleanup()
 
 	addr := fmt.Sprintf(":%d", port)
 	log.Infof("[main] gomoku server starting on ws://localhost%s/gomoku\n", addr)

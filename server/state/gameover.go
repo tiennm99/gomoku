@@ -4,7 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/game"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 	"github.com/tiennm99/gomoku/server/protocol"
@@ -16,8 +16,8 @@ import (
 // On ClientExit: removes from room and goes home.
 type gameOverState struct{}
 
-func (*gameOverState) Next(player *database.Player) (consts.StateID, error) {
-	room, ok := database.GetNewRoom(player.RoomID)
+func (*gameOverState) Next(player *lobby.Player) (consts.StateID, error) {
+	room, ok := lobby.GetNewRoom(player.RoomID)
 	if !ok {
 		// Room gone (e.g. opponent left and room was deleted) — go home.
 		return consts.StateHome, nil
@@ -45,14 +45,14 @@ func (*gameOverState) Next(player *database.Player) (consts.StateID, error) {
 }
 
 // handleGameReset resets the room and starts a fresh game.
-func handleGameReset(room *database.NewRoom) (consts.StateID, error) {
+func handleGameReset(room *lobby.NewRoom) (consts.StateID, error) {
 	seed := rand.Int63()
 	room.Lock()
 	room.Reset(seed)
-	room.Status = database.RoomStatusPlaying
+	room.Status = lobby.RoomStatusPlaying
 	room.CurrentTurn = game.Black
 	roomType := room.RoomType
-	if roomType == database.RoomTypePvp {
+	if roomType == lobby.RoomTypePvp {
 		// Fresh GameOverCh for the new game round so player goroutines can sync again.
 		room.GameOverCh = make(chan struct{})
 	}
@@ -62,7 +62,7 @@ func handleGameReset(room *database.NewRoom) (consts.StateID, error) {
 	resp := buildGameStartingResponse(room)
 	broadcastResponse(room, resp)
 
-	if roomType == database.RoomTypePve {
+	if roomType == lobby.RoomTypePve {
 		return consts.StateGamePve, nil
 	}
 	return consts.StateGamePvp, nil

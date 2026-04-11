@@ -7,7 +7,7 @@ package state
 
 import (
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 	"github.com/tiennm99/gomoku/server/protocol"
 )
@@ -21,17 +21,17 @@ import (
 //   - any other request    → log and stay (spectator cannot act).
 type watchingState struct{}
 
-func (*watchingState) Next(player *database.Player) (consts.StateID, error) {
+func (*watchingState) Next(player *lobby.Player) (consts.StateID, error) {
 	req, ok := <-player.CmdCh
 	if !ok {
 		// Connection closed or channel drained — clean up quietly.
-		database.UnwatchNewRoom(player)
+		lobby.UnwatchNewRoom(player)
 		return 0, ErrClientExit
 	}
 
 	switch req.Payload.(type) {
 	case *protocol.Request_WatchGameExit:
-		database.UnwatchNewRoom(player)
+		lobby.UnwatchNewRoom(player)
 		_ = player.Send(&protocol.Response{
 			Payload: &protocol.Response_ShowOptions{
 				ShowOptions: &protocol.ShowOptionsResponse{},
@@ -40,7 +40,7 @@ func (*watchingState) Next(player *database.Player) (consts.StateID, error) {
 		return consts.StateHome, nil
 
 	case *protocol.Request_ClientExit:
-		database.UnwatchNewRoom(player)
+		lobby.UnwatchNewRoom(player)
 		return 0, ErrClientExit
 
 	case *protocol.Request_GameMove:

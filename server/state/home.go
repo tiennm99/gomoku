@@ -2,7 +2,7 @@ package state
 
 import (
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 	"github.com/tiennm99/gomoku/server/game"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 	"github.com/tiennm99/gomoku/server/protocol"
@@ -12,7 +12,7 @@ import (
 // GetRooms / SetNickname / Heartbeat are stateless and never reach CmdCh.
 type homeState struct{}
 
-func (*homeState) Next(player *database.Player) (consts.StateID, error) {
+func (*homeState) Next(player *lobby.Player) (consts.StateID, error) {
 	req, ok := <-player.CmdCh
 	if !ok {
 		return 0, ErrClientExit
@@ -41,15 +41,15 @@ func (*homeState) Next(player *database.Player) (consts.StateID, error) {
 	}
 }
 
-func handleCreateRoom(player *database.Player) (consts.StateID, error) {
-	room, err := database.CreatePvpRoom(player)
+func handleCreateRoom(player *lobby.Player) (consts.StateID, error) {
+	room, err := lobby.CreatePvpRoom(player)
 	if err != nil {
 		log.Errorf("[home] CreatePvpRoom error player %d: %v\n", player.ID, err)
 		return consts.StateHome, nil
 	}
 
 	// Owner joins as a player immediately.
-	if err := database.JoinNewRoom(room.ID, player); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, player); err != nil {
 		log.Errorf("[home] JoinNewRoom error player %d room %d: %v\n", player.ID, room.ID, err)
 		return consts.StateHome, nil
 	}
@@ -67,7 +67,7 @@ func handleCreateRoom(player *database.Player) (consts.StateID, error) {
 	return consts.StateWaiting, nil
 }
 
-func handleCreatePveRoom(player *database.Player, req *protocol.Request) (consts.StateID, error) {
+func handleCreatePveRoom(player *lobby.Player, req *protocol.Request) (consts.StateID, error) {
 	difficulty := int(req.GetCreatePveRoom().GetDifficulty())
 	if difficulty < consts.DifficultyEasy || difficulty > consts.DifficultyHard {
 		_ = player.Send(&protocol.Response{
@@ -79,7 +79,7 @@ func handleCreatePveRoom(player *database.Player, req *protocol.Request) (consts
 	}
 
 	// CreatePveRoom already randomizes human color and creates the AI.
-	room, err := database.CreatePveRoom(player, difficulty)
+	room, err := lobby.CreatePveRoom(player, difficulty)
 	if err != nil {
 		log.Errorf("[home] CreatePveRoom error player %d: %v\n", player.ID, err)
 		_ = player.Send(&protocol.Response{
@@ -90,13 +90,13 @@ func handleCreatePveRoom(player *database.Player, req *protocol.Request) (consts
 		return consts.StateHome, nil
 	}
 
-	if err := database.JoinNewRoom(room.ID, player); err != nil {
+	if err := lobby.JoinNewRoom(room.ID, player); err != nil {
 		log.Errorf("[home] JoinNewRoom (PVE) error player %d room %d: %v\n", player.ID, room.ID, err)
 		return consts.StateHome, nil
 	}
 
 	room.Lock()
-	room.Status = database.RoomStatusPlaying
+	room.Status = lobby.RoomStatusPlaying
 	room.CurrentTurn = game.Black // Black always moves first per Gomoku rules.
 	room.Unlock()
 
@@ -107,15 +107,15 @@ func handleCreatePveRoom(player *database.Player, req *protocol.Request) (consts
 	return consts.StateGamePve, nil
 }
 
-func handleJoinRoom(player *database.Player, req *protocol.Request) (consts.StateID, error) {
+func handleJoinRoom(player *lobby.Player, req *protocol.Request) (consts.StateID, error) {
 	roomID := int64(req.GetJoinRoom().GetRoomId())
 
-	err := database.JoinNewRoom(roomID, player)
+	err := lobby.JoinNewRoom(roomID, player)
 	if err != nil {
 		switch err {
-		case database.ErrRoomFull, database.ErrRoomPlaying:
+		case lobby.ErrRoomFull, lobby.ErrRoomPlaying:
 			owner := ""
-			if r, ok := database.GetNewRoom(roomID); ok {
+			if r, ok := lobby.GetNewRoom(roomID); ok {
 				owner = r.OwnerNickname
 			}
 			_ = player.Send(&protocol.Response{
@@ -138,7 +138,7 @@ func handleJoinRoom(player *database.Player, req *protocol.Request) (consts.Stat
 		return consts.StateHome, nil
 	}
 
-	room, ok := database.GetNewRoom(roomID)
+	room, ok := lobby.GetNewRoom(roomID)
 	if !ok {
 		return consts.StateHome, nil
 	}
@@ -167,10 +167,10 @@ func handleJoinRoom(player *database.Player, req *protocol.Request) (consts.Stat
 	return consts.StateWaiting, nil
 }
 
-func handleWatchGame(player *database.Player, req *protocol.Request) (consts.StateID, error) {
+func handleWatchGame(player *lobby.Player, req *protocol.Request) (consts.StateID, error) {
 	roomID := int64(req.GetWatchGame().GetRoomId())
 
-	room, ok := database.GetNewRoom(roomID)
+	room, ok := lobby.GetNewRoom(roomID)
 	if !ok {
 		_ = player.Send(&protocol.Response{
 			Payload: &protocol.Response_RoomPlayFailNotFound{
@@ -180,7 +180,7 @@ func handleWatchGame(player *database.Player, req *protocol.Request) (consts.Sta
 		return consts.StateHome, nil
 	}
 
-	if err := database.WatchNewRoom(roomID, player); err != nil {
+	if err := lobby.WatchNewRoom(roomID, player); err != nil {
 		_ = player.Send(&protocol.Response{
 			Payload: &protocol.Response_RoomPlayFailNotFound{
 				RoomPlayFailNotFound: &protocol.RoomPlayFailNotFoundResponse{},

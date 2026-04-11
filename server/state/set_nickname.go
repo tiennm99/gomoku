@@ -2,7 +2,7 @@ package state
 
 import (
 	"github.com/tiennm99/gomoku/server/consts"
-	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/lobby"
 )
 
 // setNicknameState waits until the player's nickname has been confirmed, then
@@ -19,7 +19,7 @@ import (
 // or dropped (the client will retry from the home screen it already received).
 type setNicknameState struct{}
 
-func (*setNicknameState) Next(player *database.Player) (consts.StateID, error) {
+func (*setNicknameState) Next(player *lobby.Player) (consts.StateID, error) {
 	// If nickname already set by stateless handler, proceed immediately.
 	if player.Name != "" {
 		return consts.StateHome, nil
