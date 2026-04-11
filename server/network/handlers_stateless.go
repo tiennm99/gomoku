@@ -14,11 +14,10 @@ const (
 	nicknameMaxRunes = 32
 )
 
-// handleHeartbeat refreshes the player's last-seen timestamp.
-// Caro sends no response for heartbeats — we match that behavior.
-func handleHeartbeat(player *lobby.Player, _ *protocol.Request) {
-	// LastHeartbeat is updated by the reader loop on every frame.
-	// No response needed per caro spec.
+// handleHeartbeat is a no-op: the reader loop already refreshes
+// LastHeartbeat and the read deadline on every incoming frame.
+// No response is sent.
+func handleHeartbeat(_ *lobby.Player, _ *protocol.Request) {
 }
 
 // handleSetNickname validates and applies the requested nickname.

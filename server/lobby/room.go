@@ -33,13 +33,12 @@ type GameMove struct {
 	Timestamp time.Time
 }
 
-// Room is the new domain model for a game room.
-// It embeds game.Board directly and carries all fields from the caro Java domain:
-// blackPlayerId, whitePlayerId, currentTurn, moveHistory, watcherList, roomOwner,
-// type (PVP|PVE), difficultyCoefficient.
+// Room is the domain model for a game room. It embeds a game.Board and
+// carries color assignment, move history, spectator list, type (PVP|PVE),
+// PVE difficulty, and cross-goroutine sync channels.
 //
 // sync.RWMutex protects Board, Players, Spectators, MoveHistory, and Status.
-// Never hold the lock while calling player.WriteString/sendFn — copy fields first, then release.
+// Never hold the lock while sending to a player — copy fields first, then release.
 type Room struct {
 	sync.RWMutex
 

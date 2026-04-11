@@ -1,6 +1,6 @@
 package game
 
-// Threat-pattern weights (ported from caro's GomokuAI scoring).
+// Threat-pattern weights used by the Hard AI's minimax leaf evaluator.
 const (
 	scoreFive       = 10_000_000 // guaranteed win — dominate everything
 	scoreOpenFour   = 100_000

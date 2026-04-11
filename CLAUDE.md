@@ -1,117 +1,145 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with
+code in this repository.
 
 ## Project Overview
 
-Multiplayer Gomoku (Five-in-a-Row) platform. Go game server with WebSocket/TCP support, vanilla JS web client with HTML5 Canvas board, and a shared Go core library. Forked from [ratel-online](https://github.com/ratel-online) with card games removed — gomoku is the only game type.
+Multiplayer Gomoku (Five-in-a-Row). Go server + Phaser 3 browser client
+communicating over a typed protobuf WebSocket on `ws://host:1999/gomoku`.
+Server is authoritative for all move validation, win detection, and room
+lifecycle. No persistence — all state is in-memory.
 
 ## Architecture
 
 ```
-web/ (browser)  ──WS──►  server/ (:9998, serves static files + /ws endpoint)
-client/ (CLI)   ──TCP──►  server/ (:9999)
-                              │
-                              ├── state machine (per-player goroutine)
-                              │     welcome → home → join/create → waiting → game
-                              ├── in-memory database (hashmaps, no persistence)
-                              ├── gomoku engine (15x15 board, win detection)
-                              └── protocol abstraction (TCP + WebSocket)
-
-core/ (Go shared lib) ◄── imported by server and client
-api/ (Java/Spring Boot) ── standalone REST API (optional, not needed for play)
+browser (Phaser 3 + protobufjs)
+    │  WS binary frames
+    ▼
+ws://host:1999/gomoku  (Go server)
+    │
+    ├── state machine (one goroutine per player)
+    │     welcome → set_nickname → home → waiting → game_pvp/game_pve → game_over
+    │
+    ├── lobby store  (in-memory: players, rooms, spectators)
+    ├── game engine  (15×15 board, win detection, AI)
+    └── protocol     (protobuf stubs generated from common/proto/)
 ```
 
-**Key design patterns:**
-- **State machine per player** (`server/state/`): each state implements `Next(player) -> (nextStateID, error)`. States registered in `state.go` via `Register()`.
-- **Protocol abstraction** (`core/protocol/`): `ReadWriteCloser` interface wraps both TCP (4-byte length-prefixed binary) and WebSocket (JSON `{"data":"<base64>"}` packets).
-- **In-memory game store** (`server/database/`): volatile hashmaps for players, rooms, spectators. No persistence — restart loses all state.
-- **Channel-based game sync**: game turns communicated via `States[playerID] chan int`, not locks. Mutex protects board reads/writes.
-- **Server-authoritative**: all move validation and win detection server-side. Web client never modifies board locally.
+Key design patterns:
+- **State machine per player** (`server/state/`): each state implements
+  `Next(player) -> (nextStateID, error)`. Registered in `state.go`. Players
+  communicate across goroutines via channels on the `Room` struct
+  (`StartCh`, `GameOverCh`, `RematchCh`).
+- **Typed protobuf protocol** (`common/proto/{request,response}.proto`): single
+  source of truth for the wire format. Enums (`Piece`, `GameResult`, `RoomType`,
+  `RoomStatus`) replace stringly-typed fields for compile-time safety.
+- **In-memory lobby** (`server/lobby/`): rooms + players + spectators in
+  hashmaps. Restart clears everything.
+- **Server-authoritative moves**: client clicks send `GameMoveRequest`; the
+  browser never modifies its own board until the server broadcasts
+  `GameMoveSuccessResponse`.
+- **Auto-start PVP**: handleJoinRoom flips the room to Playing and broadcasts
+  `GameStartingResponse` as soon as the second player joins — no "Start Game"
+  click from the owner. See `server/state/waiting.go`.
 
 ## Build & Run
 
-### Server (Go)
+### Docker Compose (full stack)
+
 ```bash
-cd server
-go build -o gomoku-server main.go
-go run main.go -w 9998 -t 9999 -s ../web
-# Web UI at http://localhost:9998, WebSocket at ws://localhost:9998/ws
+docker compose up -d
+# browser at http://localhost:8080
+# WebSocket at ws://localhost:1999/gomoku
 ```
 
-Server flags: `-w` (WebSocket port, default 9998), `-t` (TCP port, default 9999), `-s` (static files dir, default `../web`), `-bot`, `-bot-token`, `-bot-group` (QQ bot).
+### Local dev
 
-### Client (Go CLI)
 ```bash
-cd client
-go run main.go -h 127.0.0.1 -p 9999    # TCP
-go run main.go -h 127.0.0.1 -p 9998    # WebSocket
-```
+# Terminal 1 — Go server
+go -C server run . -p 1999
 
-### Docker
-```bash
-cd server
-make build && make run      # dev: ports 9998 + 9999
-make logs                   # view logs
-make stop                   # stop
+# Terminal 2 — Vite dev server
+npm --prefix client install
+npm --prefix client run dev
+# open http://localhost:5173
 ```
 
 ### Tests
+
 ```bash
-cd server && go test ./...
-cd core && go test ./...
+go -C server vet ./...
+go -C server test ./...
+npm --prefix client run build    # client has no unit tests; build is the gate
 ```
 
-## Module Details
+### Regenerate protobuf stubs (after editing common/proto/)
 
-### server/
-- `main.go`: entry point, starts TCP + WS listeners concurrently
-- `consts/const.go`: state IDs (`StateWelcome` through `StateGomokuGame`), `GameTypeGomoku=1`, board size (15), timeouts, error constants
-- `state/state.go`: state machine runner — registers states, loops `Next()` calls per player
-- `state/welcome.go`, `home.go`, `join.go`, `create.go`: menu navigation states
-- `state/waiting.go`: room lobby — start game, kick players, set room props
-- `state/game/gomoku.go`: gomoku game loop — turn handling, move validation, win detection (4 directions), board broadcast
-- `database/model.go`: `Player`, `Room`, `RoomGame` interface — core domain types
-- `database/gomoku.go`: `Gomoku` struct — board state, player IDs, turn tracking, channel-based sync
-- `database/database.go`: in-memory store — room CRUD, player management, broadcast helpers
-- `network/network.go`: connection handler — auth, state machine bootstrap
-- `network/wss.go`: WebSocket server + static file serving
-- `network/tcp.go`: TCP server
-- `bot/bot.go`: QQ bot integration (optional)
+```bash
+make -C server proto              # Go stubs via protoc
+npm --prefix client run proto:gen # JS + .d.ts stubs via pbjs/pbts
+```
 
-### core/
-- `protocol/protocol.go`: `Packet` struct + `ReadWriteCloser` interface
-- `protocol/websocket.go`: WebSocket implementation (JSON `{"data":"<base64>"}`)
-- `protocol/tcp.go`: TCP implementation (4-byte length-prefixed binary)
-- `model/model.go`: shared types — `AuthInfo`, `Player`, `Room`
-- `network/`: `Conn` wrapper with auto-assigned IDs and handler loop
+## Layout
 
-### web/
-- `index.html`: HTML shell with panels (connect, home, create, waiting, game, log sidebar)
-- `js/ws-client.js`: WebSocket client — base64 encode/decode, auth, transaction markers
-- `js/state-machine.js`: detects server state from message patterns, routes UI panels
-- `js/board-renderer.js`: Canvas 15x15 board — gradient stones, click handling, hover ghost, game-over overlay
-- `js/game-controller.js`: bridges WS client + board renderer — handles turn/board/gameover messages
-- `js/app.js`: entry point — wires all modules, DOM event bindings
+```
+gomoku/
+├── common/proto/       request.proto + response.proto  (wire format)
+├── server/
+│   ├── main.go         entry; flags: -p <port>
+│   ├── consts/         StateID enum + difficulty constants
+│   ├── game/           pure game engine (Board, AI easy/medium/hard)
+│   ├── lobby/          in-memory Player + Room store
+│   ├── network/        WS upgrade, reader/writer, dispatch
+│   ├── protocol/       generated Go protobuf stubs
+│   ├── state/          per-player state machine
+│   └── pkg/log/        tiny logging wrapper
+├── client/src/
+│   ├── config/         game-config + protocol-constants
+│   ├── scenes/         Phaser scenes: boot, menu, game
+│   ├── services/       event-bus, connection-service, game-state-service
+│   ├── ui/             DOM overlay: menu-ui, menu-ui-rooms, game-ui
+│   ├── objects/        Phaser display objects: Board, Stone
+│   └── generated/      generated JS protobuf stubs
+├── docs/               deployment guide + system architecture
+└── docker-compose.yml  server :1999 + client :8080
+```
 
-### client/
-- `main.go`: CLI entry, connects via TCP or WS based on port
-- `ctx/`: connection context, auth flow, packet listener
-- `shell/`: wraps context, manages player session
+## Protocol notes
 
-### api/ (Java)
-- Spring Boot 2.3.1, MySQL + Redis + MyBatis (optional, not required for gameplay)
+- All frames are binary protobuf `Request` / `Response` messages. The oneof
+  case name in the proto IS the event code.
+- The client maps each decoded `Response` oneof case to a local event-bus
+  event in `client/src/services/connection-service.js`
+  (`RESPONSE_CASE_TO_CLIENT_CODE`).
+- **ClientExitResponse** is broadcast to every player in the room so peers can
+  see "X left". The client distinguishes self from peer via `exit_client_id`
+  in `client/src/services/client-exit-helpers.js` — only a self-exit
+  transitions the UI back to the lobby.
+- **Heartbeat**: client sends `HeartbeatRequest` every 50 s; server has a 90 s
+  read deadline, missed heartbeats close the WS.
+- **Enum serialization**: protobufjs `toJSON` converts proto enums to their
+  UPPERCASE string name (`BLACK`, `WHITE`, `BLACK_WIN`, …) at the `event-bus`
+  boundary. Client comparisons use those strings.
 
-## Networking Protocol
+## AI
 
-**Auth flow**: client sends `AuthInfo{id, name, score}` JSON within 3 seconds → server creates player → state machine starts.
+- `server/game/ai.go`, `ai_eval.go`, `ai_minimax.go`.
+- Easy: random legal move.
+- Medium: heuristic threat-score evaluator (immediate win > immediate block >
+  center-weighted).
+- Hard: minimax depth 3 with alpha-beta pruning and candidate pruning
+  (radius-2 Chebyshev neighbourhood of existing stones to keep branching
+  factor bounded).
 
-**Packet format**: TCP uses `[4-byte big-endian length][payload]`. WebSocket uses JSON `{"data":"<base64-encoded-payload>"}`.
+## When editing
 
-**Game messages** (server → client, JSON strings):
-- `{"type":"info","color":1}` — player color assignment (1=black, 2=white)
-- `{"type":"board","board":[[...]],"last":[r,c],"turn":1}` — full board state
-- `{"type":"turn","color":1}` — it's your turn
-- `{"type":"gameover","winner":"Name"}` or `{"type":"gameover","draw":true}`
-
-**Player input** (client → server): plain strings — `"1"` for join, `"2"` for new, `"7,7"` for moves.
+- **Proto changes**: regen both Go and JS stubs; run `go -C server build ./...`
+  and `npm --prefix client run build` before committing.
+- **State machine changes**: there are flow tests in `server/state/flow_test.go`
+  that drive end-to-end scenarios (create → leave → create, rematch, forfeit,
+  PVP→PVE transition, join auto-start). They're the regression gate for any
+  state transition change.
+- **Client scene lifecycle**: `GameScene._cleanup()` explicitly unregisters
+  both event-bus listeners and Phaser input listeners. Add any new subscription
+  to _cleanup() to keep scene restarts idempotent.

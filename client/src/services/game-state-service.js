@@ -110,7 +110,6 @@ class GameStateService {
     });
 
     eventBus.on(ClientEventCode.WATCH_GAME_SUCCESS, (data) => {
-      // Renamed from caro's GAME_WATCH_SUCCESSFUL to match proto oneof `watchGameSuccess`
       this.isSpectating = true;
       if (data && data.roomId != null) this.roomId = data.roomId;
     });

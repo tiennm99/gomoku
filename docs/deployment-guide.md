@@ -140,7 +140,7 @@ the server's `-p` flag. The WS URL is derived at runtime from
 `window.location.hostname` in the browser.
 
 Future: JWT auth allowlist, CORS origin restriction, Prometheus metrics
-endpoint (see phase-11 post-phase backlog in `plans/`).
+endpoint.
 
 ---
 

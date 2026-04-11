@@ -1,25 +1,22 @@
 # Gomoku (Five-in-a-Row)
 
 Multiplayer online Gomoku with PVP, PVE (3 AI difficulties), and spectator mode.
-Go server + Phaser 3 browser client communicating over protobuf WebSocket binary frames.
-
-Forked from [ratel-online](https://github.com/ratel-online) by [ainilili](https://github.com/ainilili) and contributors.
-Card games removed; gomoku rewritten with a caro-compatible protobuf protocol and Phaser 3 client
-(feature set ported from [tiennm99/caro](https://github.com/tiennm99/caro)).
+Go server + Phaser 3 browser client over a typed protobuf WebSocket.
 
 ---
 
 ## Features
 
-- **PVP** — two human players in a room
+- **PVP** — two human players in a room. Game auto-starts as soon as the
+  second player joins — no explicit "Start Game" click.
 - **PVE** — three AI difficulties:
   - Easy — random legal move
-  - Medium — heuristic threat scoring
+  - Medium — heuristic threat scoring (win > block > center-weighted)
   - Hard — minimax depth 3 with alpha-beta pruning
 - **Spectator mode** — watch any in-progress game in real time
-- **Owner-controlled start** — room owner starts when ready; other players can join before start
-- **Live lobby** — room list updates as rooms open / close
-- **Heartbeat / reconnect** — client pings every 5 s; missed pings close the connection cleanly
+- **Live lobby** — room list refreshes on demand
+- **Heartbeat / auto-reconnect** — client pings every 50 s; server closes idle
+  connections after 90 s; client reconnects with exponential back-off
 
 ---
 
@@ -70,9 +67,9 @@ Browser tab B ──► http://localhost:8080  (nginx / client:8080) │
                          │                                      │
               ┌──────────┴──────────┐                           │
               │  state machine      │  one goroutine per player │
-              │  per-player         │  lobby → waiting → game   │
+              │  per-player         │  home → waiting → game    │
               ├─────────────────────┤                           │
-              │  in-memory domain   │  rooms, players (no DB)   │
+              │  in-memory lobby    │  rooms, players (no DB)   │
               ├─────────────────────┤                           │
               │  game engine        │  15×15 board, win detect  │
               └─────────────────────┘                           │
@@ -82,11 +79,16 @@ Browser tab B ──► http://localhost:8080  (nginx / client:8080) │
 
 **Key design decisions:**
 
-- **Server-authoritative** — all move validation and win detection server-side; browser never modifies board locally
-- **Protobuf binary frames** over WebSocket (`gorilla/websocket`); `common/proto/` is the single source of truth
-- **State machine per player** — `lobby → waiting → game`; states registered in `server/state/`
-- **In-memory store** — rooms and players live in hashmaps; restart loses all state (intentional — games are short-lived)
-- **Channel-based turn sync** — game turns flow via `chan` per player, no polling
+- **Server-authoritative** — all move validation and win detection server-side;
+  browser never modifies board locally
+- **Protobuf binary frames** over WebSocket (`gorilla/websocket`); `common/proto/`
+  is the single source of truth, enums replace stringly-typed fields
+- **State machine per player** — `home → waiting → game → gameover`; states
+  registered in `server/state/`
+- **Auto-start PVP** — handleJoinRoom flips the room to Playing the instant a
+  second player joins; both goroutines transition via `room.StartCh`
+- **In-memory store** — rooms and players live in hashmaps; restart clears all
+  state (intentional — games are short-lived)
 
 ---
 
@@ -94,30 +96,31 @@ Browser tab B ──► http://localhost:8080  (nginx / client:8080) │
 
 ```
 gomoku/
-├── server/           Go game server (WebSocket :1999, WS endpoint /gomoku)
+├── server/              Go game server (:1999, endpoint /gomoku)
 │   ├── main.go
-│   ├── consts/       state IDs, game constants
-│   ├── database/     in-memory room + player store
-│   ├── game/         gomoku engine (board, win detection, AI)
-│   ├── network/      WebSocket server, connection handler
-│   ├── protocol/     protobuf encode/decode helpers
-│   ├── state/        state machine (lobby, waiting, game)
-│   ├── Dockerfile    multi-stage Go build → distroless runtime
-│   └── Makefile      build / test / docker targets
+│   ├── consts/          StateID enum, difficulty constants
+│   ├── game/            pure game engine: Board, win detection, AI
+│   ├── lobby/           in-memory Player + Room store
+│   ├── network/         WS upgrade, reader/writer, dispatch
+│   ├── protocol/        generated Go protobuf stubs
+│   ├── state/           per-player state machine
+│   ├── Dockerfile       multi-stage → distroless/static-debian12
+│   └── Makefile         build / test / docker / proto targets
 │
-├── client/           Phaser 3 browser client (Vite, served by nginx :8080)
+├── client/              Phaser 3 browser client (Vite, nginx :8080)
 │   ├── src/
-│   │   ├── scenes/       Phaser scenes (lobby, game, spectate)
-│   │   ├── services/     connection, room, game, AI services
-│   │   └── generated/    protobuf JS stubs (committed, no build-time protoc)
-│   ├── Dockerfile    Vite build → nginx:1.27-alpine
-│   └── nginx.conf    SPA fallback, gzip, aggressive asset caching
+│   │   ├── config/          game-config, protocol-constants
+│   │   ├── scenes/          boot, menu, game
+│   │   ├── services/        event-bus, connection-service, game-state-service
+│   │   ├── ui/              menu-ui, menu-ui-rooms, game-ui (DOM overlay)
+│   │   ├── objects/         Phaser Board, Stone
+│   │   └── generated/       committed protobuf JS stubs
+│   ├── Dockerfile       Vite build → nginx:1.27-alpine
+│   └── nginx.conf       SPA fallback, gzip, asset caching
 │
-├── common/
-│   └── proto/        request.proto / response.proto (shared by server + client)
-│
+├── common/proto/        request.proto / response.proto (shared wire format)
 ├── docker-compose.yml   two services: server :1999, client :8080
-└── docs/                architecture, deployment, code standards
+└── docs/                architecture + deployment guide
 ```
 
 ---
@@ -133,15 +136,21 @@ gomoku/
 
 ## Protocol
 
-- **Transport:** WebSocket binary frames (`ws://<host>:1999/gomoku`)
-- **Encoding:** protobuf (see `common/proto/request.proto`, `common/proto/response.proto`)
-- **Auth:** client sends `AuthRequest{name}` immediately after connect; server replies with `AuthResponse{playerId, color}`
-- **Heartbeat:** client → `HeartbeatRequest` every 5 s; server replies `HeartbeatResponse`; 3 missed → disconnect
-- **Auto-reconnect:** client retries with exponential back-off on connection loss
+- **Transport:** WebSocket binary frames at `ws://<host>:1999/gomoku`
+- **Encoding:** protobuf (see `common/proto/request.proto`,
+  `common/proto/response.proto`). The `oneof payload` case IS the event code.
+- **Nickname handshake:** on connect the server sends `ClientConnectResponse`
+  then `NicknameSetResponse{invalid_length: 0}` as a prompt. The client replies
+  with `SetNicknameRequest{nickname}`. On success the server sends
+  `NicknameSetResponse{invalid_length: 0}` + `ShowOptionsResponse` and the
+  client shows the lobby.
+- **Heartbeat:** client → `HeartbeatRequest` every 50 s. Server closes the WS
+  if no frame is received within 90 s. Client auto-reconnects on close with
+  exponential back-off (up to 10 attempts).
 
 ---
 
-## Deployment Notes
+## Deployment
 
 See [`docs/deployment-guide.md`](docs/deployment-guide.md) for:
 - Docker Compose quick start
@@ -152,15 +161,8 @@ See [`docs/deployment-guide.md`](docs/deployment-guide.md) for:
 
 ## Credits
 
-- [ratel-online](https://github.com/ratel-online) by [ainilili](https://github.com/ainilili) — original Go game server framework (MIT)
-- [tiennm99/caro](https://github.com/tiennm99/caro) — feature-set reference: protobuf protocol, AI engine, Phaser 3 client
-- [Phaser 3](https://phaser.io) — HTML5 game framework
-- [gorilla/websocket](https://github.com/gorilla/websocket) — WebSocket library
-- [protobuf](https://protobuf.dev) + [protobufjs](https://github.com/protobufjs/protobuf.js) — binary protocol
-
-Implementation history: [`plans/260411-1101-port-caro-feature-set/plan.md`](plans/260411-1101-port-caro-feature-set/plan.md)
-
----
+Based on [ratel-online](https://github.com/ratel-online) by
+[ainilili](https://github.com/ainilili) (MIT).
 
 ## License
 

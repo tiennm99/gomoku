@@ -2,137 +2,243 @@
 
 ## Overview
 
-Gomoku Online is a multiplayer game platform with a Go server, vanilla JS web client, and optional CLI client. The server manages all game state in memory and communicates with clients over WebSocket (web) and TCP (CLI).
+Multiplayer Gomoku with a Go server, Phaser 3 browser client, and a shared
+protobuf wire format. The server is authoritative for all moves, win detection,
+and room lifecycle. All state lives in memory — there is no database.
 
 ## Component Diagram
 
 ```
-+-------------------+     WebSocket (:9998)     +-------------------+
-|   Web Client      | ◄──────────────────────►  |   Game Server     |
-|   (browser)       |     /ws endpoint          |   (Go)            |
-|                   |                           |                   |
-|  ws-client.js     |     HTTP (:9998)          |  main.go          |
-|  state-machine.js | ◄────── static files ──── |  network/wss.go   |
-|  board-renderer.js|     / endpoint            |  network/tcp.go   |
-|  game-controller.js                           |  network/network.go
-|  app.js           |                           |                   |
-+-------------------+                           |  state/           |
-                                                |    state.go       |
-+-------------------+     TCP (:9999)           |    welcome.go     |
-|   CLI Client      | ◄──────────────────────►  |    home.go        |
-|   (Go terminal)   |     binary protocol       |    join.go        |
-+-------------------+                           |    create.go      |
-                                                |    waiting.go     |
-                                                |    game/gomoku.go |
-                                                |                   |
-                                                |  database/        |
-                                                |    model.go       |
-                                                |    database.go    |
-                                                |    gomoku.go      |
-                                                |                   |
-                                                |  consts/const.go  |
-                                                +-------------------+
+┌──────────────────────┐      WebSocket binary (:1999/gomoku)      ┌──────────────────────┐
+│  Browser client      │ ◄────────────────────────────────────────► │  Go game server      │
+│  (Phaser 3 + Vite)   │              protobuf frames               │                      │
+│                      │                                            │  main.go             │
+│  scenes/             │                                            │  network/            │
+│    boot-scene.js     │                                            │    server.go         │
+│    menu-scene.js     │                                            │    reader.go         │
+│    game-scene.js     │                                            │    writer.go         │
+│                      │                                            │    dispatch.go       │
+│  services/           │                                            │    handlers_stateless│
+│    event-bus.js      │                                            │                      │
+│    connection-service│                                            │  state/              │
+│    game-state-service│                                            │    welcome           │
+│    client-exit-helpers                                            │    set_nickname      │
+│                      │                                            │    home              │
+│  ui/                 │                                            │    waiting           │
+│    menu-ui.js        │                                            │    game_pvp          │
+│    menu-ui-rooms.js  │                                            │    game_pve          │
+│    game-ui.js        │                                            │    gameover          │
+│                      │                                            │    watching          │
+│  objects/            │                                            │                      │
+│    board.js          │                                            │  lobby/              │
+│    stone.js          │                                            │    store (rooms,     │
+│                      │                                            │     players)         │
+│  generated/          │                                            │    room, player      │
+│    protocol.js       │                                            │    cleanup           │
+│    protocol.d.ts     │                                            │                      │
+│                      │                                            │  game/               │
+│                      │                                            │    board             │
+│                      │                                            │    ai (easy/med/hard)│
+└──────────────────────┘                                            └──────────────────────┘
+                                          ▲                                     ▲
+                                          │                                     │
+                                          └──────── common/proto/ ─────────────┘
+                                                request.proto
+                                                response.proto
 ```
 
 ## State Machine
 
-Every connected player runs a per-goroutine state machine. States are registered in `state/state.go` and each implements the `State` interface:
+Every connected WebSocket spawns one state machine goroutine. Each state
+implements:
 
 ```go
 type State interface {
-    Next(player *database.Player) (consts.StateID, error)
-    Exit(player *database.Player) consts.StateID
+    Next(player *lobby.Player) (next consts.StateID, err error)
 }
 ```
+
+The runner (`state/state.go`) loops calling `s.Next(player)` until a state
+returns `ErrClientExit` or the player's `CmdCh` is closed.
 
 ### State Flow
 
 ```
-Welcome ──► Home ──► Join ──► Waiting ──► GomokuGame ──► Waiting
-                 └── Create ──► Waiting          (game ends)
-                                   │
-                                   └── Home (player exits room)
+            Welcome
+               │
+               ▼
+         SetNickname
+               │
+               ▼
+              Home ◄──────────────────────────────────────┐
+               │                                          │
+      ┌────────┼────────────┐                             │
+      │        │            │                             │
+      ▼        ▼            ▼                             │
+   Waiting   GamePve    Watching                          │
+      │        │            │                             │
+      │        │            └── exit/watch_exit ──────────┤
+      │        │                                          │
+      │        └── game-over ──┐                          │
+      │                        ▼                          │
+      │                     GameOver                      │
+      │                        │                          │
+      │                        └── exit/reset ────────────┤
+      │                                                   │
+      └── auto-start (2nd player joins) ──► GamePvp ──────┤
+                                               │          │
+                                               └── end ──► GameOver ─┐
+                                                                     │
+                                                                     └─►
 ```
 
-| State | ID | Description |
-|-------|-----|-------------|
-| Welcome | 1 | Sends greeting, auto-transitions to Home |
-| Home | 2 | Menu: "1.Join" or "2.New" |
-| Join | 3 | Lists rooms, player picks one by ID |
-| Create | 4 | Lists game types, creates room, auto-joins |
-| Waiting | 5 | Room lobby: owner starts game, players chat/wait |
-| GomokuGame | 6 | Active gomoku game loop |
+### State Registry
+
+| State | Purpose |
+|-------|---------|
+| `Welcome` | One-shot entry; server already sent `ClientConnectResponse` + nickname prompt, transition immediately to `SetNickname`. |
+| `SetNickname` | Wait for `SetNicknameRequest` (handled statelessly in parallel); polls `player.Name` to advance. |
+| `Home` | Main lobby. Accepts `CreateRoomRequest`, `CreatePveRoomRequest`, `JoinRoomRequest`, `WatchGameRequest`, `ClientExitRequest`. |
+| `Waiting` | PVP pre-game. Single unified loop for both owner and joiner. Blocks on `room.StartCh` (auto-start) or `CmdCh` (client exit). |
+| `GamePvp` | Active PVP game. Two goroutines share the room; synchronize via `room.GameOverCh`. |
+| `GamePve` | Active PVE game. Single goroutine; AI moves run inline when it's the AI's turn. |
+| `GameOver` | Post-game. Accepts `GameResetRequest` (rematch, synchronizes via `room.RematchCh`) or `ClientExitRequest`. |
+| `Watching` | Spectator view. Accepts `WatchGameExitRequest` or `ClientExitRequest`; `GameMoveRequest` is rejected with `SpectatorCannotActResponse`. |
+
+### Cross-goroutine room synchronization
+
+Three channels on the `Room` struct let independent player goroutines wake each
+other without polling:
+
+- **`StartCh`** — closed by `handleJoinRoom` when the 2nd player joins. Wakes
+  the owner's `waitingState` for PVP auto-start.
+- **`GameOverCh`** — closed when one player's `gamePvpState` detects a win or
+  a forfeit. Wakes the peer's `gamePvpState` so both transition to `gameOverState`.
+- **`RematchCh`** — lazily created by the first goroutine entering
+  `gameOverState`; closed by `handleGameReset` on Play Again so the peer also
+  transitions into the fresh game.
+
+`gameOverState`'s ClientExit path additionally calls `kickStaleRoomPeers`,
+which pushes a synthetic `ClientExitRequest` onto remaining peers' `CmdCh`
+if the room becomes unplayable (PVP with <2 humans). This prevents a
+desynced peer from sitting in `gameOverState` while its client has
+transitioned to the lobby.
 
 ## Networking Protocol
 
-### Wire Formats
+### Wire format
 
-**WebSocket** (`/ws` on port 9998):
-- JSON packets: `{"data":"<base64-encoded-payload>"}`
-- Go's `[]byte` serializes as base64 in JSON, so the web client must `btoa()`/`atob()`
+- Transport: WebSocket at `ws://<host>:1999/gomoku`
+- Payload: binary protobuf `Request` / `Response` messages
+- Encoding: `proto.Marshal` / `proto.Unmarshal` on the server
+  (`server/network/codec.go`); protobufjs on the client
+  (`client/src/services/connection-service.js`)
+- Max frame: 4 KB (server read limit)
 
-**TCP** (port 9999):
-- Binary: `[4-byte big-endian length][payload bytes]`
-- Same logical `Packet{Body}` struct, different encoding
+### Request / Response routing
 
-### Auth Flow
+Each wrapper uses a `oneof payload` — the case name IS the event code.
 
-1. Client connects (WS or TCP)
-2. Server waits up to 3 seconds for an `AuthInfo` JSON packet
-3. `AuthInfo` fields: `id` (0 for web clients, server assigns real ID), `name`, `score`
-4. Server creates a `Player`, starts the state machine goroutine
-5. Connection enters the read loop (`Player.Listening()`)
+- `network/dispatch.go` routes incoming `Request` by type:
+  - **stateless** (inline on reader goroutine): `Heartbeat`, `SetNickname`,
+    `GetRooms`, `SetClientInfo`
+  - **stateful** (pushed onto `player.CmdCh` for state machine to consume):
+    `CreateRoom`, `CreatePveRoom`, `JoinRoom`, `GameMove`, `GameReset`,
+    `WatchGame`, `WatchGameExit`, `ClientExit`
+- Client `_onMessage` decodes the binary frame, reads
+  `Response.payload` (pbjs oneof tag), maps the case name to a
+  `ClientEventCode` string via `RESPONSE_CASE_TO_CLIENT_CODE`, and emits on
+  the event bus. Scenes subscribe to those event codes.
 
-### Transaction Markers
+### Typed enums
 
-The server uses `INTERACTIVE_SIGNAL_START` and `INTERACTIVE_SIGNAL_STOP` to tell the client when input is expected. The web client enables/disables interactivity based on these signals.
+`common/proto/response.proto` defines:
 
-### Gomoku Game Messages
+- `Piece { BLACK, WHITE }`
+- `GameResult { BLACK_WIN, WHITE_WIN, DRAW }`
+- `RoomType { PVP, PVE }`
+- `RoomStatus { WAITING, PLAYING, FINISHED }`
 
-Server sends JSON strings (not wrapped in the usual `Packet` format — they're the `Body` content):
+These replace previously stringly-typed fields. protobufjs `toJSON` serializes
+enums to their UPPERCASE name, so the client's existing string comparisons
+(e.g. `data.piece === 'BLACK'`) continue to work without numeric handling.
 
-| Message | Direction | Description |
-|---------|-----------|-------------|
-| `{"type":"info","color":1}` | server→client | Your color assignment (1=black, 2=white) |
-| `{"type":"board","board":[[...]],"last":[r,c],"turn":1}` | server→client | Full 15x15 board state after each move |
-| `{"type":"turn","color":1}` | server→client | It's your turn to play |
-| `{"type":"gameover","winner":"Name"}` | server→client | Game ended with a winner |
-| `{"type":"gameover","draw":true}` | server→client | Game ended in a draw |
-| `"7,7"` | client→server | Place stone at row 7, column 7 |
+### Heartbeat + reconnect
 
-## In-Memory Database
+- Client sends `HeartbeatRequest` every 50 s.
+- Server read deadline: 90 s — any frame (heartbeat or otherwise) resets it.
+- On unexpected WS close, client auto-reconnects with exponential back-off
+  (1 s → 30 s cap, max 10 attempts). Reconnect creates a fresh server session;
+  the client re-sends its nickname from the cached `gameState.nickname`.
 
-All state lives in concurrent hashmaps (no persistence):
+### ClientExit semantics
+
+`ClientExitResponse` is broadcast to every player in the room so peers see
+who left. The client distinguishes self vs peer via `exit_client_id`:
+
+- `exit_client_id == 0` → bare self-ack (home / watching / room-closed)
+- `exit_client_id == clientId` → our own broadcast loopback (self)
+- Anything else → a peer left; stay in the current scene and show a toast
+
+This gating lives in `client/src/services/client-exit-helpers.js`.
+
+## In-memory Lobby
+
+All state in `server/lobby/`:
 
 | Store | Key | Value | Purpose |
 |-------|-----|-------|---------|
-| `players` | player ID | `*Player` | All players ever connected |
-| `connPlayers` | player ID | `*Player` | Currently connected players |
-| `rooms` | room ID | `*Room` | Active game rooms |
-| `roomPlayers` | room ID | `map[playerID]bool` | Players in each room |
-| `roomSpectators` | room ID | `map[playerID]int` | Spectators (with join order) |
+| `store.players` | player ID | `*Player` | All connected players |
+| `store.rooms`   | room ID   | `*Room`   | Active game rooms |
 
-Rooms are auto-cleaned after 24 hours of inactivity or when all players disconnect.
+Each `Room` holds its own `Players` map, `Spectators` map, embedded
+`game.Board`, `MoveHistory`, and the three sync channels.
 
-## Gomoku Game Engine
+### Room lifecycle
 
-- **Board**: 15x15 integer array (0=empty, 1=black, 2=white)
-- **Turn sync**: channel-based — `States[playerID] chan int` with buffer size 2
-- **Move validation**: bounds check, cell empty, correct turn (all server-side)
-- **Win detection**: checks 4 directions (horizontal, vertical, 2 diagonals) from last placed stone, counting consecutive same-color stones in both directions
-- **Draw**: board full (225 moves) with no winner
-- **Concurrency**: `sync.Mutex` on the `Gomoku` struct protects board reads/writes
+- Created by `CreatePvpRoom` / `CreatePveRoom` (from `state/home.go`)
+- Players added via `JoinRoom`, removed via `LeaveRoom`
+- On every `LeaveRoom`, if the room becomes empty (no players, no spectators)
+  it is deleted immediately from `store.rooms`
+- `cleanup.go` runs an idle reaper every minute and deletes rooms that have
+  been empty for > 5 minutes (safety net; normal path is immediate delete)
 
-## Web Client Architecture
+## Game Engine
 
-Vanilla JavaScript, no framework, no build step. Five modules loaded via `<script>` tags:
+`server/game/` is pure — no network, no state machine dependencies.
+
+- `board.go` — 15×15 `Board` value type, `Piece` + `GameResult` enums,
+  `MakeMove`, `Clone`, `Reset`, win detection (4 directions from last move)
+- `helper.go` — stateless utilities: `ValidMoves`, `FormatBoard`,
+  `WinnerMessage`
+- `ai.go` / `ai_eval.go` / `ai_minimax.go` — three difficulties:
+  - **Easy** — random legal move
+  - **Medium** — heuristic: immediate win > immediate block > nearest
+    center-weighted
+  - **Hard** — minimax depth 3 + alpha-beta pruning, leaf evaluation via
+    threat-pattern scoring, candidate pruning (radius-2 Chebyshev neighbourhood
+    of existing stones). Typical mid-game move < 1 ms.
+
+## Client Architecture
+
+Phaser 3 scenes + DOM overlay (menus/HUD as plain DOM on top of the canvas
+inside `#ui-overlay`).
 
 | Module | Responsibility |
 |--------|---------------|
-| `ws-client.js` | WebSocket connection, base64 encode/decode, auth, transaction markers |
-| `state-machine.js` | Detects server state from message text patterns, shows/hides UI panels |
-| `board-renderer.js` | Canvas 15x15 board, gradient stones, click-to-place, hover ghost, game-over overlay |
-| `game-controller.js` | Bridges WS client and board renderer — routes game JSON messages |
-| `app.js` | Entry point — wires modules, binds DOM events |
+| `scenes/boot-scene.js` | Opens WS connection, transitions to MenuScene |
+| `scenes/menu-scene.js` | Nickname entry, lobby, PVP/PVE submenus, waiting room, room list |
+| `scenes/game-scene.js` | Phaser board + stones + hover ghost; click → `sendGameMove`; subscribes to move/win events |
+| `services/event-bus.js` | Tiny pub/sub singleton |
+| `services/connection-service.js` | WS lifecycle, heartbeat, reconnect, typed `send*` helpers, `Response` decode → event-bus emit |
+| `services/game-state-service.js` | Client state container: `clientId`, `nickname`, `roomId`, `isBlack`, `currentTurn`, `moves[]` |
+| `services/client-exit-helpers.js` | `isSelfExit(data, clientId)` — central self-vs-peer check |
+| `ui/menu-ui.js` | Nickname screen, lobby, PVP/PVE submenus |
+| `ui/menu-ui-rooms.js` | Room list, PVE difficulty dialog, waiting room |
+| `ui/game-ui.js` | HUD (player panels, move history), game-over modal, toast notifications |
+| `objects/board.js` | Phaser `Graphics` board: wood background, grid, star points, coord labels |
+| `objects/stone.js` | Phaser `Graphics` stone with drop-in tween, last-move marker |
 
-The web client is fully server-authoritative: clicking the board sends `"row,col"` to the server and waits for the server's board broadcast before rendering.
+The browser client is fully server-authoritative: clicking the board sends a
+`GameMoveRequest` and waits for the server's `GameMoveSuccessResponse`
+broadcast before rendering the stone.

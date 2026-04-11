@@ -85,8 +85,8 @@ func (a *AI) strategicMove(b *Board) (int, int) {
 	return br, bc
 }
 
-// positionScore mirrors caro's evaluatePosition(board, row, col):
-// prefer center positions and cells near existing pieces.
+// positionScore is a cheap tie-breaker for the Medium heuristic: prefer
+// center positions and cells near existing pieces.
 func (a *AI) positionScore(b *Board, r, c int) int {
 	score := 0
 	centerDist := abs(r-BoardSize/2) + abs(c-BoardSize/2)
