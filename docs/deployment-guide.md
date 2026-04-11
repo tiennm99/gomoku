@@ -4,162 +4,170 @@
 
 | Requirement | Version | Purpose |
 |-------------|---------|---------|
-| Go | 1.22+ | Build server and CLI client |
-| Docker | 20+ | Containerized deployment |
-| Docker Compose | v2+ | Orchestration |
-| Modern browser | Chrome/Firefox/Edge | Web client |
+| Go | 1.23+ | Build server |
+| Node | 22+ | Build browser client |
+| Docker + Compose | 20+ / v2+ | Containerized deployment |
 
-## Local Development
+---
 
-### 1. Build and Run Server
+## Docker Compose (recommended)
 
-```bash
-cd server
-go build -o gomoku-server main.go
-./gomoku-server -w 9998 -t 9999 -s ../web
-```
-
-This starts:
-- **Port 9998**: WebSocket server + web client UI at `http://localhost:9998`
-- **Port 9999**: TCP server for CLI clients
-
-### 2. Open Web Client
-
-Open `http://localhost:9998` in two browser tabs. Enter names, connect, create a room, join it, and start playing.
-
-### 3. CLI Client (optional)
+Run the full stack — Go server on `:1999` and nginx client on `:8080`:
 
 ```bash
-cd client
-go run main.go -h 127.0.0.1 -p 9999
-```
-
-### Server Flags
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-w` | `9998` | WebSocket port (serves web UI + `/ws` endpoint) |
-| `-t` | `9999` | TCP port (CLI client) |
-| `-s` | `../web` | Static files directory for web client |
-| `-bot` | *(empty)* | QQ bot address (optional) |
-| `-bot-token` | *(empty)* | QQ bot token |
-| `-bot-group` | `0` | QQ group ID for notifications |
-
-## Docker Deployment
-
-### Development
-
-```bash
-cd server
-make build    # builds Docker image from repo root context
-make run      # starts container, maps ports 9998 + 9999
-make logs     # tail container logs
-make stop     # stop container
-make clean    # remove container and image
-```
-
-### Manual Docker Compose
-
-```bash
-cd server
 docker compose up -d
 ```
 
-The `docker-compose.yaml` sets build context to the repo root (`..`) so the Dockerfile can access both `server/` and `web/`.
+Open http://localhost:8080 in two browser tabs to play.
 
-### Standalone Docker Build
-
-From the **repo root**:
+Stop and remove containers:
 
 ```bash
-docker build -t gomoku-server:latest -f server/Dockerfile .
-docker run -d -p 9998:9998 -p 9999:9999 --name gomoku gomoku-server:latest
+docker compose down
 ```
 
-## Production Deployment
+Rebuild images after code changes:
 
-### Reverse Proxy (nginx)
+```bash
+docker compose up -d --build
+```
 
-The server handles both HTTP (static files) and WebSocket (`/ws`) on the same port. Your reverse proxy must support WebSocket upgrade:
+---
 
-```nginx
-server {
-    listen 80;
-    server_name gomoku.example.com;
+## Local Development
 
-    location / {
-        proxy_pass http://gomoku-server:9998;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
+```bash
+# Terminal 1 — Go server on :1999
+go -C server run . -p 1999
+
+# Terminal 2 — Vite dev server on :5173
+npm --prefix client install
+npm --prefix client run dev
+```
+
+Open http://localhost:5173. The client derives the WebSocket URL from
+`window.location.hostname`, so it connects to `ws://localhost:1999/gomoku`
+automatically in both dev and production.
+
+---
+
+## Building Individual Images
+
+```bash
+# Server (Go multi-stage → distroless/static-debian12, < 20 MB)
+docker build -t gomoku-server:local ./server
+
+# Client (node:22-alpine build → nginx:1.27-alpine runtime)
+docker build -t gomoku-client:local ./client
+```
+
+---
+
+## Server Makefile Targets
+
+From `server/`:
+
+```bash
+make build        # compile Go binary
+make test         # go test ./...
+make lint         # go vet ./...
+make docker-build # build gomoku-server:local image
+make docker-run   # run server container on :1999
+make docker-stop  # stop + remove server container
+make docker-logs  # tail server container logs
+make smoke        # vet + test + binary build gate
+make proto        # regenerate protobuf stubs
+```
+
+---
+
+## Reverse Proxy / TLS
+
+The server exposes only a WebSocket endpoint at `ws://<host>:1999/gomoku`.
+The client is served by nginx at `:8080`.
+
+In production, front both with a reverse proxy that handles TLS termination
+(Caddy or Traefik are simplest):
+
+**Caddy example (`Caddyfile`):**
+
+```
+gomoku.example.com {
+    handle /gomoku* {
+        reverse_proxy localhost:1999
+    }
+    handle {
+        reverse_proxy localhost:8080
     }
 }
 ```
 
-### HTTPS / TLS
+**nginx example:**
 
-Add TLS termination at the reverse proxy layer. The Go server itself does not handle TLS. Clients will connect via `wss://` automatically when the page is served over HTTPS.
+```nginx
+server {
+    listen 443 ssl;
+    server_name gomoku.example.com;
 
-### Resource Requirements
+    # Static client
+    location / {
+        proxy_pass http://localhost:8080;
+    }
 
-The server is lightweight — all state is in-memory:
+    # WebSocket endpoint — must be on the Go server port
+    location /gomoku {
+        proxy_pass http://localhost:1999;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+}
+```
+
+Note: if you front both services behind the same hostname, the client will
+derive `wss://<hostname>/gomoku` automatically (because it uses
+`window.location.hostname` + the hardcoded `:1999` port). For split-port
+production setups, the WS URL derivation in
+`client/src/services/connection-service.js` must be updated to use port 443.
+
+---
+
+## Environment Variables
+
+Currently none — the server and client have no runtime configuration beyond
+the server's `-p` flag. The WS URL is derived at runtime from
+`window.location.hostname` in the browser.
+
+Future: JWT auth allowlist, CORS origin restriction, Prometheus metrics
+endpoint (see phase-11 post-phase backlog in `plans/`).
+
+---
+
+## Resource Requirements
 
 | Metric | Estimate |
 |--------|----------|
-| Memory | ~50MB base + ~1KB per active player |
-| CPU | Minimal — one goroutine per player |
-| Disk | None (no persistence) |
-| Network | ~1KB per move (JSON board broadcast) |
+| Server memory | ~20 MB base + ~2 KB per active player |
+| Server CPU | Minimal — one goroutine per player, no polling |
+| Client image | nginx:1.27-alpine + ~1.6 MB JS bundle |
+| Server image | < 20 MB (distroless static) |
+| Persistence | None — in-memory only, restart clears all rooms |
 
-### Container Limits (docker-compose defaults)
+---
 
-- CPU: 2 cores max, 0.5 reserved
-- Memory: 512MB max, 128MB reserved
-- Log rotation: 10MB per file, 3 files max
+## Manual Smoke Check
 
-### Health Checks
-
-The Docker container includes a health check that tests TCP connectivity to port 9998. For external monitoring:
+After `docker compose up -d`:
 
 ```bash
-# WebSocket port
-curl -s -o /dev/null -w "%{http_code}" http://localhost:9998
-# Should return 200 (serves index.html)
+# nginx client should return 200
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/
 
-# TCP port
-nc -z localhost 9999
+# WebSocket server should return 400 or 426 (upgrade required — healthy)
+curl -s -o /dev/null -w "%{http_code}" http://localhost:1999/gomoku
 ```
 
-## Cross-Compilation
-
-Build server binaries for multiple platforms:
-
-```bash
-cd server
-
-# Linux/macOS
-bash build.sh        # outputs to target/
-
-# Windows
-powershell ./build.ps1  # outputs to target/
-```
-
-## Important Notes
-
-### No Persistence
-
-All game state (rooms, players, active games) is stored in memory. A server restart clears everything. This is by design — gomoku games are short-lived sessions, not long-running persistent state.
-
-### No Authentication Required
-
-The web client sends `id: 0` during auth — the server assigns a real ID from its connection counter. No database, no passwords, no sessions. The optional Java `api/` module provides user auth via MySQL if needed, but it is not required for gameplay.
-
-### Single-Process Architecture
-
-The server runs as a single Go process. There is no clustering or horizontal scaling — a single instance handles all connections. For most use cases (dozens of concurrent games), this is sufficient.
-
-### WebSocket Path
-
-The WebSocket endpoint is always at `/ws`. The static file server handles all other paths. Do not configure your reverse proxy to intercept `/ws` — it must pass through to the Go server.
+Then open http://localhost:8080 in two browser tabs, create a room in one tab,
+join from the other, start the game, and make a few moves to confirm end-to-end
+WebSocket communication.
