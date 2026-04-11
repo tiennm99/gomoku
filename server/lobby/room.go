@@ -80,6 +80,12 @@ type Room struct {
 	// Created in CreatePvpRoom; nil for PVE rooms (single player, no concurrent goroutine).
 	GameOverCh chan struct{}
 
+	// RematchCh is closed by whichever player's gameoverState accepts a GameReset
+	// request first, signalling the other player's gameoverState to follow into
+	// the fresh game. Lazily created by the first goroutine entering gameoverState.
+	// Only used for PVP rooms; PVE has a single goroutine so no cross-sync needed.
+	RematchCh chan struct{}
+
 	CreatedAt  time.Time
 	LastActive time.Time
 }
