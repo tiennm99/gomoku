@@ -1,47 +1,45 @@
 package network
 
 import (
-    "github.com/gorilla/websocket"
-    "github.com/ratel-online/core/log"
-    "github.com/ratel-online/core/protocol"
-    "net/http"
+	"net/http"
+
+	"github.com/gorilla/websocket"
+	"github.com/tiennm99/gomoku/server/pkg/log"
+	"github.com/tiennm99/gomoku/server/pkg/protocol"
 )
 
+// Websocket is a WebSocket-only HTTP server bound to a single /gomoku endpoint.
 type Websocket struct {
-    addr      string
-    StaticDir string
+	addr string
 }
 
 var upgrader = websocket.Upgrader{
-    ReadBufferSize:  1024,
-    WriteBufferSize: 1024,
-    CheckOrigin: func(r *http.Request) bool {
-        return true
-    },
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
-func NewWebsocketServer(addr string, staticDir string) Websocket {
-    return Websocket{addr: addr, StaticDir: staticDir}
+// NewWebsocketServer creates a Websocket server listening on addr (e.g. ":1999").
+func NewWebsocketServer(addr string) Websocket {
+	return Websocket{addr: addr}
 }
 
 func (w Websocket) Serve() error {
-    http.HandleFunc("/ws", serveWs)
-    if w.StaticDir != "" {
-        http.Handle("/", http.FileServer(http.Dir(w.StaticDir)))
-        log.Infof("Serving static files from %s\n", w.StaticDir)
-    }
-    log.Infof("Websocket server listener on %s\n", w.addr)
-    return http.ListenAndServe(w.addr, nil)
+	http.HandleFunc("/gomoku", serveWs)
+	log.Infof("WebSocket server listening on %s/gomoku\n", w.addr)
+	return http.ListenAndServe(w.addr, nil)
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
-    conn, err := upgrader.Upgrade(w, r, nil)
-    if err != nil {
-        log.Error(err)
-        return
-    }
-    err = handle(protocol.NewWebsocketReadWriteCloser(conn))
-    if err != nil{
-        log.Error(err)
-    }
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	err = handle(protocol.NewWebsocketReadWriteCloser(conn))
+	if err != nil {
+		log.Error(err)
+	}
 }

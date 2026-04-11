@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/awesome-cap/hashmap"
-	"github.com/ratel-online/core/log"
-	modelx "github.com/ratel-online/core/model"
-	"github.com/ratel-online/core/network"
-	"github.com/ratel-online/core/util/async"
-	"github.com/ratel-online/core/util/json"
-	"github.com/ratel-online/core/util/strings"
-	"github.com/ratel-online/server/consts"
+	"github.com/tiennm99/gomoku/server/pkg/log"
+	modelx "github.com/tiennm99/gomoku/server/pkg/model"
+	"github.com/tiennm99/gomoku/server/pkg/network"
+	"github.com/tiennm99/gomoku/server/pkg/async"
+	"github.com/tiennm99/gomoku/server/pkg/json"
+	"github.com/tiennm99/gomoku/server/pkg/strings"
+	"github.com/tiennm99/gomoku/server/consts"
 )
 
 // In-memory data store. All state is volatile — server restart clears everything.

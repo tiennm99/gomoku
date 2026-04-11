@@ -3,7 +3,7 @@ package database
 import (
 	"sync"
 
-	"github.com/ratel-online/server/consts"
+	"github.com/tiennm99/gomoku/server/consts"
 )
 
 // Gomoku stores the state of a gomoku (five-in-a-row) game.

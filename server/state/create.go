@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ratel-online/server/consts"
-	"github.com/ratel-online/server/database"
+	"github.com/tiennm99/gomoku/server/consts"
+	"github.com/tiennm99/gomoku/server/database"
 )
 
 // create handles room creation. Prompts for game type, creates the room, and

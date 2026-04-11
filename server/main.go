@@ -2,54 +2,20 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"strconv"
 
-	"github.com/ratel-online/core/log"
-	"github.com/ratel-online/core/util/async"
-	"github.com/ratel-online/server/bot"
-	"github.com/ratel-online/server/network"
+	"github.com/tiennm99/gomoku/server/network"
+	"github.com/tiennm99/gomoku/server/pkg/log"
 )
 
-var (
-	Wsport    int
-	Tcpport   int
-	StaticDir string
-	BotAddr   string
-	BotToken  string
-	BotGroup  int64
-)
+var port int
 
 func main() {
-	flag.IntVar(&Wsport, "w", 9998, "WebsocketServer Port")
-	flag.IntVar(&Tcpport, "t", 9999, "TcpServer Port")
-	flag.StringVar(&StaticDir, "s", "../web", "Static files directory")
-	flag.StringVar(&BotAddr, "bot", "", "Bot connection address")
-	flag.StringVar(&BotToken, "bot-token", "", "Bot token")
-	flag.Int64Var(&BotGroup, "bot-group", 0, "Bot group ID")
-
+	flag.IntVar(&port, "p", 1999, "WebSocket server port")
 	flag.Parse()
-	// Connect QQ bot if configured
-	if BotAddr != "" && BotToken != "" && BotGroup != 0 {
-		err := bot.Connect(BotAddr, BotToken, BotGroup)
-		if err != nil {
-			log.Panic(fmt.Sprintf("连接Bot失败: %v", err))
-		}
-		// Send test message to the bot group
-		err = bot.SendGroupMessage(BotGroup, "Server started!")
-		if err != nil {
-			log.Errorf("发送群消息失败: %v", err)
-		} else {
-			log.Infof("已发送群消息到 %d", BotGroup)
-		}
-		defer bot.Close()
-	}
 
-	async.Async(func() {
-		wsServer := network.NewWebsocketServer(":" + strconv.Itoa(Wsport), StaticDir)
-		log.Panic(wsServer.Serve())
-	})
-
-	server := network.NewTcpServer(":" + strconv.Itoa(Tcpport))
-	log.Panic(server.Serve())
+	addr := ":" + strconv.Itoa(port)
+	log.Infof("Starting gomoku server on %s/gomoku\n", addr)
+	wsServer := network.NewWebsocketServer(addr)
+	log.Panic(wsServer.Serve())
 }

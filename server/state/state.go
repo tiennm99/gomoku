@@ -3,11 +3,11 @@ package state
 import (
 	"strings"
 
-	"github.com/ratel-online/core/log"
-	"github.com/ratel-online/core/util/async"
-	"github.com/ratel-online/server/consts"
-	"github.com/ratel-online/server/database"
-	"github.com/ratel-online/server/state/game"
+	"github.com/tiennm99/gomoku/server/pkg/log"
+	"github.com/tiennm99/gomoku/server/pkg/async"
+	"github.com/tiennm99/gomoku/server/consts"
+	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/state/game"
 )
 
 var states = map[consts.StateID]State{}

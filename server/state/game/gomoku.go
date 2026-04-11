@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ratel-online/core/log"
-	"github.com/ratel-online/core/util/json"
-	"github.com/ratel-online/server/consts"
-	"github.com/ratel-online/server/database"
+	"github.com/tiennm99/gomoku/server/pkg/log"
+	"github.com/tiennm99/gomoku/server/pkg/json"
+	"github.com/tiennm99/gomoku/server/consts"
+	"github.com/tiennm99/gomoku/server/database"
 )
 
 // Gomoku state constants for channel-based turn sync.

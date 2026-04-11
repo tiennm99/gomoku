@@ -3,7 +3,7 @@ package consts
 import (
 	"time"
 
-	"github.com/ratel-online/core/consts"
+	"github.com/tiennm99/gomoku/server/pkg/consts"
 )
 
 type StateID int

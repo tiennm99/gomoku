@@ -3,8 +3,8 @@ package state
 import (
 	"bytes"
 	"fmt"
-	"github.com/ratel-online/server/consts"
-	"github.com/ratel-online/server/database"
+	"github.com/tiennm99/gomoku/server/consts"
+	"github.com/tiennm99/gomoku/server/database"
 )
 
 // welcome is the initial state. Sends a greeting and transitions to home.
@@ -12,7 +12,7 @@ type welcome struct{}
 
 func (*welcome) Next(player *database.Player) (consts.StateID, error) {
 	buf := bytes.Buffer{}
-	buf.WriteString(fmt.Sprintf("Hi %s, Welcome to ratel online! rules at https://github.com/ratel-online/server/blob/main/README.md\n", player.Name))
+	buf.WriteString(fmt.Sprintf("Hi %s, Welcome to ratel online! rules at https://github.com/tiennm99/gomoku/server/blob/main/README.md\n", player.Name))
 	err := player.WriteString(buf.String())
 	if err != nil {
 		return 0, player.WriteError(err)

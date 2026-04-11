@@ -1,14 +1,14 @@
 package network
 
 import (
-	"github.com/ratel-online/core/log"
-	"github.com/ratel-online/core/model"
-	"github.com/ratel-online/core/network"
-	"github.com/ratel-online/core/protocol"
-	"github.com/ratel-online/core/util/async"
-	"github.com/ratel-online/server/consts"
-	"github.com/ratel-online/server/database"
-	"github.com/ratel-online/server/state"
+	"github.com/tiennm99/gomoku/server/pkg/log"
+	"github.com/tiennm99/gomoku/server/pkg/model"
+	"github.com/tiennm99/gomoku/server/pkg/network"
+	"github.com/tiennm99/gomoku/server/pkg/protocol"
+	"github.com/tiennm99/gomoku/server/pkg/async"
+	"github.com/tiennm99/gomoku/server/consts"
+	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/state"
 	"time"
 )
 

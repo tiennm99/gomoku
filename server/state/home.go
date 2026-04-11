@@ -2,8 +2,8 @@ package state
 
 import (
 	"bytes"
-	"github.com/ratel-online/server/consts"
-	"github.com/ratel-online/server/database"
+	"github.com/tiennm99/gomoku/server/consts"
+	"github.com/tiennm99/gomoku/server/database"
 )
 
 // home is the main menu. Player chooses to join an existing room or create a new one.

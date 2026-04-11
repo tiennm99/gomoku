@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ratel-online/core/log"
-	"github.com/ratel-online/server/consts"
-	"github.com/ratel-online/server/database"
-	"github.com/ratel-online/server/state/game"
+	"github.com/tiennm99/gomoku/server/pkg/log"
+	"github.com/tiennm99/gomoku/server/consts"
+	"github.com/tiennm99/gomoku/server/database"
+	"github.com/tiennm99/gomoku/server/state/game"
 )
 
 type waiting struct{}

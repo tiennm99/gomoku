@@ -3,8 +3,8 @@ package state
 import (
 	"bytes"
 	"fmt"
-	"github.com/ratel-online/server/consts"
-	"github.com/ratel-online/server/database"
+	"github.com/tiennm99/gomoku/server/consts"
+	"github.com/tiennm99/gomoku/server/database"
 	"strconv"
 )
 
