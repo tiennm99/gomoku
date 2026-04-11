@@ -36,7 +36,7 @@ func (*gameOverState) Next(player *lobby.Player) (consts.StateID, error) {
 
 		case *protocol.Request_ClientExit:
 			leaveRoom(player, room)
-			return 0, ErrClientExit
+			return consts.StateHome, nil
 
 		default:
 			log.Errorf("[gameover] player %d: unexpected %T, ignoring\n", player.ID, req.Payload)

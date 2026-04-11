@@ -113,7 +113,8 @@ func TestGameoverResetTransitionsToPve(t *testing.T) {
 	}
 }
 
-// TestGameoverExitOnClientExitRequest verifies ErrClientExit on explicit exit.
+// TestGameoverExitOnClientExitRequest verifies ClientExitRequest transitions to
+// StateHome (keeps WS alive) instead of killing the session.
 func TestGameoverExitOnClientExitRequest(t *testing.T) {
 	black, _, _ := setupFinishedPvpRoom(t)
 
@@ -127,9 +128,12 @@ func TestGameoverExitOnClientExitRequest(t *testing.T) {
 	}()
 
 	s := &gameOverState{}
-	_, err := s.Next(black)
-	if err != ErrClientExit {
-		t.Errorf("expected ErrClientExit, got %v", err)
+	next, err := s.Next(black)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if next != consts.StateHome {
+		t.Errorf("expected StateHome, got %d", next)
 	}
 }
 

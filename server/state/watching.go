@@ -41,7 +41,13 @@ func (*watchingState) Next(player *lobby.Player) (consts.StateID, error) {
 
 	case *protocol.Request_ClientExit:
 		lobby.UnwatchRoom(player)
-		return 0, ErrClientExit
+		// Notify the spectator so the client can transition UI back to lobby.
+		_ = player.Send(&protocol.Response{
+			Payload: &protocol.Response_ClientExit{
+				ClientExit: &protocol.ClientExitResponse{},
+			},
+		})
+		return consts.StateHome, nil
 
 	case *protocol.Request_GameMove:
 		// Spectators may not make moves.

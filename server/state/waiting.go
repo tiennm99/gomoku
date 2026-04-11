@@ -41,6 +41,7 @@ func ownerWait(player *lobby.Player, room *lobby.Room) (consts.StateID, error) {
 	for {
 		req, ok := <-player.CmdCh
 		if !ok {
+			// WS closed — bail out of the state machine entirely.
 			leaveRoom(player, room)
 			return 0, ErrClientExit
 		}
@@ -83,7 +84,7 @@ func ownerWait(player *lobby.Player, room *lobby.Room) (consts.StateID, error) {
 
 		case *protocol.Request_ClientExit:
 			leaveRoom(player, room)
-			return 0, ErrClientExit
+			return consts.StateHome, nil
 
 		default:
 			log.Errorf("[waiting/owner] player %d: unexpected %T, ignoring\n", player.ID, req.Payload)
@@ -117,13 +118,14 @@ func joinerWait(player *lobby.Player, room *lobby.Room) (consts.StateID, error) 
 
 		case req, ok := <-player.CmdCh:
 			if !ok {
+				// WS closed — bail out of the state machine entirely.
 				leaveRoom(player, room)
 				return 0, ErrClientExit
 			}
 			switch req.Payload.(type) {
 			case *protocol.Request_ClientExit:
 				leaveRoom(player, room)
-				return 0, ErrClientExit
+				return consts.StateHome, nil
 			default:
 				// Non-exit requests ignored in joiner waiting state.
 				log.Errorf("[waiting/joiner] player %d: unexpected %T, ignoring\n", player.ID, req.Payload)
@@ -158,28 +160,21 @@ func assignColors(room *lobby.Room) {
 }
 
 // leaveRoom removes player from their current room cleanly.
-// Notifies remaining players via ClientExitResponse.
+// Broadcasts ClientExitResponse to everyone in the room BEFORE removing the
+// player, so the exiting player also receives their own exit confirmation
+// (used by the client to transition UI back to the lobby).
 func leaveRoom(player *lobby.Player, room *lobby.Room) {
-	roomID := room.ID
-	lobby.LeaveRoom(player)
-
-	room.RLock()
-	targets := make([]*lobby.Player, 0, len(room.Players))
-	for _, p := range room.Players {
-		targets = append(targets, p)
-	}
-	room.RUnlock()
-
 	exitResp := &protocol.Response{
 		Payload: &protocol.Response_ClientExit{
 			ClientExit: &protocol.ClientExitResponse{
-				RoomId:             int32(roomID),
+				RoomId:             int32(room.ID),
 				ExitClientId:       int32(player.ID),
 				ExitClientNickname: player.Name,
 			},
 		},
 	}
-	for _, p := range targets {
-		_ = p.Send(exitResp)
-	}
+	// Broadcast first (player still in room.Players + room.Spectators).
+	broadcastResponse(room, exitResp)
+	// Then remove from the room.
+	lobby.LeaveRoom(player)
 }

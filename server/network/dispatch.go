@@ -8,11 +8,12 @@ import (
 
 // Dispatch routes an incoming Request to the appropriate handler.
 //
-// Stateless requests (heartbeat, get_rooms, set_nickname, set_client_info,
-// client_exit) are handled inline on the reader goroutine — they must return fast.
+// Stateless requests (heartbeat, get_rooms, set_nickname, set_client_info)
+// are handled inline on the reader goroutine — they must return fast.
 //
-// Stateful requests (create_room, join_room, game_move, etc.) are pushed onto
-// player.CmdCh for the state machine goroutine (phase-06) to consume in order.
+// Stateful requests (create_room, join_room, game_move, client_exit, etc.)
+// are pushed onto player.CmdCh for the state machine goroutine to consume
+// in order.
 //
 // Overflow policy: if CmdCh is full, the request is logged and dropped rather
 // than blocking the reader goroutine (prevents backpressure deadlocks).
@@ -31,10 +32,9 @@ func Dispatch(player *lobby.Player, req *protocol.Request) {
 	case *protocol.Request_SetClientInfo:
 		handleSetClientInfo(player, req)
 
-	case *protocol.Request_ClientExit:
-		handleClientExit(player, req)
-
 	// --- Stateful handlers (pushed to cmdCh for state machine) ---
+	// ClientExit is stateful: it must leave the current room and transition
+	// the state machine back to home, keeping the WS alive.
 	case *protocol.Request_CreateRoom,
 		*protocol.Request_CreatePveRoom,
 		*protocol.Request_JoinRoom,
@@ -42,7 +42,8 @@ func Dispatch(player *lobby.Player, req *protocol.Request) {
 		*protocol.Request_GameMove,
 		*protocol.Request_GameReset,
 		*protocol.Request_WatchGame,
-		*protocol.Request_WatchGameExit:
+		*protocol.Request_WatchGameExit,
+		*protocol.Request_ClientExit:
 		pushToCmdCh(player, req)
 
 	default:

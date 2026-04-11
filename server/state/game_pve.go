@@ -54,7 +54,7 @@ func (*gamePveState) Next(player *lobby.Player) (consts.StateID, error) {
 
 		case *protocol.Request_ClientExit:
 			leaveRoom(player, room)
-			return 0, ErrClientExit
+			return consts.StateHome, nil
 
 		default:
 			log.Errorf("[pve] player %d: unexpected %T\n", player.ID, req.Payload)

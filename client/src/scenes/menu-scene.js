@@ -7,6 +7,7 @@
 
 import Phaser from 'phaser';
 import { eventBus } from '../services/event-bus.js';
+import { gameState } from '../services/game-state-service.js';
 import { ClientEventCode } from '../config/protocol-constants.js';
 import {
   showNicknameScreen,
@@ -43,8 +44,14 @@ export class MenuScene extends Phaser.Scene {
       g.lineBetween(0, i, 800, i);
     }
 
-    // Show nickname entry — server has already sent NICKNAME_SET prompt
-    showNicknameScreen();
+    // If we already have a nickname (returning from a game via exit), skip
+    // the nickname screen and go straight to the lobby. Otherwise show the
+    // nickname entry form — server has already sent NICKNAME_SET prompt.
+    if (gameState.nickname) {
+      showLobby();
+    } else {
+      showNicknameScreen();
+    }
 
     // Register event listeners
     eventBus.on(ClientEventCode.NICKNAME_SET, this._onNicknameSet);

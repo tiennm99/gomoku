@@ -64,7 +64,7 @@ func (*gamePvpState) Next(player *lobby.Player) (consts.StateID, error) {
 			signalGameOver(room)
 			broadcastForfeit(room, player)
 			leaveRoom(player, room)
-			return 0, ErrClientExit
+			return consts.StateHome, nil
 
 		default:
 			log.Errorf("[pvp] player %d: unexpected %T\n", player.ID, req.Payload)

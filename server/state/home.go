@@ -32,7 +32,14 @@ func (*homeState) Next(player *lobby.Player) (consts.StateID, error) {
 		return handleWatchGame(player, req)
 
 	case *protocol.Request_ClientExit:
-		return 0, ErrClientExit
+		// Client already in home — acknowledge and stay. "Exit" means
+		// "leave current room"; home has none.
+		_ = player.Send(&protocol.Response{
+			Payload: &protocol.Response_ClientExit{
+				ClientExit: &protocol.ClientExitResponse{},
+			},
+		})
+		return consts.StateHome, nil
 
 	default:
 		// Unexpected for this state — log and stay.

@@ -143,7 +143,8 @@ type stateFunc func(*lobby.Player) (consts.StateID, error)
 
 func (f stateFunc) Next(p *lobby.Player) (consts.StateID, error) { return f(p) }
 
-// TestHomeExitOnClientExitRequest verifies homeState returns ErrClientExit.
+// TestHomeExitOnClientExitRequest verifies homeState acknowledges ClientExit
+// but stays in home (since there is no room to leave).
 func TestHomeExitOnClientExitRequest(t *testing.T) {
 	p := makeTestPlayer(1, "Bob")
 	p.CmdCh <- &protocol.Request{
@@ -153,9 +154,12 @@ func TestHomeExitOnClientExitRequest(t *testing.T) {
 	}
 
 	s := &homeState{}
-	_, err := s.Next(p)
-	if err != ErrClientExit {
-		t.Errorf("expected ErrClientExit, got %v", err)
+	next, err := s.Next(p)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if next != consts.StateHome {
+		t.Errorf("expected StateHome, got %d", next)
 	}
 }
 

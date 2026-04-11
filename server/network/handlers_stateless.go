@@ -98,23 +98,6 @@ func handleSetClientInfo(player *lobby.Player, req *protocol.Request) {
 	log.Infof("[handler] player %d client version: %q\n", player.ID, player.ClientVersion)
 }
 
-// handleClientExit sends a ClientExitResponse and closes the send channel
-// so the writer goroutine exits, which in turn closes the WS connection.
-func handleClientExit(player *lobby.Player, _ *protocol.Request) {
-	log.Infof("[handler] player %d requested exit\n", player.ID)
-	_ = player.Send(&protocol.Response{
-		Payload: &protocol.Response_ClientExit{
-			ClientExit: &protocol.ClientExitResponse{},
-		},
-	})
-	// Closing SendCh signals the writer goroutine to stop, which will
-	// cause the WS conn to close and the reader loop to exit naturally.
-	if player.SendCh != nil {
-		close(player.SendCh)
-		player.SendCh = nil // prevent double-close
-	}
-}
-
 // containsControlChars returns true if s contains any ASCII control character
 // (including NUL) or the Unicode replacement character.
 func containsControlChars(s string) bool {

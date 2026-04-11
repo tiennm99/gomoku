@@ -20,7 +20,6 @@ import {
   showToast,
   hideGameHud,
 } from '../ui/game-ui.js';
-import { showLobby } from '../ui/menu-ui.js';
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -220,13 +219,13 @@ export class GameScene extends Phaser.Scene {
 
   /**
    * Opponent disconnected or client exited — return to menu lobby.
+   * MenuScene.create() checks gameState.nickname and shows the lobby directly.
    * @private
    */
   _onClientExit() {
     hideGameHud();
     this._cleanup();
     this.scene.start('MenuScene');
-    showLobby();
   }
 
   /**

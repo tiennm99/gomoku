@@ -56,9 +56,12 @@ func TestWaitingOwnerGameStartingRequiresFullRoom(t *testing.T) {
 	}()
 
 	s := &waitingState{}
-	_, err := s.Next(owner)
-	if err != ErrClientExit {
-		t.Errorf("expected ErrClientExit after rejection+exit, got %v", err)
+	next, err := s.Next(owner)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if next != consts.StateHome {
+		t.Errorf("expected StateHome after rejection+exit, got %d", next)
 	}
 
 	// Owner should have received RoomPlayFailNotFoundResponse.
@@ -146,7 +149,8 @@ func TestWaitingJoinerTransitionsOnStartCh(t *testing.T) {
 	}
 }
 
-// TestWaitingExitOnClientExitRequest verifies clean exit via ClientExitRequest.
+// TestWaitingExitOnClientExitRequest verifies clean exit via ClientExitRequest
+// transitions back to home (keeping the WS alive) rather than killing the session.
 func TestWaitingExitOnClientExitRequest(t *testing.T) {
 	owner, _ := setupPvpRoomWithOwner(t)
 
@@ -160,9 +164,12 @@ func TestWaitingExitOnClientExitRequest(t *testing.T) {
 	}()
 
 	s := &waitingState{}
-	_, err := s.Next(owner)
-	if err != ErrClientExit {
-		t.Errorf("expected ErrClientExit, got %v", err)
+	next, err := s.Next(owner)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if next != consts.StateHome {
+		t.Errorf("expected StateHome, got %d", next)
 	}
 }
 

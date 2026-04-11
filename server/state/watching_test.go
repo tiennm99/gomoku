@@ -74,8 +74,9 @@ func TestWatching_ExitReturnsHome(t *testing.T) {
 	}
 }
 
-// TestWatching_ClientExitReturnsErrClientExit verifies ClientExitRequest → unwatch → ErrClientExit.
-func TestWatching_ClientExitReturnsErrClientExit(t *testing.T) {
+// TestWatching_ClientExitReturnsHome verifies ClientExitRequest → unwatch → StateHome
+// (keeps WS alive, no ErrClientExit).
+func TestWatching_ClientExitReturnsHome(t *testing.T) {
 	spectator, _ := setupWatchingPlayer(t)
 
 	go func() {
@@ -88,9 +89,12 @@ func TestWatching_ClientExitReturnsErrClientExit(t *testing.T) {
 	}()
 
 	s := &watchingState{}
-	_, err := s.Next(spectator)
-	if err != ErrClientExit {
-		t.Errorf("expected ErrClientExit, got %v", err)
+	next, err := s.Next(spectator)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if next != consts.StateHome {
+		t.Errorf("expected StateHome, got %d", next)
 	}
 	if spectator.RoomID != 0 {
 		t.Errorf("expected RoomID cleared, got %d", spectator.RoomID)
