@@ -34,64 +34,22 @@ func setupPvpRoomWithOwner(t *testing.T) (*lobby.Player, *lobby.Room) {
 	return owner, room
 }
 
-// TestWaitingOwnerGameStartingRequiresFullRoom verifies that GameStartingRequest
-// is rejected (RoomPlayFailNotFound) when only 1 player is in the room.
-func TestWaitingOwnerGameStartingRequiresFullRoom(t *testing.T) {
-	owner, _ := setupPvpRoomWithOwner(t)
-
-	go func() {
-		time.Sleep(20 * time.Millisecond)
-		owner.CmdCh <- &protocol.Request{
-			Payload: &protocol.Request_GameStarting{
-				GameStarting: &protocol.GameStartingRequest{},
-			},
-		}
-		// After rejection, send exit so the state unblocks.
-		time.Sleep(20 * time.Millisecond)
-		owner.CmdCh <- &protocol.Request{
-			Payload: &protocol.Request_ClientExit{
-				ClientExit: &protocol.ClientExitRequest{},
-			},
-		}
-	}()
-
-	s := &waitingState{}
-	next, err := s.Next(owner)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if next != consts.StateHome {
-		t.Errorf("expected StateHome after rejection+exit, got %d", next)
-	}
-
-	// Owner should have received RoomPlayFailNotFoundResponse.
-	found := false
-	for _, r := range drainSend(owner) {
-		if _, ok := r.Payload.(*protocol.Response_RoomPlayFailNotFound); ok {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("expected RoomPlayFailNotFoundResponse for single-player start attempt")
-	}
-}
-
-// TestWaitingOwnerStartsWhenFull verifies owner can start when 2 players present.
-func TestWaitingOwnerStartsWhenFull(t *testing.T) {
+// TestWaitingOwnerTransitionsOnStartCh verifies the owner's waiting goroutine
+// wakes via StartCh when handleJoinRoom (running on the joiner's goroutine)
+// triggers auto-start. This is the PVP auto-start path.
+func TestWaitingOwnerTransitionsOnStartCh(t *testing.T) {
 	owner, room := setupPvpRoomWithOwner(t)
-	joiner := makeRegisteredPlayer(t, "Joiner")
-	if err := lobby.JoinRoom(room.ID, joiner); err != nil {
-		t.Fatalf("JoinRoom joiner: %v", err)
-	}
 
+	// Simulate the joiner's handleJoinRoom path: mark playing + close StartCh.
 	go func() {
-		time.Sleep(10 * time.Millisecond)
-		owner.CmdCh <- &protocol.Request{
-			Payload: &protocol.Request_GameStarting{
-				GameStarting: &protocol.GameStartingRequest{},
-			},
+		time.Sleep(20 * time.Millisecond)
+		room.Lock()
+		room.Status = lobby.RoomStatusPlaying
+		if room.StartCh != nil {
+			close(room.StartCh)
+			room.StartCh = nil
 		}
+		room.Unlock()
 	}()
 
 	s := &waitingState{}
@@ -100,24 +58,13 @@ func TestWaitingOwnerStartsWhenFull(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if next != consts.StateGamePvp {
-		t.Errorf("got state %d, want StateGamePvp (%d)", next, consts.StateGamePvp)
-	}
-
-	// Owner should receive GameStartingResponse.
-	found := false
-	for _, r := range drainSend(owner) {
-		if _, ok := r.Payload.(*protocol.Response_GameStarting); ok {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("expected GameStartingResponse after valid start")
+		t.Errorf("owner got state %d, want StateGamePvp (%d)", next, consts.StateGamePvp)
 	}
 }
 
-// TestWaitingJoinerTransitionsOnStartCh verifies joiner transitions when
-// owner closes StartCh (signals game start).
+// TestWaitingJoinerTransitionsOnStartCh verifies the joiner's waiting goroutine
+// also wakes via StartCh when auto-start fires. Mirrors the owner test above
+// but from the joiner's perspective (same unified waitingState).
 func TestWaitingJoinerTransitionsOnStartCh(t *testing.T) {
 	owner, room := setupPvpRoomWithOwner(t)
 	joiner := makeRegisteredPlayer(t, "Joiner")
@@ -125,7 +72,6 @@ func TestWaitingJoinerTransitionsOnStartCh(t *testing.T) {
 		t.Fatalf("JoinRoom joiner: %v", err)
 	}
 
-	// Simulate owner triggering start: close StartCh and mark room playing.
 	go func() {
 		time.Sleep(30 * time.Millisecond)
 		room.Lock()

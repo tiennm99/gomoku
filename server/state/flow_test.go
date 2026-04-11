@@ -128,6 +128,94 @@ func TestFlow_RoomListReflectsCreateLeaveCycle(t *testing.T) {
 	}
 }
 
+// TestFlow_JoinAutoStartsGame verifies the end-to-end PVP auto-start: owner
+// creates a room, a second player sends JoinRoomRequest, and the handler
+// (running on joiner's goroutine) should assign colors, flip Status=Playing,
+// close StartCh, broadcast GameStartingResponse, and return StateGamePvp.
+// In parallel, the owner's waitingState wakes via StartCh and transitions
+// to StateGamePvp. No explicit Start click.
+func TestFlow_JoinAutoStartsGame(t *testing.T) {
+	// Setup: owner creates a room and is already in waiting state.
+	owner := makeRegisteredPlayer(t, "owner")
+	room, err := lobby.CreatePvpRoom(owner)
+	if err != nil {
+		t.Fatalf("CreatePvpRoom: %v", err)
+	}
+	if err := lobby.JoinRoom(room.ID, owner); err != nil {
+		t.Fatalf("owner JoinRoom: %v", err)
+	}
+
+	// Owner goroutine: run waitingState, expect it to transition on StartCh close.
+	ownerDone := make(chan consts.StateID, 1)
+	ownerErr := make(chan error, 1)
+	go func() {
+		next, err := runState(consts.StateWaiting, owner)
+		ownerDone <- next
+		ownerErr <- err
+	}()
+	time.Sleep(20 * time.Millisecond) // let owner enter waitingState
+
+	// Joiner sends JoinRoomRequest from home state.
+	joiner := makeRegisteredPlayer(t, "joiner")
+	joiner.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_JoinRoom{JoinRoom: &protocol.JoinRoomRequest{RoomId: int32(room.ID)}},
+	}
+	joinerNext, err := runState(consts.StateHome, joiner)
+	if err != nil {
+		t.Fatalf("joiner home: %v", err)
+	}
+	if joinerNext != consts.StateGamePvp {
+		t.Fatalf("joiner expected StateGamePvp (auto-start), got %d", joinerNext)
+	}
+
+	// Owner must have transitioned to gamePvp in lockstep.
+	select {
+	case next := <-ownerDone:
+		if next != consts.StateGamePvp {
+			t.Errorf("owner expected StateGamePvp, got %d", next)
+		}
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("owner waitingState did not transition within 500ms — auto-start didn't fire StartCh")
+	}
+	if err := <-ownerErr; err != nil {
+		t.Errorf("owner error: %v", err)
+	}
+
+	// Room must be fully set up.
+	room.RLock()
+	status := room.Status
+	blackID := room.BlackPlayerID
+	whiteID := room.WhitePlayerID
+	turn := room.CurrentTurn
+	room.RUnlock()
+	if status != lobby.RoomStatusPlaying {
+		t.Errorf("room.Status = %d, want Playing", status)
+	}
+	if turn != game.Black {
+		t.Errorf("room.CurrentTurn = %v, want Black", turn)
+	}
+	// Colors assigned to the actual two players.
+	if !(blackID == owner.ID && whiteID == joiner.ID) &&
+		!(blackID == joiner.ID && whiteID == owner.ID) {
+		t.Errorf("colors not assigned to actual players: black=%d white=%d owner=%d joiner=%d",
+			blackID, whiteID, owner.ID, joiner.ID)
+	}
+
+	// Both players must have received GameStartingResponse.
+	for name, p := range map[string]*lobby.Player{"owner": owner, "joiner": joiner} {
+		found := false
+		for _, r := range drainSend(p) {
+			if _, ok := r.Payload.(*protocol.Response_GameStarting); ok {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("%s did not receive GameStartingResponse", name)
+		}
+	}
+}
+
 // TestFlow_HomeExit_DoesNotKillSession verifies that ClientExit from home
 // keeps the session alive (returns StateHome, not ErrClientExit) so the
 // client isn't stuck after pressing a Back/Leave button in lobby.

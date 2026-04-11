@@ -56,7 +56,6 @@ export const com = $root.com = (() => {
                      * @property {com.miti99.gomoku.proto.ICreatePveRoomRequest|null} [createPveRoom] Request createPveRoom
                      * @property {com.miti99.gomoku.proto.IGetRoomsRequest|null} [getRooms] Request getRooms
                      * @property {com.miti99.gomoku.proto.IJoinRoomRequest|null} [joinRoom] Request joinRoom
-                     * @property {com.miti99.gomoku.proto.IGameStartingRequest|null} [gameStarting] Request gameStarting
                      * @property {com.miti99.gomoku.proto.IGameMoveRequest|null} [gameMove] Request gameMove
                      * @property {com.miti99.gomoku.proto.IGameResetRequest|null} [gameReset] Request gameReset
                      * @property {com.miti99.gomoku.proto.IWatchGameRequest|null} [watchGame] Request watchGame
@@ -136,14 +135,6 @@ export const com = $root.com = (() => {
                     Request.prototype.joinRoom = null;
 
                     /**
-                     * Request gameStarting.
-                     * @member {com.miti99.gomoku.proto.IGameStartingRequest|null|undefined} gameStarting
-                     * @memberof com.miti99.gomoku.proto.Request
-                     * @instance
-                     */
-                    Request.prototype.gameStarting = null;
-
-                    /**
                      * Request gameMove.
                      * @member {com.miti99.gomoku.proto.IGameMoveRequest|null|undefined} gameMove
                      * @memberof com.miti99.gomoku.proto.Request
@@ -188,12 +179,12 @@ export const com = $root.com = (() => {
 
                     /**
                      * Request payload.
-                     * @member {"heartbeat"|"setNickname"|"setClientInfo"|"createRoom"|"createPveRoom"|"getRooms"|"joinRoom"|"gameStarting"|"gameMove"|"gameReset"|"watchGame"|"watchGameExit"|"clientExit"|undefined} payload
+                     * @member {"heartbeat"|"setNickname"|"setClientInfo"|"createRoom"|"createPveRoom"|"getRooms"|"joinRoom"|"gameMove"|"gameReset"|"watchGame"|"watchGameExit"|"clientExit"|undefined} payload
                      * @memberof com.miti99.gomoku.proto.Request
                      * @instance
                      */
                     Object.defineProperty(Request.prototype, "payload", {
-                        get: $util.oneOfGetter($oneOfFields = ["heartbeat", "setNickname", "setClientInfo", "createRoom", "createPveRoom", "getRooms", "joinRoom", "gameStarting", "gameMove", "gameReset", "watchGame", "watchGameExit", "clientExit"]),
+                        get: $util.oneOfGetter($oneOfFields = ["heartbeat", "setNickname", "setClientInfo", "createRoom", "createPveRoom", "getRooms", "joinRoom", "gameMove", "gameReset", "watchGame", "watchGameExit", "clientExit"]),
                         set: $util.oneOfSetter($oneOfFields)
                     });
 
@@ -235,18 +226,16 @@ export const com = $root.com = (() => {
                             $root.com.miti99.gomoku.proto.GetRoomsRequest.encode(message.getRooms, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
                         if (message.joinRoom != null && Object.hasOwnProperty.call(message, "joinRoom"))
                             $root.com.miti99.gomoku.proto.JoinRoomRequest.encode(message.joinRoom, writer.uint32(/* id 7, wireType 2 =*/58).fork()).ldelim();
-                        if (message.gameStarting != null && Object.hasOwnProperty.call(message, "gameStarting"))
-                            $root.com.miti99.gomoku.proto.GameStartingRequest.encode(message.gameStarting, writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
                         if (message.gameMove != null && Object.hasOwnProperty.call(message, "gameMove"))
-                            $root.com.miti99.gomoku.proto.GameMoveRequest.encode(message.gameMove, writer.uint32(/* id 9, wireType 2 =*/74).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.GameMoveRequest.encode(message.gameMove, writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
                         if (message.gameReset != null && Object.hasOwnProperty.call(message, "gameReset"))
-                            $root.com.miti99.gomoku.proto.GameResetRequest.encode(message.gameReset, writer.uint32(/* id 10, wireType 2 =*/82).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.GameResetRequest.encode(message.gameReset, writer.uint32(/* id 9, wireType 2 =*/74).fork()).ldelim();
                         if (message.watchGame != null && Object.hasOwnProperty.call(message, "watchGame"))
-                            $root.com.miti99.gomoku.proto.WatchGameRequest.encode(message.watchGame, writer.uint32(/* id 11, wireType 2 =*/90).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.WatchGameRequest.encode(message.watchGame, writer.uint32(/* id 10, wireType 2 =*/82).fork()).ldelim();
                         if (message.watchGameExit != null && Object.hasOwnProperty.call(message, "watchGameExit"))
-                            $root.com.miti99.gomoku.proto.WatchGameExitRequest.encode(message.watchGameExit, writer.uint32(/* id 12, wireType 2 =*/98).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.WatchGameExitRequest.encode(message.watchGameExit, writer.uint32(/* id 11, wireType 2 =*/90).fork()).ldelim();
                         if (message.clientExit != null && Object.hasOwnProperty.call(message, "clientExit"))
-                            $root.com.miti99.gomoku.proto.ClientExitRequest.encode(message.clientExit, writer.uint32(/* id 13, wireType 2 =*/106).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.ClientExitRequest.encode(message.clientExit, writer.uint32(/* id 12, wireType 2 =*/98).fork()).ldelim();
                         return writer;
                     };
 
@@ -312,26 +301,22 @@ export const com = $root.com = (() => {
                                     break;
                                 }
                             case 8: {
-                                    message.gameStarting = $root.com.miti99.gomoku.proto.GameStartingRequest.decode(reader, reader.uint32());
-                                    break;
-                                }
-                            case 9: {
                                     message.gameMove = $root.com.miti99.gomoku.proto.GameMoveRequest.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 10: {
+                            case 9: {
                                     message.gameReset = $root.com.miti99.gomoku.proto.GameResetRequest.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 11: {
+                            case 10: {
                                     message.watchGame = $root.com.miti99.gomoku.proto.WatchGameRequest.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 12: {
+                            case 11: {
                                     message.watchGameExit = $root.com.miti99.gomoku.proto.WatchGameExitRequest.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 13: {
+                            case 12: {
                                     message.clientExit = $root.com.miti99.gomoku.proto.ClientExitRequest.decode(reader, reader.uint32());
                                     break;
                                 }
@@ -439,16 +424,6 @@ export const com = $root.com = (() => {
                                     return "joinRoom." + error;
                             }
                         }
-                        if (message.gameStarting != null && message.hasOwnProperty("gameStarting")) {
-                            if (properties.payload === 1)
-                                return "payload: multiple values";
-                            properties.payload = 1;
-                            {
-                                let error = $root.com.miti99.gomoku.proto.GameStartingRequest.verify(message.gameStarting);
-                                if (error)
-                                    return "gameStarting." + error;
-                            }
-                        }
                         if (message.gameMove != null && message.hasOwnProperty("gameMove")) {
                             if (properties.payload === 1)
                                 return "payload: multiple values";
@@ -549,11 +524,6 @@ export const com = $root.com = (() => {
                                 throw TypeError(".com.miti99.gomoku.proto.Request.joinRoom: object expected");
                             message.joinRoom = $root.com.miti99.gomoku.proto.JoinRoomRequest.fromObject(object.joinRoom);
                         }
-                        if (object.gameStarting != null) {
-                            if (typeof object.gameStarting !== "object")
-                                throw TypeError(".com.miti99.gomoku.proto.Request.gameStarting: object expected");
-                            message.gameStarting = $root.com.miti99.gomoku.proto.GameStartingRequest.fromObject(object.gameStarting);
-                        }
                         if (object.gameMove != null) {
                             if (typeof object.gameMove !== "object")
                                 throw TypeError(".com.miti99.gomoku.proto.Request.gameMove: object expected");
@@ -629,11 +599,6 @@ export const com = $root.com = (() => {
                             object.joinRoom = $root.com.miti99.gomoku.proto.JoinRoomRequest.toObject(message.joinRoom, options);
                             if (options.oneofs)
                                 object.payload = "joinRoom";
-                        }
-                        if (message.gameStarting != null && message.hasOwnProperty("gameStarting")) {
-                            object.gameStarting = $root.com.miti99.gomoku.proto.GameStartingRequest.toObject(message.gameStarting, options);
-                            if (options.oneofs)
-                                object.payload = "gameStarting";
                         }
                         if (message.gameMove != null && message.hasOwnProperty("gameMove")) {
                             object.gameMove = $root.com.miti99.gomoku.proto.GameMoveRequest.toObject(message.gameMove, options);
@@ -2041,183 +2006,6 @@ export const com = $root.com = (() => {
                     };
 
                     return JoinRoomRequest;
-                })();
-
-                proto.GameStartingRequest = (function() {
-
-                    /**
-                     * Properties of a GameStartingRequest.
-                     * @memberof com.miti99.gomoku.proto
-                     * @interface IGameStartingRequest
-                     */
-
-                    /**
-                     * Constructs a new GameStartingRequest.
-                     * @memberof com.miti99.gomoku.proto
-                     * @classdesc Represents a GameStartingRequest.
-                     * @implements IGameStartingRequest
-                     * @constructor
-                     * @param {com.miti99.gomoku.proto.IGameStartingRequest=} [properties] Properties to set
-                     */
-                    function GameStartingRequest(properties) {
-                        if (properties)
-                            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                                if (properties[keys[i]] != null)
-                                    this[keys[i]] = properties[keys[i]];
-                    }
-
-                    /**
-                     * Creates a new GameStartingRequest instance using the specified properties.
-                     * @function create
-                     * @memberof com.miti99.gomoku.proto.GameStartingRequest
-                     * @static
-                     * @param {com.miti99.gomoku.proto.IGameStartingRequest=} [properties] Properties to set
-                     * @returns {com.miti99.gomoku.proto.GameStartingRequest} GameStartingRequest instance
-                     */
-                    GameStartingRequest.create = function create(properties) {
-                        return new GameStartingRequest(properties);
-                    };
-
-                    /**
-                     * Encodes the specified GameStartingRequest message. Does not implicitly {@link com.miti99.gomoku.proto.GameStartingRequest.verify|verify} messages.
-                     * @function encode
-                     * @memberof com.miti99.gomoku.proto.GameStartingRequest
-                     * @static
-                     * @param {com.miti99.gomoku.proto.IGameStartingRequest} message GameStartingRequest message or plain object to encode
-                     * @param {$protobuf.Writer} [writer] Writer to encode to
-                     * @returns {$protobuf.Writer} Writer
-                     */
-                    GameStartingRequest.encode = function encode(message, writer) {
-                        if (!writer)
-                            writer = $Writer.create();
-                        return writer;
-                    };
-
-                    /**
-                     * Encodes the specified GameStartingRequest message, length delimited. Does not implicitly {@link com.miti99.gomoku.proto.GameStartingRequest.verify|verify} messages.
-                     * @function encodeDelimited
-                     * @memberof com.miti99.gomoku.proto.GameStartingRequest
-                     * @static
-                     * @param {com.miti99.gomoku.proto.IGameStartingRequest} message GameStartingRequest message or plain object to encode
-                     * @param {$protobuf.Writer} [writer] Writer to encode to
-                     * @returns {$protobuf.Writer} Writer
-                     */
-                    GameStartingRequest.encodeDelimited = function encodeDelimited(message, writer) {
-                        return this.encode(message, writer).ldelim();
-                    };
-
-                    /**
-                     * Decodes a GameStartingRequest message from the specified reader or buffer.
-                     * @function decode
-                     * @memberof com.miti99.gomoku.proto.GameStartingRequest
-                     * @static
-                     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-                     * @param {number} [length] Message length if known beforehand
-                     * @returns {com.miti99.gomoku.proto.GameStartingRequest} GameStartingRequest
-                     * @throws {Error} If the payload is not a reader or valid buffer
-                     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-                     */
-                    GameStartingRequest.decode = function decode(reader, length, error) {
-                        if (!(reader instanceof $Reader))
-                            reader = $Reader.create(reader);
-                        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.miti99.gomoku.proto.GameStartingRequest();
-                        while (reader.pos < end) {
-                            let tag = reader.uint32();
-                            if (tag === error)
-                                break;
-                            switch (tag >>> 3) {
-                            default:
-                                reader.skipType(tag & 7);
-                                break;
-                            }
-                        }
-                        return message;
-                    };
-
-                    /**
-                     * Decodes a GameStartingRequest message from the specified reader or buffer, length delimited.
-                     * @function decodeDelimited
-                     * @memberof com.miti99.gomoku.proto.GameStartingRequest
-                     * @static
-                     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-                     * @returns {com.miti99.gomoku.proto.GameStartingRequest} GameStartingRequest
-                     * @throws {Error} If the payload is not a reader or valid buffer
-                     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-                     */
-                    GameStartingRequest.decodeDelimited = function decodeDelimited(reader) {
-                        if (!(reader instanceof $Reader))
-                            reader = new $Reader(reader);
-                        return this.decode(reader, reader.uint32());
-                    };
-
-                    /**
-                     * Verifies a GameStartingRequest message.
-                     * @function verify
-                     * @memberof com.miti99.gomoku.proto.GameStartingRequest
-                     * @static
-                     * @param {Object.<string,*>} message Plain object to verify
-                     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-                     */
-                    GameStartingRequest.verify = function verify(message) {
-                        if (typeof message !== "object" || message === null)
-                            return "object expected";
-                        return null;
-                    };
-
-                    /**
-                     * Creates a GameStartingRequest message from a plain object. Also converts values to their respective internal types.
-                     * @function fromObject
-                     * @memberof com.miti99.gomoku.proto.GameStartingRequest
-                     * @static
-                     * @param {Object.<string,*>} object Plain object
-                     * @returns {com.miti99.gomoku.proto.GameStartingRequest} GameStartingRequest
-                     */
-                    GameStartingRequest.fromObject = function fromObject(object) {
-                        if (object instanceof $root.com.miti99.gomoku.proto.GameStartingRequest)
-                            return object;
-                        return new $root.com.miti99.gomoku.proto.GameStartingRequest();
-                    };
-
-                    /**
-                     * Creates a plain object from a GameStartingRequest message. Also converts values to other types if specified.
-                     * @function toObject
-                     * @memberof com.miti99.gomoku.proto.GameStartingRequest
-                     * @static
-                     * @param {com.miti99.gomoku.proto.GameStartingRequest} message GameStartingRequest
-                     * @param {$protobuf.IConversionOptions} [options] Conversion options
-                     * @returns {Object.<string,*>} Plain object
-                     */
-                    GameStartingRequest.toObject = function toObject() {
-                        return {};
-                    };
-
-                    /**
-                     * Converts this GameStartingRequest to JSON.
-                     * @function toJSON
-                     * @memberof com.miti99.gomoku.proto.GameStartingRequest
-                     * @instance
-                     * @returns {Object.<string,*>} JSON object
-                     */
-                    GameStartingRequest.prototype.toJSON = function toJSON() {
-                        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-                    };
-
-                    /**
-                     * Gets the default type url for GameStartingRequest
-                     * @function getTypeUrl
-                     * @memberof com.miti99.gomoku.proto.GameStartingRequest
-                     * @static
-                     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-                     * @returns {string} The default type url
-                     */
-                    GameStartingRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                        if (typeUrlPrefix === undefined) {
-                            typeUrlPrefix = "type.googleapis.com";
-                        }
-                        return typeUrlPrefix + "/com.miti99.gomoku.proto.GameStartingRequest";
-                    };
-
-                    return GameStartingRequest;
                 })();
 
                 proto.GameMoveRequest = (function() {

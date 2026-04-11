@@ -5,6 +5,10 @@ package com.miti99.gomoku.proto;
 option go_package = "github.com/tiennm99/gomoku/server/protocol;protocol";
 
 // Wrapper for all client -> server messages. The oneof case IS the event code.
+//
+// Note: PVP games auto-start as soon as a second player joins — there is no
+// explicit "Start Game" request from the owner. Room creation + join is
+// enough to begin the game.
 message Request {
   oneof payload {
     HeartbeatRequest heartbeat = 1;
@@ -14,12 +18,11 @@ message Request {
     CreatePveRoomRequest create_pve_room = 5;
     GetRoomsRequest get_rooms = 6;
     JoinRoomRequest join_room = 7;
-    GameStartingRequest game_starting = 8;
-    GameMoveRequest game_move = 9;
-    GameResetRequest game_reset = 10;
-    WatchGameRequest watch_game = 11;
-    WatchGameExitRequest watch_game_exit = 12;
-    ClientExitRequest client_exit = 13;
+    GameMoveRequest game_move = 8;
+    GameResetRequest game_reset = 9;
+    WatchGameRequest watch_game = 10;
+    WatchGameExitRequest watch_game_exit = 11;
+    ClientExitRequest client_exit = 12;
   }
 }
 
@@ -30,7 +33,6 @@ message CreateRoomRequest {}
 message CreatePveRoomRequest { int32 difficulty = 1; }
 message GetRoomsRequest {}
 message JoinRoomRequest { int32 room_id = 1; }
-message GameStartingRequest {}
 message GameMoveRequest {
   int32 row = 1;
   int32 col = 2;

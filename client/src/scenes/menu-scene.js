@@ -92,7 +92,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   /**
-   * Room created — show waiting room as owner.
+   * Room created — show waiting room.
    * Store the handle so ROOM_JOIN_SUCCESS can push live player-count updates.
    * Proto field names (pbjs camelCase):
    *   id (room id), roomOwner (owner nickname), roomType (enum)
@@ -101,12 +101,15 @@ export class MenuScene extends Phaser.Scene {
    */
   _onRoomCreateSuccess(data) {
     const roomOwner = (data && data.roomOwner) ? data.roomOwner : '';
-    this._waitingHandle = showWaiting(true, roomOwner, 1, null, null);
+    this._waitingHandle = showWaiting(roomOwner, 1, null);
   }
 
   /**
-   * A player joined a room — update the waiting room live for both owner and joiner.
-   * Proto field names (from pbjs camelCase):
+   * A player joined a room — update the waiting room live (or create one if
+   * this client is the joiner). The server auto-starts the game immediately
+   * after RoomJoinSuccessResponse, so GAME_STARTING should follow shortly
+   * and transition the scene to GameScene.
+   * Proto field names (pbjs camelCase):
    *   clientId, clientNickname (the joiner), roomId, roomOwner, roomClientCount
    * @param {{ clientId: number, clientNickname: string, roomId: number, roomOwner: string, roomClientCount: number }} data
    * @private
@@ -117,11 +120,11 @@ export class MenuScene extends Phaser.Scene {
     const joinerNickname = (data && data.clientNickname) ? data.clientNickname : '';
 
     if (this._waitingHandle) {
-      // This client is the owner — a second player just joined, update the view
+      // Already showing waiting room — push live update.
       this._waitingHandle.update(count, joinerNickname);
     } else {
-      // This client is the joiner — show passive waiting screen
-      this._waitingHandle = showWaiting(false, roomOwner, count, null, null);
+      // First view of the room (this client is the joiner).
+      this._waitingHandle = showWaiting(roomOwner, count, null);
     }
   }
 

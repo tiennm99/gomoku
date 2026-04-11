@@ -36,9 +36,6 @@ export namespace com {
                     /** Request joinRoom */
                     joinRoom?: (com.miti99.gomoku.proto.IJoinRoomRequest|null);
 
-                    /** Request gameStarting */
-                    gameStarting?: (com.miti99.gomoku.proto.IGameStartingRequest|null);
-
                     /** Request gameMove */
                     gameMove?: (com.miti99.gomoku.proto.IGameMoveRequest|null);
 
@@ -85,9 +82,6 @@ export namespace com {
                     /** Request joinRoom. */
                     public joinRoom?: (com.miti99.gomoku.proto.IJoinRoomRequest|null);
 
-                    /** Request gameStarting. */
-                    public gameStarting?: (com.miti99.gomoku.proto.IGameStartingRequest|null);
-
                     /** Request gameMove. */
                     public gameMove?: (com.miti99.gomoku.proto.IGameMoveRequest|null);
 
@@ -104,7 +98,7 @@ export namespace com {
                     public clientExit?: (com.miti99.gomoku.proto.IClientExitRequest|null);
 
                     /** Request payload. */
-                    public payload?: ("heartbeat"|"setNickname"|"setClientInfo"|"createRoom"|"createPveRoom"|"getRooms"|"joinRoom"|"gameStarting"|"gameMove"|"gameReset"|"watchGame"|"watchGameExit"|"clientExit");
+                    public payload?: ("heartbeat"|"setNickname"|"setClientInfo"|"createRoom"|"createPveRoom"|"getRooms"|"joinRoom"|"gameMove"|"gameReset"|"watchGame"|"watchGameExit"|"clientExit");
 
                     /**
                      * Creates a new Request instance using the specified properties.
@@ -839,97 +833,6 @@ export namespace com {
 
                     /**
                      * Gets the default type url for JoinRoomRequest
-                     * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-                     * @returns The default type url
-                     */
-                    public static getTypeUrl(typeUrlPrefix?: string): string;
-                }
-
-                /** Properties of a GameStartingRequest. */
-                interface IGameStartingRequest {
-                }
-
-                /** Represents a GameStartingRequest. */
-                class GameStartingRequest implements IGameStartingRequest {
-
-                    /**
-                     * Constructs a new GameStartingRequest.
-                     * @param [properties] Properties to set
-                     */
-                    constructor(properties?: com.miti99.gomoku.proto.IGameStartingRequest);
-
-                    /**
-                     * Creates a new GameStartingRequest instance using the specified properties.
-                     * @param [properties] Properties to set
-                     * @returns GameStartingRequest instance
-                     */
-                    public static create(properties?: com.miti99.gomoku.proto.IGameStartingRequest): com.miti99.gomoku.proto.GameStartingRequest;
-
-                    /**
-                     * Encodes the specified GameStartingRequest message. Does not implicitly {@link com.miti99.gomoku.proto.GameStartingRequest.verify|verify} messages.
-                     * @param message GameStartingRequest message or plain object to encode
-                     * @param [writer] Writer to encode to
-                     * @returns Writer
-                     */
-                    public static encode(message: com.miti99.gomoku.proto.IGameStartingRequest, writer?: $protobuf.Writer): $protobuf.Writer;
-
-                    /**
-                     * Encodes the specified GameStartingRequest message, length delimited. Does not implicitly {@link com.miti99.gomoku.proto.GameStartingRequest.verify|verify} messages.
-                     * @param message GameStartingRequest message or plain object to encode
-                     * @param [writer] Writer to encode to
-                     * @returns Writer
-                     */
-                    public static encodeDelimited(message: com.miti99.gomoku.proto.IGameStartingRequest, writer?: $protobuf.Writer): $protobuf.Writer;
-
-                    /**
-                     * Decodes a GameStartingRequest message from the specified reader or buffer.
-                     * @param reader Reader or buffer to decode from
-                     * @param [length] Message length if known beforehand
-                     * @returns GameStartingRequest
-                     * @throws {Error} If the payload is not a reader or valid buffer
-                     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-                     */
-                    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.miti99.gomoku.proto.GameStartingRequest;
-
-                    /**
-                     * Decodes a GameStartingRequest message from the specified reader or buffer, length delimited.
-                     * @param reader Reader or buffer to decode from
-                     * @returns GameStartingRequest
-                     * @throws {Error} If the payload is not a reader or valid buffer
-                     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-                     */
-                    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.miti99.gomoku.proto.GameStartingRequest;
-
-                    /**
-                     * Verifies a GameStartingRequest message.
-                     * @param message Plain object to verify
-                     * @returns `null` if valid, otherwise the reason why it is not
-                     */
-                    public static verify(message: { [k: string]: any }): (string|null);
-
-                    /**
-                     * Creates a GameStartingRequest message from a plain object. Also converts values to their respective internal types.
-                     * @param object Plain object
-                     * @returns GameStartingRequest
-                     */
-                    public static fromObject(object: { [k: string]: any }): com.miti99.gomoku.proto.GameStartingRequest;
-
-                    /**
-                     * Creates a plain object from a GameStartingRequest message. Also converts values to other types if specified.
-                     * @param message GameStartingRequest
-                     * @param [options] Conversion options
-                     * @returns Plain object
-                     */
-                    public static toObject(message: com.miti99.gomoku.proto.GameStartingRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-                    /**
-                     * Converts this GameStartingRequest to JSON.
-                     * @returns JSON object
-                     */
-                    public toJSON(): { [k: string]: any };
-
-                    /**
-                     * Gets the default type url for GameStartingRequest
                      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
                      * @returns The default type url
                      */

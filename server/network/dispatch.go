@@ -38,7 +38,6 @@ func Dispatch(player *lobby.Player, req *protocol.Request) {
 	case *protocol.Request_CreateRoom,
 		*protocol.Request_CreatePveRoom,
 		*protocol.Request_JoinRoom,
-		*protocol.Request_GameStarting,
 		*protocol.Request_GameMove,
 		*protocol.Request_GameReset,
 		*protocol.Request_WatchGame,

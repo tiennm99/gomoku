@@ -113,8 +113,6 @@ class ConnectionService {
   sendCreatePveRoom(difficulty) { this._sendRequest({ createPveRoom: { difficulty } }); }
   sendGetRooms() { this._sendRequest({ getRooms: {} }); }
   sendJoinRoom(roomId) { this._sendRequest({ joinRoom: { roomId } }); }
-  /** Owner-only: trigger explicit PVP game start. */
-  sendGameStarting() { this._sendRequest({ gameStarting: {} }); }
   sendGameMove(row, col) { this._sendRequest({ gameMove: { row, col } }); }
   sendGameReset() { this._sendRequest({ gameReset: {} }); }
   sendWatchGame(roomId) { this._sendRequest({ watchGame: { roomId } }); }

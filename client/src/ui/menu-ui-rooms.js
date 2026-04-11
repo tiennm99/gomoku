@@ -107,23 +107,22 @@ export function showPveDifficultyPanel(onConfirm, onBack) {
   }
 }
 
-// -------- Waiting room (role-aware) --------
+// -------- Waiting room --------
 
 /**
- * Show waiting room with owner/joiner split.
- * Owner sees "Start Game" button (enabled only when playerCount === 2).
- * Joiner sees passive wait message — no button.
+ * Show the pre-game waiting room. Same passive view for both owner and joiner:
+ * the server auto-starts the game as soon as a second player arrives, so
+ * there is no "Start Game" button to click.
  *
- * Returns an `update(newPlayerCount, opponentNickname)` function for live updates.
+ * Returns an `update(newPlayerCount, opponentNickname)` function for live
+ * status updates driven by ROOM_JOIN_SUCCESS events.
  *
- * @param {boolean} isOwner
  * @param {string} ownerNickname
  * @param {number} playerCount - initial count (1 for owner, 2 for joiner)
- * @param {function|null} onStart - owner only; called after Start Game clicked
- * @param {function|null} onLeave - called after Leave button clicked
+ * @param {function|null} onLeave - optional; called after Leave Room is clicked
  * @returns {{ update: function(number, string): void }}
  */
-export function showWaiting(isOwner, ownerNickname, playerCount, onStart, onLeave) {
+export function showWaiting(ownerNickname, playerCount, onLeave) {
   showPanel(`
     <div class="menu-panel">
       <h2 class="menu-title">Waiting Room</h2>
@@ -131,7 +130,6 @@ export function showWaiting(isOwner, ownerNickname, playerCount, onStart, onLeav
       <p>Owner: <span class="accent" id="wait-owner-name"></span></p>
       <div class="spinner"></div>
       <p id="wait-status-msg" class="menu-subtitle"></p>
-      <button id="btn-start-game" class="menu-btn primary" style="display:none">Start Game</button>
       <button id="btn-leave-room" class="menu-btn danger">Leave Room</button>
     </div>
   `);
@@ -143,7 +141,6 @@ export function showWaiting(isOwner, ownerNickname, playerCount, onStart, onLeav
   if (ownerEl) ownerEl.textContent = ownerNickname || '';
 
   const statusEl = document.getElementById('wait-status-msg');
-  const startBtn = document.getElementById('btn-start-game');
   const leaveBtn = document.getElementById('btn-leave-room');
 
   leaveBtn.addEventListener('click', () => {
@@ -151,32 +148,15 @@ export function showWaiting(isOwner, ownerNickname, playerCount, onStart, onLeav
     if (typeof onLeave === 'function') onLeave();
   });
 
-  if (isOwner && startBtn) {
-    startBtn.style.display = '';
-    startBtn.addEventListener('click', () => {
-      startBtn.disabled = true;
-      connectionService.sendGameStarting();
-      if (typeof onStart === 'function') onStart();
-    });
-  }
-
   function syncStatus(count, opponentName) {
-    if (isOwner) {
-      if (count >= 2) {
-        if (statusEl) {
-          statusEl.textContent = opponentName
-            ? `Opponent joined: ${opponentName}`
-            : 'Opponent joined!';
-        }
-        if (startBtn) startBtn.disabled = false;
-      } else {
-        if (statusEl) statusEl.textContent = 'Waiting for opponent\u2026';
-        if (startBtn) startBtn.disabled = true;
-      }
+    if (!statusEl) return;
+    if (count >= 2) {
+      // Game is auto-starting; the GAME_STARTING event should arrive shortly.
+      statusEl.textContent = opponentName
+        ? `Opponent joined: ${opponentName} — starting game\u2026`
+        : 'Opponent joined — starting game\u2026';
     } else {
-      if (statusEl) {
-        statusEl.textContent = `Waiting for ${ownerNickname || 'owner'} to start the game\u2026`;
-      }
+      statusEl.textContent = 'Waiting for opponent\u2026';
     }
   }
 

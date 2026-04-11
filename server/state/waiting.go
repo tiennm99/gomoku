@@ -5,21 +5,21 @@ import (
 
 	"github.com/tiennm99/gomoku/server/consts"
 	"github.com/tiennm99/gomoku/server/lobby"
-	"github.com/tiennm99/gomoku/server/game"
 	"github.com/tiennm99/gomoku/server/pkg/log"
 	"github.com/tiennm99/gomoku/server/protocol"
 )
 
 // waitingState handles the pre-game lobby for PVP rooms.
 //
-// Owner path: loops on CmdCh accepting GameStartingRequest (only when
-// room.PlayerCount() == 2). On valid start, randomises colors, broadcasts
-// GameStartingResponse to both players, transitions to StateGamePvp.
+// Auto-start semantics: the game begins automatically as soon as a second
+// player joins — no explicit "Start Game" click. handleJoinRoom (on the
+// joiner's goroutine) does the color assignment + Playing-state flip +
+// GameStartingResponse broadcast + closes StartCh. Both the owner sitting
+// here and the joiner receive the broadcast; the owner wakes via StartCh
+// and the joiner transitions directly from home into gamePvpState.
 //
-// Joiner path: loops on CmdCh. Transitions to StateGamePvp when it receives
-// a GameStartingRequest (the owner's broadcast pushes it via the start channel).
-// The implementation uses a StartCh (chan struct{}) on the room so the joiner
-// can select on both CmdCh and the room's start signal without polling.
+// This state therefore has one job: wait for either StartCh (game starting)
+// or ClientExit (player leaves the room before the game begins).
 type waitingState struct{}
 
 func (*waitingState) Next(player *lobby.Player) (consts.StateID, error) {
@@ -29,95 +29,30 @@ func (*waitingState) Next(player *lobby.Player) (consts.StateID, error) {
 		return consts.StateHome, nil
 	}
 
-	isOwner := room.IsOwner(player.ID)
-	if isOwner {
-		return ownerWait(player, room)
-	}
-	return joinerWait(player, room)
-}
-
-// ownerWait loops until the owner triggers a valid GameStartingRequest or exits.
-func ownerWait(player *lobby.Player, room *lobby.Room) (consts.StateID, error) {
-	for {
-		req, ok := <-player.CmdCh
-		if !ok {
-			// WS closed — bail out of the state machine entirely.
-			leaveRoom(player, room)
-			return 0, ErrClientExit
-		}
-
-		switch req.Payload.(type) {
-		case *protocol.Request_GameStarting:
-			room.RLock()
-			count := room.PlayerCount()
-			room.RUnlock()
-
-			if count < 2 {
-				// Not enough players — reject and stay.
-				_ = player.Send(&protocol.Response{
-					Payload: &protocol.Response_RoomPlayFailNotFound{
-						RoomPlayFailNotFound: &protocol.RoomPlayFailNotFoundResponse{},
-					},
-				})
-				continue
-			}
-
-			// Randomise color assignment for fairness.
-			assignColors(room)
-
-			// Broadcast GameStartingResponse to all players in room.
-			resp := buildGameStartingResponse(room)
-			broadcastResponse(room, resp)
-
-			// Mark room as playing.
-			room.Lock()
-			room.Status = lobby.RoomStatusPlaying
-			room.CurrentTurn = game.Black
-			// Signal joiner via StartCh if present.
-			if room.StartCh != nil {
-				close(room.StartCh)
-				room.StartCh = nil
-			}
-			room.Unlock()
-
-			return consts.StateGamePvp, nil
-
-		case *protocol.Request_ClientExit:
-			leaveRoom(player, room)
-			return consts.StateHome, nil
-
-		default:
-			log.Errorf("[waiting/owner] player %d: unexpected %T, ignoring\n", player.ID, req.Payload)
-		}
-	}
-}
-
-// joinerWait blocks until the owner starts the game (via StartCh) or the joiner exits.
-func joinerWait(player *lobby.Player, room *lobby.Room) (consts.StateID, error) {
+	// Snapshot StartCh + Status. If the game has already started (joiner
+	// auto-start fired before this goroutine got scheduled) transition right
+	// away — no need to block on the now-closed channel.
 	room.RLock()
 	startCh := room.StartCh
+	status := room.Status
 	room.RUnlock()
+	if status == lobby.RoomStatusPlaying {
+		return consts.StateGamePvp, nil
+	}
+	if startCh == nil {
+		// Edge case: StartCh was cleared but status is still Waiting. Shouldn't
+		// normally happen; fall through to CmdCh-only loop via a never-closed
+		// placeholder so we can still handle ClientExit.
+		startCh = make(chan struct{})
+	}
 
 	for {
-		if startCh == nil {
-			// StartCh not set or already closed — check status.
-			room.RLock()
-			status := room.Status
-			room.RUnlock()
-			if status == lobby.RoomStatusPlaying {
-				return consts.StateGamePvp, nil
-			}
-			// Fall back to CmdCh-only select.
-			startCh = make(chan struct{}) // never closed; effectively disables the case
-		}
-
 		select {
 		case <-startCh:
-			// Owner started the game.
 			return consts.StateGamePvp, nil
 
-		case req, ok := <-player.CmdCh:
-			if !ok {
+		case req, reqOk := <-player.CmdCh:
+			if !reqOk {
 				// WS closed — bail out of the state machine entirely.
 				leaveRoom(player, room)
 				return 0, ErrClientExit
@@ -127,8 +62,7 @@ func joinerWait(player *lobby.Player, room *lobby.Room) (consts.StateID, error) 
 				leaveRoom(player, room)
 				return consts.StateHome, nil
 			default:
-				// Non-exit requests ignored in joiner waiting state.
-				log.Errorf("[waiting/joiner] player %d: unexpected %T, ignoring\n", player.ID, req.Payload)
+				log.Errorf("[waiting] player %d: unexpected %T, ignoring\n", player.ID, req.Payload)
 			}
 		}
 	}

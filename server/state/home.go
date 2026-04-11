@@ -156,9 +156,7 @@ func handleJoinRoom(player *lobby.Player, req *protocol.Request) (consts.StateID
 	room.RUnlock()
 
 	// Broadcast RoomJoinSuccessResponse to ALL players in the room (owner + joiner).
-	// The owner uses this to update the live waiting-room player count and enable
-	// the Start Game button; the joiner uses this to render their passive waiting view.
-	resp := &protocol.Response{
+	joinResp := &protocol.Response{
 		Payload: &protocol.Response_RoomJoinSuccess{
 			RoomJoinSuccess: &protocol.RoomJoinSuccessResponse{
 				ClientId:        int32(player.ID),
@@ -169,7 +167,30 @@ func handleJoinRoom(player *lobby.Player, req *protocol.Request) (consts.StateID
 			},
 		},
 	}
-	broadcastResponse(room, resp)
+	broadcastResponse(room, joinResp)
+
+	// Auto-start PVP as soon as the room is full. No "Start Game" click from
+	// the owner — the server just flips into Playing, assigns colors, and
+	// broadcasts GameStartingResponse. The owner's waitingState goroutine
+	// wakes via StartCh and transitions to gamePvpState in lockstep with
+	// this joiner's transition below.
+	if playerCount >= 2 {
+		assignColors(room)
+
+		room.Lock()
+		room.Status = lobby.RoomStatusPlaying
+		room.CurrentTurn = game.Black
+		if room.StartCh != nil {
+			close(room.StartCh)
+			room.StartCh = nil
+		}
+		room.Unlock()
+
+		startResp := buildGameStartingResponse(room)
+		broadcastResponse(room, startResp)
+
+		return consts.StateGamePvp, nil
+	}
 
 	return consts.StateWaiting, nil
 }
