@@ -10,6 +10,7 @@ import (
 	"github.com/tiennm99/gomoku/server/pkg/model"
 	"github.com/tiennm99/gomoku/server/pkg/network"
 	"github.com/tiennm99/gomoku/server/pkg/protocol"
+	newproto "github.com/tiennm99/gomoku/server/protocol"
 )
 
 // Role represents a player's role within a room.
@@ -43,9 +44,12 @@ type Player struct {
 	state  consts.StateID         // current state ID
 	online bool                   // false after disconnect
 
-	// New domain fields (phase-05 wires these):
-	// sendFn func(*Response) — set in phase-05, nil until then
-	// cmdCh  chan *Request   — set in phase-05, nil until then
+	// New network fields (wired in phase-05). Used by the new WS network layer.
+	// SendCh and CmdCh are nil until a new-protocol connection is established.
+	SendCh        chan *newproto.Response // buffered, drained by writer goroutine
+	CmdCh         chan *newproto.Request  // buffered 16, read by state machine (phase-06)
+	LastHeartbeat time.Time              // updated on every HeartbeatRequest
+	ClientVersion string                 // set by SetClientInfoRequest
 }
 
 // --- Network I/O helpers (legacy, used by state/*.go) ---
@@ -189,6 +193,21 @@ func (p *Player) Conn(conn *network.Conn) {
 
 func (p Player) Model() model.Player {
 	return model.Player{ID: p.ID, Name: p.Name}
+}
+
+// Send pushes a protobuf response onto the player's SendCh.
+// Non-blocking: drops the message and returns an error if the channel is full or nil.
+// Safe to call from any goroutine concurrently.
+func (p *Player) Send(resp *newproto.Response) error {
+	if p.SendCh == nil {
+		return nil
+	}
+	select {
+	case p.SendCh <- resp:
+		return nil
+	default:
+		return fmt.Errorf("player %d send channel full, dropping response", p.ID)
+	}
 }
 
 func (p Player) String() string {
