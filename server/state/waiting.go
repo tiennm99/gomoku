@@ -65,7 +65,7 @@ func ownerWait(player *database.Player, room *database.NewRoom) (consts.StateID,
 			assignColors(room)
 
 			// Broadcast GameStartingResponse to all players in room.
-			resp := buildGameStartingResponse(room, player)
+			resp := buildGameStartingResponse(room)
 			broadcastResponse(room, resp)
 
 			// Mark room as playing.
@@ -158,24 +158,28 @@ func assignColors(room *database.NewRoom) {
 }
 
 // leaveRoom removes player from their current room cleanly.
+// Notifies remaining players via ClientExitResponse.
 func leaveRoom(player *database.Player, room *database.NewRoom) {
+	roomID := room.ID
 	database.LeaveNewRoom(player)
-	// Notify remaining players.
+
 	room.RLock()
 	targets := make([]*database.Player, 0, len(room.Players))
 	for _, p := range room.Players {
 		targets = append(targets, p)
 	}
 	room.RUnlock()
-	for _, p := range targets {
-		_ = p.Send(&protocol.Response{
-			Payload: &protocol.Response_GameReady{
-				GameReady: &protocol.GameReadyResponse{
-					ClientNickname: player.Name,
-					Status:         "left",
-					ClientId:       int32(player.ID),
-				},
+
+	exitResp := &protocol.Response{
+		Payload: &protocol.Response_ClientExit{
+			ClientExit: &protocol.ClientExitResponse{
+				RoomId:             int32(roomID),
+				ExitClientId:       int32(player.ID),
+				ExitClientNickname: player.Name,
 			},
-		})
+		},
+	}
+	for _, p := range targets {
+		_ = p.Send(exitResp)
 	}
 }

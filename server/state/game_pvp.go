@@ -1,8 +1,6 @@
 package state
 
 import (
-	"sync"
-
 	"github.com/tiennm99/gomoku/server/consts"
 	"github.com/tiennm99/gomoku/server/database"
 	"github.com/tiennm99/gomoku/server/game"
@@ -76,8 +74,6 @@ func (*gamePvpState) Next(player *database.Player) (consts.StateID, error) {
 
 // signalGameOver closes room.GameOverCh exactly once so the other player goroutine
 // unblocks and transitions to StateGameOver.
-var gameOverOnce sync.Map // map[int64]*sync.Once keyed by roomID
-
 func signalGameOver(room *database.NewRoom) {
 	room.Lock()
 	ch := room.GameOverCh

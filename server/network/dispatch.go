@@ -39,7 +39,6 @@ func Dispatch(player *database.Player, req *protocol.Request) {
 		*protocol.Request_CreatePveRoom,
 		*protocol.Request_JoinRoom,
 		*protocol.Request_GameStarting,
-		*protocol.Request_GameReady,
 		*protocol.Request_GameMove,
 		*protocol.Request_GameReset,
 		*protocol.Request_WatchGame,

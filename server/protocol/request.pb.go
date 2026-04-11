@@ -34,7 +34,6 @@ type Request struct {
 	//	*Request_GetRooms
 	//	*Request_JoinRoom
 	//	*Request_GameStarting
-	//	*Request_GameReady
 	//	*Request_GameMove
 	//	*Request_GameReset
 	//	*Request_WatchGame
@@ -154,15 +153,6 @@ func (x *Request) GetGameStarting() *GameStartingRequest {
 	return nil
 }
 
-func (x *Request) GetGameReady() *GameReadyRequest {
-	if x != nil {
-		if x, ok := x.Payload.(*Request_GameReady); ok {
-			return x.GameReady
-		}
-	}
-	return nil
-}
-
 func (x *Request) GetGameMove() *GameMoveRequest {
 	if x != nil {
 		if x, ok := x.Payload.(*Request_GameMove); ok {
@@ -244,28 +234,24 @@ type Request_GameStarting struct {
 	GameStarting *GameStartingRequest `protobuf:"bytes,8,opt,name=game_starting,json=gameStarting,proto3,oneof"`
 }
 
-type Request_GameReady struct {
-	GameReady *GameReadyRequest `protobuf:"bytes,9,opt,name=game_ready,json=gameReady,proto3,oneof"`
-}
-
 type Request_GameMove struct {
-	GameMove *GameMoveRequest `protobuf:"bytes,10,opt,name=game_move,json=gameMove,proto3,oneof"`
+	GameMove *GameMoveRequest `protobuf:"bytes,9,opt,name=game_move,json=gameMove,proto3,oneof"`
 }
 
 type Request_GameReset struct {
-	GameReset *GameResetRequest `protobuf:"bytes,11,opt,name=game_reset,json=gameReset,proto3,oneof"`
+	GameReset *GameResetRequest `protobuf:"bytes,10,opt,name=game_reset,json=gameReset,proto3,oneof"`
 }
 
 type Request_WatchGame struct {
-	WatchGame *WatchGameRequest `protobuf:"bytes,12,opt,name=watch_game,json=watchGame,proto3,oneof"`
+	WatchGame *WatchGameRequest `protobuf:"bytes,11,opt,name=watch_game,json=watchGame,proto3,oneof"`
 }
 
 type Request_WatchGameExit struct {
-	WatchGameExit *WatchGameExitRequest `protobuf:"bytes,13,opt,name=watch_game_exit,json=watchGameExit,proto3,oneof"`
+	WatchGameExit *WatchGameExitRequest `protobuf:"bytes,12,opt,name=watch_game_exit,json=watchGameExit,proto3,oneof"`
 }
 
 type Request_ClientExit struct {
-	ClientExit *ClientExitRequest `protobuf:"bytes,14,opt,name=client_exit,json=clientExit,proto3,oneof"`
+	ClientExit *ClientExitRequest `protobuf:"bytes,13,opt,name=client_exit,json=clientExit,proto3,oneof"`
 }
 
 func (*Request_Heartbeat) isRequest_Payload() {}
@@ -283,8 +269,6 @@ func (*Request_GetRooms) isRequest_Payload() {}
 func (*Request_JoinRoom) isRequest_Payload() {}
 
 func (*Request_GameStarting) isRequest_Payload() {}
-
-func (*Request_GameReady) isRequest_Payload() {}
 
 func (*Request_GameMove) isRequest_Payload() {}
 
@@ -616,42 +600,6 @@ func (*GameStartingRequest) Descriptor() ([]byte, []int) {
 	return file_request_proto_rawDescGZIP(), []int{8}
 }
 
-type GameReadyRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GameReadyRequest) Reset() {
-	*x = GameReadyRequest{}
-	mi := &file_request_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GameReadyRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GameReadyRequest) ProtoMessage() {}
-
-func (x *GameReadyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_request_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GameReadyRequest.ProtoReflect.Descriptor instead.
-func (*GameReadyRequest) Descriptor() ([]byte, []int) {
-	return file_request_proto_rawDescGZIP(), []int{9}
-}
-
 type GameMoveRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Row           int32                  `protobuf:"varint,1,opt,name=row,proto3" json:"row,omitempty"`
@@ -662,7 +610,7 @@ type GameMoveRequest struct {
 
 func (x *GameMoveRequest) Reset() {
 	*x = GameMoveRequest{}
-	mi := &file_request_proto_msgTypes[10]
+	mi := &file_request_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -674,7 +622,7 @@ func (x *GameMoveRequest) String() string {
 func (*GameMoveRequest) ProtoMessage() {}
 
 func (x *GameMoveRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_request_proto_msgTypes[10]
+	mi := &file_request_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -687,7 +635,7 @@ func (x *GameMoveRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameMoveRequest.ProtoReflect.Descriptor instead.
 func (*GameMoveRequest) Descriptor() ([]byte, []int) {
-	return file_request_proto_rawDescGZIP(), []int{10}
+	return file_request_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GameMoveRequest) GetRow() int32 {
@@ -712,7 +660,7 @@ type GameResetRequest struct {
 
 func (x *GameResetRequest) Reset() {
 	*x = GameResetRequest{}
-	mi := &file_request_proto_msgTypes[11]
+	mi := &file_request_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -724,7 +672,7 @@ func (x *GameResetRequest) String() string {
 func (*GameResetRequest) ProtoMessage() {}
 
 func (x *GameResetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_request_proto_msgTypes[11]
+	mi := &file_request_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -737,7 +685,7 @@ func (x *GameResetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameResetRequest.ProtoReflect.Descriptor instead.
 func (*GameResetRequest) Descriptor() ([]byte, []int) {
-	return file_request_proto_rawDescGZIP(), []int{11}
+	return file_request_proto_rawDescGZIP(), []int{10}
 }
 
 type WatchGameRequest struct {
@@ -749,7 +697,7 @@ type WatchGameRequest struct {
 
 func (x *WatchGameRequest) Reset() {
 	*x = WatchGameRequest{}
-	mi := &file_request_proto_msgTypes[12]
+	mi := &file_request_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -761,7 +709,7 @@ func (x *WatchGameRequest) String() string {
 func (*WatchGameRequest) ProtoMessage() {}
 
 func (x *WatchGameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_request_proto_msgTypes[12]
+	mi := &file_request_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -774,7 +722,7 @@ func (x *WatchGameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchGameRequest.ProtoReflect.Descriptor instead.
 func (*WatchGameRequest) Descriptor() ([]byte, []int) {
-	return file_request_proto_rawDescGZIP(), []int{12}
+	return file_request_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *WatchGameRequest) GetRoomId() int32 {
@@ -792,7 +740,7 @@ type WatchGameExitRequest struct {
 
 func (x *WatchGameExitRequest) Reset() {
 	*x = WatchGameExitRequest{}
-	mi := &file_request_proto_msgTypes[13]
+	mi := &file_request_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -804,7 +752,7 @@ func (x *WatchGameExitRequest) String() string {
 func (*WatchGameExitRequest) ProtoMessage() {}
 
 func (x *WatchGameExitRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_request_proto_msgTypes[13]
+	mi := &file_request_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -817,7 +765,7 @@ func (x *WatchGameExitRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchGameExitRequest.ProtoReflect.Descriptor instead.
 func (*WatchGameExitRequest) Descriptor() ([]byte, []int) {
-	return file_request_proto_rawDescGZIP(), []int{13}
+	return file_request_proto_rawDescGZIP(), []int{12}
 }
 
 type ClientExitRequest struct {
@@ -828,7 +776,7 @@ type ClientExitRequest struct {
 
 func (x *ClientExitRequest) Reset() {
 	*x = ClientExitRequest{}
-	mi := &file_request_proto_msgTypes[14]
+	mi := &file_request_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -840,7 +788,7 @@ func (x *ClientExitRequest) String() string {
 func (*ClientExitRequest) ProtoMessage() {}
 
 func (x *ClientExitRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_request_proto_msgTypes[14]
+	mi := &file_request_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -853,14 +801,14 @@ func (x *ClientExitRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientExitRequest.ProtoReflect.Descriptor instead.
 func (*ClientExitRequest) Descriptor() ([]byte, []int) {
-	return file_request_proto_rawDescGZIP(), []int{14}
+	return file_request_proto_rawDescGZIP(), []int{13}
 }
 
 var File_request_proto protoreflect.FileDescriptor
 
 const file_request_proto_rawDesc = "" +
 	"\n" +
-	"\rrequest.proto\x12\x17com.miti99.gomoku.proto\"\xee\b\n" +
+	"\rrequest.proto\x12\x17com.miti99.gomoku.proto\"\xa2\b\n" +
 	"\aRequest\x12I\n" +
 	"\theartbeat\x18\x01 \x01(\v2).com.miti99.gomoku.proto.HeartbeatRequestH\x00R\theartbeat\x12P\n" +
 	"\fset_nickname\x18\x02 \x01(\v2+.com.miti99.gomoku.proto.SetNicknameRequestH\x00R\vsetNickname\x12W\n" +
@@ -870,17 +818,15 @@ const file_request_proto_rawDesc = "" +
 	"\x0fcreate_pve_room\x18\x05 \x01(\v2-.com.miti99.gomoku.proto.CreatePveRoomRequestH\x00R\rcreatePveRoom\x12G\n" +
 	"\tget_rooms\x18\x06 \x01(\v2(.com.miti99.gomoku.proto.GetRoomsRequestH\x00R\bgetRooms\x12G\n" +
 	"\tjoin_room\x18\a \x01(\v2(.com.miti99.gomoku.proto.JoinRoomRequestH\x00R\bjoinRoom\x12S\n" +
-	"\rgame_starting\x18\b \x01(\v2,.com.miti99.gomoku.proto.GameStartingRequestH\x00R\fgameStarting\x12J\n" +
+	"\rgame_starting\x18\b \x01(\v2,.com.miti99.gomoku.proto.GameStartingRequestH\x00R\fgameStarting\x12G\n" +
+	"\tgame_move\x18\t \x01(\v2(.com.miti99.gomoku.proto.GameMoveRequestH\x00R\bgameMove\x12J\n" +
 	"\n" +
-	"game_ready\x18\t \x01(\v2).com.miti99.gomoku.proto.GameReadyRequestH\x00R\tgameReady\x12G\n" +
-	"\tgame_move\x18\n" +
-	" \x01(\v2(.com.miti99.gomoku.proto.GameMoveRequestH\x00R\bgameMove\x12J\n" +
+	"game_reset\x18\n" +
+	" \x01(\v2).com.miti99.gomoku.proto.GameResetRequestH\x00R\tgameReset\x12J\n" +
 	"\n" +
-	"game_reset\x18\v \x01(\v2).com.miti99.gomoku.proto.GameResetRequestH\x00R\tgameReset\x12J\n" +
-	"\n" +
-	"watch_game\x18\f \x01(\v2).com.miti99.gomoku.proto.WatchGameRequestH\x00R\twatchGame\x12W\n" +
-	"\x0fwatch_game_exit\x18\r \x01(\v2-.com.miti99.gomoku.proto.WatchGameExitRequestH\x00R\rwatchGameExit\x12M\n" +
-	"\vclient_exit\x18\x0e \x01(\v2*.com.miti99.gomoku.proto.ClientExitRequestH\x00R\n" +
+	"watch_game\x18\v \x01(\v2).com.miti99.gomoku.proto.WatchGameRequestH\x00R\twatchGame\x12W\n" +
+	"\x0fwatch_game_exit\x18\f \x01(\v2-.com.miti99.gomoku.proto.WatchGameExitRequestH\x00R\rwatchGameExit\x12M\n" +
+	"\vclient_exit\x18\r \x01(\v2*.com.miti99.gomoku.proto.ClientExitRequestH\x00R\n" +
 	"clientExitB\t\n" +
 	"\apayload\"\x12\n" +
 	"\x10HeartbeatRequest\"0\n" +
@@ -896,8 +842,7 @@ const file_request_proto_rawDesc = "" +
 	"\x0fGetRoomsRequest\"*\n" +
 	"\x0fJoinRoomRequest\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\x05R\x06roomId\"\x15\n" +
-	"\x13GameStartingRequest\"\x12\n" +
-	"\x10GameReadyRequest\"5\n" +
+	"\x13GameStartingRequest\"5\n" +
 	"\x0fGameMoveRequest\x12\x10\n" +
 	"\x03row\x18\x01 \x01(\x05R\x03row\x12\x10\n" +
 	"\x03col\x18\x02 \x01(\x05R\x03col\"\x12\n" +
@@ -919,7 +864,7 @@ func file_request_proto_rawDescGZIP() []byte {
 	return file_request_proto_rawDescData
 }
 
-var file_request_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_request_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_request_proto_goTypes = []any{
 	(*Request)(nil),              // 0: com.miti99.gomoku.proto.Request
 	(*HeartbeatRequest)(nil),     // 1: com.miti99.gomoku.proto.HeartbeatRequest
@@ -930,12 +875,11 @@ var file_request_proto_goTypes = []any{
 	(*GetRoomsRequest)(nil),      // 6: com.miti99.gomoku.proto.GetRoomsRequest
 	(*JoinRoomRequest)(nil),      // 7: com.miti99.gomoku.proto.JoinRoomRequest
 	(*GameStartingRequest)(nil),  // 8: com.miti99.gomoku.proto.GameStartingRequest
-	(*GameReadyRequest)(nil),     // 9: com.miti99.gomoku.proto.GameReadyRequest
-	(*GameMoveRequest)(nil),      // 10: com.miti99.gomoku.proto.GameMoveRequest
-	(*GameResetRequest)(nil),     // 11: com.miti99.gomoku.proto.GameResetRequest
-	(*WatchGameRequest)(nil),     // 12: com.miti99.gomoku.proto.WatchGameRequest
-	(*WatchGameExitRequest)(nil), // 13: com.miti99.gomoku.proto.WatchGameExitRequest
-	(*ClientExitRequest)(nil),    // 14: com.miti99.gomoku.proto.ClientExitRequest
+	(*GameMoveRequest)(nil),      // 9: com.miti99.gomoku.proto.GameMoveRequest
+	(*GameResetRequest)(nil),     // 10: com.miti99.gomoku.proto.GameResetRequest
+	(*WatchGameRequest)(nil),     // 11: com.miti99.gomoku.proto.WatchGameRequest
+	(*WatchGameExitRequest)(nil), // 12: com.miti99.gomoku.proto.WatchGameExitRequest
+	(*ClientExitRequest)(nil),    // 13: com.miti99.gomoku.proto.ClientExitRequest
 }
 var file_request_proto_depIdxs = []int32{
 	1,  // 0: com.miti99.gomoku.proto.Request.heartbeat:type_name -> com.miti99.gomoku.proto.HeartbeatRequest
@@ -946,17 +890,16 @@ var file_request_proto_depIdxs = []int32{
 	6,  // 5: com.miti99.gomoku.proto.Request.get_rooms:type_name -> com.miti99.gomoku.proto.GetRoomsRequest
 	7,  // 6: com.miti99.gomoku.proto.Request.join_room:type_name -> com.miti99.gomoku.proto.JoinRoomRequest
 	8,  // 7: com.miti99.gomoku.proto.Request.game_starting:type_name -> com.miti99.gomoku.proto.GameStartingRequest
-	9,  // 8: com.miti99.gomoku.proto.Request.game_ready:type_name -> com.miti99.gomoku.proto.GameReadyRequest
-	10, // 9: com.miti99.gomoku.proto.Request.game_move:type_name -> com.miti99.gomoku.proto.GameMoveRequest
-	11, // 10: com.miti99.gomoku.proto.Request.game_reset:type_name -> com.miti99.gomoku.proto.GameResetRequest
-	12, // 11: com.miti99.gomoku.proto.Request.watch_game:type_name -> com.miti99.gomoku.proto.WatchGameRequest
-	13, // 12: com.miti99.gomoku.proto.Request.watch_game_exit:type_name -> com.miti99.gomoku.proto.WatchGameExitRequest
-	14, // 13: com.miti99.gomoku.proto.Request.client_exit:type_name -> com.miti99.gomoku.proto.ClientExitRequest
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	9,  // 8: com.miti99.gomoku.proto.Request.game_move:type_name -> com.miti99.gomoku.proto.GameMoveRequest
+	10, // 9: com.miti99.gomoku.proto.Request.game_reset:type_name -> com.miti99.gomoku.proto.GameResetRequest
+	11, // 10: com.miti99.gomoku.proto.Request.watch_game:type_name -> com.miti99.gomoku.proto.WatchGameRequest
+	12, // 11: com.miti99.gomoku.proto.Request.watch_game_exit:type_name -> com.miti99.gomoku.proto.WatchGameExitRequest
+	13, // 12: com.miti99.gomoku.proto.Request.client_exit:type_name -> com.miti99.gomoku.proto.ClientExitRequest
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_request_proto_init() }
@@ -973,7 +916,6 @@ func file_request_proto_init() {
 		(*Request_GetRooms)(nil),
 		(*Request_JoinRoom)(nil),
 		(*Request_GameStarting)(nil),
-		(*Request_GameReady)(nil),
 		(*Request_GameMove)(nil),
 		(*Request_GameReset)(nil),
 		(*Request_WatchGame)(nil),
@@ -986,7 +928,7 @@ func file_request_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_request_proto_rawDesc), len(file_request_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -30,7 +30,6 @@ const RESPONSE_CASE_TO_CLIENT_CODE = Object.freeze({
   roomJoinFailNotFound: ClientEventCode.ROOM_JOIN_FAIL_INEXIST,
   roomPlayFailNotFound: ClientEventCode.ROOM_PLAY_FAIL_INEXIST,
   gameStarting: ClientEventCode.GAME_STARTING,
-  gameReady: ClientEventCode.GAME_READY,
   gameMoveSuccess: ClientEventCode.GAME_MOVE_SUCCESS,
   gameMoveInvalid: ClientEventCode.GAME_MOVE_INVALID,
   gameMoveOccupied: ClientEventCode.GAME_MOVE_OCCUPIED,
@@ -38,10 +37,8 @@ const RESPONSE_CASE_TO_CLIENT_CODE = Object.freeze({
   gameMoveNotYourTurn: ClientEventCode.GAME_MOVE_NOT_YOUR_TURN,
   gameOver: ClientEventCode.GAME_OVER,
   pveDifficultyNotSupport: ClientEventCode.PVE_DIFFICULTY_NOT_SUPPORT,
-  // Renamed from caro's GAME_WATCH_SUCCESSFUL — matches proto oneof `watchGameSuccess`
   watchGameSuccess: ClientEventCode.WATCH_GAME_SUCCESS,
   clientExit: ClientEventCode.CLIENT_EXIT,
-  // Gomoku-specific: proto field 21
   spectatorCannotAct: ClientEventCode.SPECTATOR_CANNOT_ACT,
 });
 
@@ -116,9 +113,8 @@ class ConnectionService {
   sendCreatePveRoom(difficulty) { this._sendRequest({ createPveRoom: { difficulty } }); }
   sendGetRooms() { this._sendRequest({ getRooms: {} }); }
   sendJoinRoom(roomId) { this._sendRequest({ joinRoom: { roomId } }); }
-  /** Owner-only: trigger explicit PVP game start (non-caro addition for phase-10 UI). */
+  /** Owner-only: trigger explicit PVP game start. */
   sendGameStarting() { this._sendRequest({ gameStarting: {} }); }
-  sendGameReady() { this._sendRequest({ gameReady: {} }); }
   sendGameMove(row, col) { this._sendRequest({ gameMove: { row, col } }); }
   sendGameReset() { this._sendRequest({ gameReset: {} }); }
   sendWatchGame(roomId) { this._sendRequest({ watchGame: { roomId } }); }

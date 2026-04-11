@@ -59,7 +59,7 @@ func handleCreateRoom(player *database.Player) (consts.StateID, error) {
 			RoomCreateSuccess: &protocol.RoomCreateSuccessResponse{
 				Id:        int32(room.ID),
 				RoomOwner: player.Name,
-				RoomType:  "PVP",
+				RoomType:  protocol.RoomType_PVP,
 			},
 		},
 	})
@@ -101,7 +101,7 @@ func handleCreatePveRoom(player *database.Player, req *protocol.Request) (consts
 	room.Unlock()
 
 	// Send GameStartingResponse to the human player.
-	resp := buildGameStartingResponse(room, player)
+	resp := buildGameStartingResponse(room)
 	_ = player.Send(resp)
 
 	return consts.StateGamePve, nil
@@ -148,7 +148,10 @@ func handleJoinRoom(player *database.Player, req *protocol.Request) (consts.Stat
 	owner := room.OwnerNickname
 	room.RUnlock()
 
-	_ = player.Send(&protocol.Response{
+	// Broadcast RoomJoinSuccessResponse to ALL players in the room (owner + joiner).
+	// The owner uses this to update the live waiting-room player count and enable
+	// the Start Game button; the joiner uses this to render their passive waiting view.
+	resp := &protocol.Response{
 		Payload: &protocol.Response_RoomJoinSuccess{
 			RoomJoinSuccess: &protocol.RoomJoinSuccessResponse{
 				ClientId:        int32(player.ID),
@@ -158,10 +161,8 @@ func handleJoinRoom(player *database.Player, req *protocol.Request) (consts.Stat
 				RoomClientCount: int32(playerCount),
 			},
 		},
-	})
-
-	// Notify existing room members that someone joined.
-	broadcastJoined(room, player)
+	}
+	broadcastResponse(room, resp)
 
 	return consts.StateWaiting, nil
 }
@@ -192,26 +193,3 @@ func handleWatchGame(player *database.Player, req *protocol.Request) (consts.Sta
 	return consts.StateWatching, nil
 }
 
-// broadcastJoined notifies existing players in the room that joiner has arrived.
-func broadcastJoined(room *database.NewRoom, joiner *database.Player) {
-	room.RLock()
-	targets := make([]*database.Player, 0, len(room.Players))
-	for id, p := range room.Players {
-		if id != joiner.ID {
-			targets = append(targets, p)
-		}
-	}
-	room.RUnlock()
-
-	for _, p := range targets {
-		_ = p.Send(&protocol.Response{
-			Payload: &protocol.Response_GameReady{
-				GameReady: &protocol.GameReadyResponse{
-					ClientNickname: joiner.Name,
-					Status:         "joined",
-					ClientId:       int32(joiner.ID),
-				},
-			},
-		})
-	}
-}

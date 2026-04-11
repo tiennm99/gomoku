@@ -57,7 +57,6 @@ export const com = $root.com = (() => {
                      * @property {com.miti99.gomoku.proto.IGetRoomsRequest|null} [getRooms] Request getRooms
                      * @property {com.miti99.gomoku.proto.IJoinRoomRequest|null} [joinRoom] Request joinRoom
                      * @property {com.miti99.gomoku.proto.IGameStartingRequest|null} [gameStarting] Request gameStarting
-                     * @property {com.miti99.gomoku.proto.IGameReadyRequest|null} [gameReady] Request gameReady
                      * @property {com.miti99.gomoku.proto.IGameMoveRequest|null} [gameMove] Request gameMove
                      * @property {com.miti99.gomoku.proto.IGameResetRequest|null} [gameReset] Request gameReset
                      * @property {com.miti99.gomoku.proto.IWatchGameRequest|null} [watchGame] Request watchGame
@@ -145,14 +144,6 @@ export const com = $root.com = (() => {
                     Request.prototype.gameStarting = null;
 
                     /**
-                     * Request gameReady.
-                     * @member {com.miti99.gomoku.proto.IGameReadyRequest|null|undefined} gameReady
-                     * @memberof com.miti99.gomoku.proto.Request
-                     * @instance
-                     */
-                    Request.prototype.gameReady = null;
-
-                    /**
                      * Request gameMove.
                      * @member {com.miti99.gomoku.proto.IGameMoveRequest|null|undefined} gameMove
                      * @memberof com.miti99.gomoku.proto.Request
@@ -197,12 +188,12 @@ export const com = $root.com = (() => {
 
                     /**
                      * Request payload.
-                     * @member {"heartbeat"|"setNickname"|"setClientInfo"|"createRoom"|"createPveRoom"|"getRooms"|"joinRoom"|"gameStarting"|"gameReady"|"gameMove"|"gameReset"|"watchGame"|"watchGameExit"|"clientExit"|undefined} payload
+                     * @member {"heartbeat"|"setNickname"|"setClientInfo"|"createRoom"|"createPveRoom"|"getRooms"|"joinRoom"|"gameStarting"|"gameMove"|"gameReset"|"watchGame"|"watchGameExit"|"clientExit"|undefined} payload
                      * @memberof com.miti99.gomoku.proto.Request
                      * @instance
                      */
                     Object.defineProperty(Request.prototype, "payload", {
-                        get: $util.oneOfGetter($oneOfFields = ["heartbeat", "setNickname", "setClientInfo", "createRoom", "createPveRoom", "getRooms", "joinRoom", "gameStarting", "gameReady", "gameMove", "gameReset", "watchGame", "watchGameExit", "clientExit"]),
+                        get: $util.oneOfGetter($oneOfFields = ["heartbeat", "setNickname", "setClientInfo", "createRoom", "createPveRoom", "getRooms", "joinRoom", "gameStarting", "gameMove", "gameReset", "watchGame", "watchGameExit", "clientExit"]),
                         set: $util.oneOfSetter($oneOfFields)
                     });
 
@@ -246,18 +237,16 @@ export const com = $root.com = (() => {
                             $root.com.miti99.gomoku.proto.JoinRoomRequest.encode(message.joinRoom, writer.uint32(/* id 7, wireType 2 =*/58).fork()).ldelim();
                         if (message.gameStarting != null && Object.hasOwnProperty.call(message, "gameStarting"))
                             $root.com.miti99.gomoku.proto.GameStartingRequest.encode(message.gameStarting, writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
-                        if (message.gameReady != null && Object.hasOwnProperty.call(message, "gameReady"))
-                            $root.com.miti99.gomoku.proto.GameReadyRequest.encode(message.gameReady, writer.uint32(/* id 9, wireType 2 =*/74).fork()).ldelim();
                         if (message.gameMove != null && Object.hasOwnProperty.call(message, "gameMove"))
-                            $root.com.miti99.gomoku.proto.GameMoveRequest.encode(message.gameMove, writer.uint32(/* id 10, wireType 2 =*/82).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.GameMoveRequest.encode(message.gameMove, writer.uint32(/* id 9, wireType 2 =*/74).fork()).ldelim();
                         if (message.gameReset != null && Object.hasOwnProperty.call(message, "gameReset"))
-                            $root.com.miti99.gomoku.proto.GameResetRequest.encode(message.gameReset, writer.uint32(/* id 11, wireType 2 =*/90).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.GameResetRequest.encode(message.gameReset, writer.uint32(/* id 10, wireType 2 =*/82).fork()).ldelim();
                         if (message.watchGame != null && Object.hasOwnProperty.call(message, "watchGame"))
-                            $root.com.miti99.gomoku.proto.WatchGameRequest.encode(message.watchGame, writer.uint32(/* id 12, wireType 2 =*/98).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.WatchGameRequest.encode(message.watchGame, writer.uint32(/* id 11, wireType 2 =*/90).fork()).ldelim();
                         if (message.watchGameExit != null && Object.hasOwnProperty.call(message, "watchGameExit"))
-                            $root.com.miti99.gomoku.proto.WatchGameExitRequest.encode(message.watchGameExit, writer.uint32(/* id 13, wireType 2 =*/106).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.WatchGameExitRequest.encode(message.watchGameExit, writer.uint32(/* id 12, wireType 2 =*/98).fork()).ldelim();
                         if (message.clientExit != null && Object.hasOwnProperty.call(message, "clientExit"))
-                            $root.com.miti99.gomoku.proto.ClientExitRequest.encode(message.clientExit, writer.uint32(/* id 14, wireType 2 =*/114).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.ClientExitRequest.encode(message.clientExit, writer.uint32(/* id 13, wireType 2 =*/106).fork()).ldelim();
                         return writer;
                     };
 
@@ -327,26 +316,22 @@ export const com = $root.com = (() => {
                                     break;
                                 }
                             case 9: {
-                                    message.gameReady = $root.com.miti99.gomoku.proto.GameReadyRequest.decode(reader, reader.uint32());
-                                    break;
-                                }
-                            case 10: {
                                     message.gameMove = $root.com.miti99.gomoku.proto.GameMoveRequest.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 11: {
+                            case 10: {
                                     message.gameReset = $root.com.miti99.gomoku.proto.GameResetRequest.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 12: {
+                            case 11: {
                                     message.watchGame = $root.com.miti99.gomoku.proto.WatchGameRequest.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 13: {
+                            case 12: {
                                     message.watchGameExit = $root.com.miti99.gomoku.proto.WatchGameExitRequest.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 14: {
+                            case 13: {
                                     message.clientExit = $root.com.miti99.gomoku.proto.ClientExitRequest.decode(reader, reader.uint32());
                                     break;
                                 }
@@ -464,16 +449,6 @@ export const com = $root.com = (() => {
                                     return "gameStarting." + error;
                             }
                         }
-                        if (message.gameReady != null && message.hasOwnProperty("gameReady")) {
-                            if (properties.payload === 1)
-                                return "payload: multiple values";
-                            properties.payload = 1;
-                            {
-                                let error = $root.com.miti99.gomoku.proto.GameReadyRequest.verify(message.gameReady);
-                                if (error)
-                                    return "gameReady." + error;
-                            }
-                        }
                         if (message.gameMove != null && message.hasOwnProperty("gameMove")) {
                             if (properties.payload === 1)
                                 return "payload: multiple values";
@@ -579,11 +554,6 @@ export const com = $root.com = (() => {
                                 throw TypeError(".com.miti99.gomoku.proto.Request.gameStarting: object expected");
                             message.gameStarting = $root.com.miti99.gomoku.proto.GameStartingRequest.fromObject(object.gameStarting);
                         }
-                        if (object.gameReady != null) {
-                            if (typeof object.gameReady !== "object")
-                                throw TypeError(".com.miti99.gomoku.proto.Request.gameReady: object expected");
-                            message.gameReady = $root.com.miti99.gomoku.proto.GameReadyRequest.fromObject(object.gameReady);
-                        }
                         if (object.gameMove != null) {
                             if (typeof object.gameMove !== "object")
                                 throw TypeError(".com.miti99.gomoku.proto.Request.gameMove: object expected");
@@ -664,11 +634,6 @@ export const com = $root.com = (() => {
                             object.gameStarting = $root.com.miti99.gomoku.proto.GameStartingRequest.toObject(message.gameStarting, options);
                             if (options.oneofs)
                                 object.payload = "gameStarting";
-                        }
-                        if (message.gameReady != null && message.hasOwnProperty("gameReady")) {
-                            object.gameReady = $root.com.miti99.gomoku.proto.GameReadyRequest.toObject(message.gameReady, options);
-                            if (options.oneofs)
-                                object.payload = "gameReady";
                         }
                         if (message.gameMove != null && message.hasOwnProperty("gameMove")) {
                             object.gameMove = $root.com.miti99.gomoku.proto.GameMoveRequest.toObject(message.gameMove, options);
@@ -2255,183 +2220,6 @@ export const com = $root.com = (() => {
                     return GameStartingRequest;
                 })();
 
-                proto.GameReadyRequest = (function() {
-
-                    /**
-                     * Properties of a GameReadyRequest.
-                     * @memberof com.miti99.gomoku.proto
-                     * @interface IGameReadyRequest
-                     */
-
-                    /**
-                     * Constructs a new GameReadyRequest.
-                     * @memberof com.miti99.gomoku.proto
-                     * @classdesc Represents a GameReadyRequest.
-                     * @implements IGameReadyRequest
-                     * @constructor
-                     * @param {com.miti99.gomoku.proto.IGameReadyRequest=} [properties] Properties to set
-                     */
-                    function GameReadyRequest(properties) {
-                        if (properties)
-                            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                                if (properties[keys[i]] != null)
-                                    this[keys[i]] = properties[keys[i]];
-                    }
-
-                    /**
-                     * Creates a new GameReadyRequest instance using the specified properties.
-                     * @function create
-                     * @memberof com.miti99.gomoku.proto.GameReadyRequest
-                     * @static
-                     * @param {com.miti99.gomoku.proto.IGameReadyRequest=} [properties] Properties to set
-                     * @returns {com.miti99.gomoku.proto.GameReadyRequest} GameReadyRequest instance
-                     */
-                    GameReadyRequest.create = function create(properties) {
-                        return new GameReadyRequest(properties);
-                    };
-
-                    /**
-                     * Encodes the specified GameReadyRequest message. Does not implicitly {@link com.miti99.gomoku.proto.GameReadyRequest.verify|verify} messages.
-                     * @function encode
-                     * @memberof com.miti99.gomoku.proto.GameReadyRequest
-                     * @static
-                     * @param {com.miti99.gomoku.proto.IGameReadyRequest} message GameReadyRequest message or plain object to encode
-                     * @param {$protobuf.Writer} [writer] Writer to encode to
-                     * @returns {$protobuf.Writer} Writer
-                     */
-                    GameReadyRequest.encode = function encode(message, writer) {
-                        if (!writer)
-                            writer = $Writer.create();
-                        return writer;
-                    };
-
-                    /**
-                     * Encodes the specified GameReadyRequest message, length delimited. Does not implicitly {@link com.miti99.gomoku.proto.GameReadyRequest.verify|verify} messages.
-                     * @function encodeDelimited
-                     * @memberof com.miti99.gomoku.proto.GameReadyRequest
-                     * @static
-                     * @param {com.miti99.gomoku.proto.IGameReadyRequest} message GameReadyRequest message or plain object to encode
-                     * @param {$protobuf.Writer} [writer] Writer to encode to
-                     * @returns {$protobuf.Writer} Writer
-                     */
-                    GameReadyRequest.encodeDelimited = function encodeDelimited(message, writer) {
-                        return this.encode(message, writer).ldelim();
-                    };
-
-                    /**
-                     * Decodes a GameReadyRequest message from the specified reader or buffer.
-                     * @function decode
-                     * @memberof com.miti99.gomoku.proto.GameReadyRequest
-                     * @static
-                     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-                     * @param {number} [length] Message length if known beforehand
-                     * @returns {com.miti99.gomoku.proto.GameReadyRequest} GameReadyRequest
-                     * @throws {Error} If the payload is not a reader or valid buffer
-                     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-                     */
-                    GameReadyRequest.decode = function decode(reader, length, error) {
-                        if (!(reader instanceof $Reader))
-                            reader = $Reader.create(reader);
-                        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.miti99.gomoku.proto.GameReadyRequest();
-                        while (reader.pos < end) {
-                            let tag = reader.uint32();
-                            if (tag === error)
-                                break;
-                            switch (tag >>> 3) {
-                            default:
-                                reader.skipType(tag & 7);
-                                break;
-                            }
-                        }
-                        return message;
-                    };
-
-                    /**
-                     * Decodes a GameReadyRequest message from the specified reader or buffer, length delimited.
-                     * @function decodeDelimited
-                     * @memberof com.miti99.gomoku.proto.GameReadyRequest
-                     * @static
-                     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-                     * @returns {com.miti99.gomoku.proto.GameReadyRequest} GameReadyRequest
-                     * @throws {Error} If the payload is not a reader or valid buffer
-                     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-                     */
-                    GameReadyRequest.decodeDelimited = function decodeDelimited(reader) {
-                        if (!(reader instanceof $Reader))
-                            reader = new $Reader(reader);
-                        return this.decode(reader, reader.uint32());
-                    };
-
-                    /**
-                     * Verifies a GameReadyRequest message.
-                     * @function verify
-                     * @memberof com.miti99.gomoku.proto.GameReadyRequest
-                     * @static
-                     * @param {Object.<string,*>} message Plain object to verify
-                     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-                     */
-                    GameReadyRequest.verify = function verify(message) {
-                        if (typeof message !== "object" || message === null)
-                            return "object expected";
-                        return null;
-                    };
-
-                    /**
-                     * Creates a GameReadyRequest message from a plain object. Also converts values to their respective internal types.
-                     * @function fromObject
-                     * @memberof com.miti99.gomoku.proto.GameReadyRequest
-                     * @static
-                     * @param {Object.<string,*>} object Plain object
-                     * @returns {com.miti99.gomoku.proto.GameReadyRequest} GameReadyRequest
-                     */
-                    GameReadyRequest.fromObject = function fromObject(object) {
-                        if (object instanceof $root.com.miti99.gomoku.proto.GameReadyRequest)
-                            return object;
-                        return new $root.com.miti99.gomoku.proto.GameReadyRequest();
-                    };
-
-                    /**
-                     * Creates a plain object from a GameReadyRequest message. Also converts values to other types if specified.
-                     * @function toObject
-                     * @memberof com.miti99.gomoku.proto.GameReadyRequest
-                     * @static
-                     * @param {com.miti99.gomoku.proto.GameReadyRequest} message GameReadyRequest
-                     * @param {$protobuf.IConversionOptions} [options] Conversion options
-                     * @returns {Object.<string,*>} Plain object
-                     */
-                    GameReadyRequest.toObject = function toObject() {
-                        return {};
-                    };
-
-                    /**
-                     * Converts this GameReadyRequest to JSON.
-                     * @function toJSON
-                     * @memberof com.miti99.gomoku.proto.GameReadyRequest
-                     * @instance
-                     * @returns {Object.<string,*>} JSON object
-                     */
-                    GameReadyRequest.prototype.toJSON = function toJSON() {
-                        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-                    };
-
-                    /**
-                     * Gets the default type url for GameReadyRequest
-                     * @function getTypeUrl
-                     * @memberof com.miti99.gomoku.proto.GameReadyRequest
-                     * @static
-                     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-                     * @returns {string} The default type url
-                     */
-                    GameReadyRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                        if (typeUrlPrefix === undefined) {
-                            typeUrlPrefix = "type.googleapis.com";
-                        }
-                        return typeUrlPrefix + "/com.miti99.gomoku.proto.GameReadyRequest";
-                    };
-
-                    return GameReadyRequest;
-                })();
-
                 proto.GameMoveRequest = (function() {
 
                     /**
@@ -3397,6 +3185,74 @@ export const com = $root.com = (() => {
                     return ClientExitRequest;
                 })();
 
+                /**
+                 * Piece enum.
+                 * @name com.miti99.gomoku.proto.Piece
+                 * @enum {number}
+                 * @property {number} PIECE_UNSPECIFIED=0 PIECE_UNSPECIFIED value
+                 * @property {number} BLACK=1 BLACK value
+                 * @property {number} WHITE=2 WHITE value
+                 */
+                proto.Piece = (function() {
+                    const valuesById = {}, values = Object.create(valuesById);
+                    values[valuesById[0] = "PIECE_UNSPECIFIED"] = 0;
+                    values[valuesById[1] = "BLACK"] = 1;
+                    values[valuesById[2] = "WHITE"] = 2;
+                    return values;
+                })();
+
+                /**
+                 * GameResult enum.
+                 * @name com.miti99.gomoku.proto.GameResult
+                 * @enum {number}
+                 * @property {number} GAME_RESULT_UNSPECIFIED=0 GAME_RESULT_UNSPECIFIED value
+                 * @property {number} BLACK_WIN=1 BLACK_WIN value
+                 * @property {number} WHITE_WIN=2 WHITE_WIN value
+                 * @property {number} DRAW=3 DRAW value
+                 */
+                proto.GameResult = (function() {
+                    const valuesById = {}, values = Object.create(valuesById);
+                    values[valuesById[0] = "GAME_RESULT_UNSPECIFIED"] = 0;
+                    values[valuesById[1] = "BLACK_WIN"] = 1;
+                    values[valuesById[2] = "WHITE_WIN"] = 2;
+                    values[valuesById[3] = "DRAW"] = 3;
+                    return values;
+                })();
+
+                /**
+                 * RoomType enum.
+                 * @name com.miti99.gomoku.proto.RoomType
+                 * @enum {number}
+                 * @property {number} ROOM_TYPE_UNSPECIFIED=0 ROOM_TYPE_UNSPECIFIED value
+                 * @property {number} PVP=1 PVP value
+                 * @property {number} PVE=2 PVE value
+                 */
+                proto.RoomType = (function() {
+                    const valuesById = {}, values = Object.create(valuesById);
+                    values[valuesById[0] = "ROOM_TYPE_UNSPECIFIED"] = 0;
+                    values[valuesById[1] = "PVP"] = 1;
+                    values[valuesById[2] = "PVE"] = 2;
+                    return values;
+                })();
+
+                /**
+                 * RoomStatus enum.
+                 * @name com.miti99.gomoku.proto.RoomStatus
+                 * @enum {number}
+                 * @property {number} ROOM_STATUS_UNSPECIFIED=0 ROOM_STATUS_UNSPECIFIED value
+                 * @property {number} WAITING=1 WAITING value
+                 * @property {number} PLAYING=2 PLAYING value
+                 * @property {number} FINISHED=3 FINISHED value
+                 */
+                proto.RoomStatus = (function() {
+                    const valuesById = {}, values = Object.create(valuesById);
+                    values[valuesById[0] = "ROOM_STATUS_UNSPECIFIED"] = 0;
+                    values[valuesById[1] = "WAITING"] = 1;
+                    values[valuesById[2] = "PLAYING"] = 2;
+                    values[valuesById[3] = "FINISHED"] = 3;
+                    return values;
+                })();
+
                 proto.Response = (function() {
 
                     /**
@@ -3413,7 +3269,6 @@ export const com = $root.com = (() => {
                      * @property {com.miti99.gomoku.proto.IRoomJoinFailNotFoundResponse|null} [roomJoinFailNotFound] Response roomJoinFailNotFound
                      * @property {com.miti99.gomoku.proto.IRoomPlayFailNotFoundResponse|null} [roomPlayFailNotFound] Response roomPlayFailNotFound
                      * @property {com.miti99.gomoku.proto.IGameStartingResponse|null} [gameStarting] Response gameStarting
-                     * @property {com.miti99.gomoku.proto.IGameReadyResponse|null} [gameReady] Response gameReady
                      * @property {com.miti99.gomoku.proto.IGameMoveSuccessResponse|null} [gameMoveSuccess] Response gameMoveSuccess
                      * @property {com.miti99.gomoku.proto.IGameMoveInvalidResponse|null} [gameMoveInvalid] Response gameMoveInvalid
                      * @property {com.miti99.gomoku.proto.IGameMoveOccupiedResponse|null} [gameMoveOccupied] Response gameMoveOccupied
@@ -3522,14 +3377,6 @@ export const com = $root.com = (() => {
                     Response.prototype.gameStarting = null;
 
                     /**
-                     * Response gameReady.
-                     * @member {com.miti99.gomoku.proto.IGameReadyResponse|null|undefined} gameReady
-                     * @memberof com.miti99.gomoku.proto.Response
-                     * @instance
-                     */
-                    Response.prototype.gameReady = null;
-
-                    /**
                      * Response gameMoveSuccess.
                      * @member {com.miti99.gomoku.proto.IGameMoveSuccessResponse|null|undefined} gameMoveSuccess
                      * @memberof com.miti99.gomoku.proto.Response
@@ -3614,12 +3461,12 @@ export const com = $root.com = (() => {
 
                     /**
                      * Response payload.
-                     * @member {"clientConnect"|"nicknameSet"|"showOptions"|"showRooms"|"roomCreateSuccess"|"roomJoinSuccess"|"roomJoinFailFull"|"roomJoinFailNotFound"|"roomPlayFailNotFound"|"gameStarting"|"gameReady"|"gameMoveSuccess"|"gameMoveInvalid"|"gameMoveOccupied"|"gameMoveOutOfBounds"|"gameMoveNotYourTurn"|"gameOver"|"pveDifficultyNotSupport"|"watchGameSuccess"|"clientExit"|"spectatorCannotAct"|undefined} payload
+                     * @member {"clientConnect"|"nicknameSet"|"showOptions"|"showRooms"|"roomCreateSuccess"|"roomJoinSuccess"|"roomJoinFailFull"|"roomJoinFailNotFound"|"roomPlayFailNotFound"|"gameStarting"|"gameMoveSuccess"|"gameMoveInvalid"|"gameMoveOccupied"|"gameMoveOutOfBounds"|"gameMoveNotYourTurn"|"gameOver"|"pveDifficultyNotSupport"|"watchGameSuccess"|"clientExit"|"spectatorCannotAct"|undefined} payload
                      * @memberof com.miti99.gomoku.proto.Response
                      * @instance
                      */
                     Object.defineProperty(Response.prototype, "payload", {
-                        get: $util.oneOfGetter($oneOfFields = ["clientConnect", "nicknameSet", "showOptions", "showRooms", "roomCreateSuccess", "roomJoinSuccess", "roomJoinFailFull", "roomJoinFailNotFound", "roomPlayFailNotFound", "gameStarting", "gameReady", "gameMoveSuccess", "gameMoveInvalid", "gameMoveOccupied", "gameMoveOutOfBounds", "gameMoveNotYourTurn", "gameOver", "pveDifficultyNotSupport", "watchGameSuccess", "clientExit", "spectatorCannotAct"]),
+                        get: $util.oneOfGetter($oneOfFields = ["clientConnect", "nicknameSet", "showOptions", "showRooms", "roomCreateSuccess", "roomJoinSuccess", "roomJoinFailFull", "roomJoinFailNotFound", "roomPlayFailNotFound", "gameStarting", "gameMoveSuccess", "gameMoveInvalid", "gameMoveOccupied", "gameMoveOutOfBounds", "gameMoveNotYourTurn", "gameOver", "pveDifficultyNotSupport", "watchGameSuccess", "clientExit", "spectatorCannotAct"]),
                         set: $util.oneOfSetter($oneOfFields)
                     });
 
@@ -3667,28 +3514,26 @@ export const com = $root.com = (() => {
                             $root.com.miti99.gomoku.proto.RoomPlayFailNotFoundResponse.encode(message.roomPlayFailNotFound, writer.uint32(/* id 9, wireType 2 =*/74).fork()).ldelim();
                         if (message.gameStarting != null && Object.hasOwnProperty.call(message, "gameStarting"))
                             $root.com.miti99.gomoku.proto.GameStartingResponse.encode(message.gameStarting, writer.uint32(/* id 10, wireType 2 =*/82).fork()).ldelim();
-                        if (message.gameReady != null && Object.hasOwnProperty.call(message, "gameReady"))
-                            $root.com.miti99.gomoku.proto.GameReadyResponse.encode(message.gameReady, writer.uint32(/* id 11, wireType 2 =*/90).fork()).ldelim();
                         if (message.gameMoveSuccess != null && Object.hasOwnProperty.call(message, "gameMoveSuccess"))
-                            $root.com.miti99.gomoku.proto.GameMoveSuccessResponse.encode(message.gameMoveSuccess, writer.uint32(/* id 12, wireType 2 =*/98).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.GameMoveSuccessResponse.encode(message.gameMoveSuccess, writer.uint32(/* id 11, wireType 2 =*/90).fork()).ldelim();
                         if (message.gameMoveInvalid != null && Object.hasOwnProperty.call(message, "gameMoveInvalid"))
-                            $root.com.miti99.gomoku.proto.GameMoveInvalidResponse.encode(message.gameMoveInvalid, writer.uint32(/* id 13, wireType 2 =*/106).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.GameMoveInvalidResponse.encode(message.gameMoveInvalid, writer.uint32(/* id 12, wireType 2 =*/98).fork()).ldelim();
                         if (message.gameMoveOccupied != null && Object.hasOwnProperty.call(message, "gameMoveOccupied"))
-                            $root.com.miti99.gomoku.proto.GameMoveOccupiedResponse.encode(message.gameMoveOccupied, writer.uint32(/* id 14, wireType 2 =*/114).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.GameMoveOccupiedResponse.encode(message.gameMoveOccupied, writer.uint32(/* id 13, wireType 2 =*/106).fork()).ldelim();
                         if (message.gameMoveOutOfBounds != null && Object.hasOwnProperty.call(message, "gameMoveOutOfBounds"))
-                            $root.com.miti99.gomoku.proto.GameMoveOutOfBoundsResponse.encode(message.gameMoveOutOfBounds, writer.uint32(/* id 15, wireType 2 =*/122).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.GameMoveOutOfBoundsResponse.encode(message.gameMoveOutOfBounds, writer.uint32(/* id 14, wireType 2 =*/114).fork()).ldelim();
                         if (message.gameMoveNotYourTurn != null && Object.hasOwnProperty.call(message, "gameMoveNotYourTurn"))
-                            $root.com.miti99.gomoku.proto.GameMoveNotYourTurnResponse.encode(message.gameMoveNotYourTurn, writer.uint32(/* id 16, wireType 2 =*/130).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.GameMoveNotYourTurnResponse.encode(message.gameMoveNotYourTurn, writer.uint32(/* id 15, wireType 2 =*/122).fork()).ldelim();
                         if (message.gameOver != null && Object.hasOwnProperty.call(message, "gameOver"))
-                            $root.com.miti99.gomoku.proto.GameOverResponse.encode(message.gameOver, writer.uint32(/* id 17, wireType 2 =*/138).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.GameOverResponse.encode(message.gameOver, writer.uint32(/* id 16, wireType 2 =*/130).fork()).ldelim();
                         if (message.pveDifficultyNotSupport != null && Object.hasOwnProperty.call(message, "pveDifficultyNotSupport"))
-                            $root.com.miti99.gomoku.proto.PveDifficultyNotSupportResponse.encode(message.pveDifficultyNotSupport, writer.uint32(/* id 18, wireType 2 =*/146).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.PveDifficultyNotSupportResponse.encode(message.pveDifficultyNotSupport, writer.uint32(/* id 17, wireType 2 =*/138).fork()).ldelim();
                         if (message.watchGameSuccess != null && Object.hasOwnProperty.call(message, "watchGameSuccess"))
-                            $root.com.miti99.gomoku.proto.WatchGameSuccessResponse.encode(message.watchGameSuccess, writer.uint32(/* id 19, wireType 2 =*/154).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.WatchGameSuccessResponse.encode(message.watchGameSuccess, writer.uint32(/* id 18, wireType 2 =*/146).fork()).ldelim();
                         if (message.clientExit != null && Object.hasOwnProperty.call(message, "clientExit"))
-                            $root.com.miti99.gomoku.proto.ClientExitResponse.encode(message.clientExit, writer.uint32(/* id 20, wireType 2 =*/162).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.ClientExitResponse.encode(message.clientExit, writer.uint32(/* id 19, wireType 2 =*/154).fork()).ldelim();
                         if (message.spectatorCannotAct != null && Object.hasOwnProperty.call(message, "spectatorCannotAct"))
-                            $root.com.miti99.gomoku.proto.SpectatorCannotActResponse.encode(message.spectatorCannotAct, writer.uint32(/* id 21, wireType 2 =*/170).fork()).ldelim();
+                            $root.com.miti99.gomoku.proto.SpectatorCannotActResponse.encode(message.spectatorCannotAct, writer.uint32(/* id 20, wireType 2 =*/162).fork()).ldelim();
                         return writer;
                     };
 
@@ -3766,46 +3611,42 @@ export const com = $root.com = (() => {
                                     break;
                                 }
                             case 11: {
-                                    message.gameReady = $root.com.miti99.gomoku.proto.GameReadyResponse.decode(reader, reader.uint32());
-                                    break;
-                                }
-                            case 12: {
                                     message.gameMoveSuccess = $root.com.miti99.gomoku.proto.GameMoveSuccessResponse.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 13: {
+                            case 12: {
                                     message.gameMoveInvalid = $root.com.miti99.gomoku.proto.GameMoveInvalidResponse.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 14: {
+                            case 13: {
                                     message.gameMoveOccupied = $root.com.miti99.gomoku.proto.GameMoveOccupiedResponse.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 15: {
+                            case 14: {
                                     message.gameMoveOutOfBounds = $root.com.miti99.gomoku.proto.GameMoveOutOfBoundsResponse.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 16: {
+                            case 15: {
                                     message.gameMoveNotYourTurn = $root.com.miti99.gomoku.proto.GameMoveNotYourTurnResponse.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 17: {
+                            case 16: {
                                     message.gameOver = $root.com.miti99.gomoku.proto.GameOverResponse.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 18: {
+                            case 17: {
                                     message.pveDifficultyNotSupport = $root.com.miti99.gomoku.proto.PveDifficultyNotSupportResponse.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 19: {
+                            case 18: {
                                     message.watchGameSuccess = $root.com.miti99.gomoku.proto.WatchGameSuccessResponse.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 20: {
+                            case 19: {
                                     message.clientExit = $root.com.miti99.gomoku.proto.ClientExitResponse.decode(reader, reader.uint32());
                                     break;
                                 }
-                            case 21: {
+                            case 20: {
                                     message.spectatorCannotAct = $root.com.miti99.gomoku.proto.SpectatorCannotActResponse.decode(reader, reader.uint32());
                                     break;
                                 }
@@ -3941,16 +3782,6 @@ export const com = $root.com = (() => {
                                 let error = $root.com.miti99.gomoku.proto.GameStartingResponse.verify(message.gameStarting);
                                 if (error)
                                     return "gameStarting." + error;
-                            }
-                        }
-                        if (message.gameReady != null && message.hasOwnProperty("gameReady")) {
-                            if (properties.payload === 1)
-                                return "payload: multiple values";
-                            properties.payload = 1;
-                            {
-                                let error = $root.com.miti99.gomoku.proto.GameReadyResponse.verify(message.gameReady);
-                                if (error)
-                                    return "gameReady." + error;
                             }
                         }
                         if (message.gameMoveSuccess != null && message.hasOwnProperty("gameMoveSuccess")) {
@@ -4118,11 +3949,6 @@ export const com = $root.com = (() => {
                                 throw TypeError(".com.miti99.gomoku.proto.Response.gameStarting: object expected");
                             message.gameStarting = $root.com.miti99.gomoku.proto.GameStartingResponse.fromObject(object.gameStarting);
                         }
-                        if (object.gameReady != null) {
-                            if (typeof object.gameReady !== "object")
-                                throw TypeError(".com.miti99.gomoku.proto.Response.gameReady: object expected");
-                            message.gameReady = $root.com.miti99.gomoku.proto.GameReadyResponse.fromObject(object.gameReady);
-                        }
                         if (object.gameMoveSuccess != null) {
                             if (typeof object.gameMoveSuccess !== "object")
                                 throw TypeError(".com.miti99.gomoku.proto.Response.gameMoveSuccess: object expected");
@@ -4238,11 +4064,6 @@ export const com = $root.com = (() => {
                             object.gameStarting = $root.com.miti99.gomoku.proto.GameStartingResponse.toObject(message.gameStarting, options);
                             if (options.oneofs)
                                 object.payload = "gameStarting";
-                        }
-                        if (message.gameReady != null && message.hasOwnProperty("gameReady")) {
-                            object.gameReady = $root.com.miti99.gomoku.proto.GameReadyResponse.toObject(message.gameReady, options);
-                            if (options.oneofs)
-                                object.payload = "gameReady";
                         }
                         if (message.gameMoveSuccess != null && message.hasOwnProperty("gameMoveSuccess")) {
                             object.gameMoveSuccess = $root.com.miti99.gomoku.proto.GameMoveSuccessResponse.toObject(message.gameMoveSuccess, options);
@@ -4922,7 +4743,7 @@ export const com = $root.com = (() => {
                      * @property {number|null} [roomId] RoomSummary roomId
                      * @property {string|null} [roomOwner] RoomSummary roomOwner
                      * @property {number|null} [roomClientCount] RoomSummary roomClientCount
-                     * @property {string|null} [roomType] RoomSummary roomType
+                     * @property {com.miti99.gomoku.proto.RoomType|null} [roomType] RoomSummary roomType
                      */
 
                     /**
@@ -4966,11 +4787,11 @@ export const com = $root.com = (() => {
 
                     /**
                      * RoomSummary roomType.
-                     * @member {string} roomType
+                     * @member {com.miti99.gomoku.proto.RoomType} roomType
                      * @memberof com.miti99.gomoku.proto.RoomSummary
                      * @instance
                      */
-                    RoomSummary.prototype.roomType = "";
+                    RoomSummary.prototype.roomType = 0;
 
                     /**
                      * Creates a new RoomSummary instance using the specified properties.
@@ -5003,7 +4824,7 @@ export const com = $root.com = (() => {
                         if (message.roomClientCount != null && Object.hasOwnProperty.call(message, "roomClientCount"))
                             writer.uint32(/* id 3, wireType 0 =*/24).int32(message.roomClientCount);
                         if (message.roomType != null && Object.hasOwnProperty.call(message, "roomType"))
-                            writer.uint32(/* id 4, wireType 2 =*/34).string(message.roomType);
+                            writer.uint32(/* id 4, wireType 0 =*/32).int32(message.roomType);
                         return writer;
                     };
 
@@ -5053,7 +4874,7 @@ export const com = $root.com = (() => {
                                     break;
                                 }
                             case 4: {
-                                    message.roomType = reader.string();
+                                    message.roomType = reader.int32();
                                     break;
                                 }
                             default:
@@ -5101,8 +4922,14 @@ export const com = $root.com = (() => {
                             if (!$util.isInteger(message.roomClientCount))
                                 return "roomClientCount: integer expected";
                         if (message.roomType != null && message.hasOwnProperty("roomType"))
-                            if (!$util.isString(message.roomType))
-                                return "roomType: string expected";
+                            switch (message.roomType) {
+                            default:
+                                return "roomType: enum value expected";
+                            case 0:
+                            case 1:
+                            case 2:
+                                break;
+                            }
                         return null;
                     };
 
@@ -5124,8 +4951,26 @@ export const com = $root.com = (() => {
                             message.roomOwner = String(object.roomOwner);
                         if (object.roomClientCount != null)
                             message.roomClientCount = object.roomClientCount | 0;
-                        if (object.roomType != null)
-                            message.roomType = String(object.roomType);
+                        switch (object.roomType) {
+                        default:
+                            if (typeof object.roomType === "number") {
+                                message.roomType = object.roomType;
+                                break;
+                            }
+                            break;
+                        case "ROOM_TYPE_UNSPECIFIED":
+                        case 0:
+                            message.roomType = 0;
+                            break;
+                        case "PVP":
+                        case 1:
+                            message.roomType = 1;
+                            break;
+                        case "PVE":
+                        case 2:
+                            message.roomType = 2;
+                            break;
+                        }
                         return message;
                     };
 
@@ -5146,7 +4991,7 @@ export const com = $root.com = (() => {
                             object.roomId = 0;
                             object.roomOwner = "";
                             object.roomClientCount = 0;
-                            object.roomType = "";
+                            object.roomType = options.enums === String ? "ROOM_TYPE_UNSPECIFIED" : 0;
                         }
                         if (message.roomId != null && message.hasOwnProperty("roomId"))
                             object.roomId = message.roomId;
@@ -5155,7 +5000,7 @@ export const com = $root.com = (() => {
                         if (message.roomClientCount != null && message.hasOwnProperty("roomClientCount"))
                             object.roomClientCount = message.roomClientCount;
                         if (message.roomType != null && message.hasOwnProperty("roomType"))
-                            object.roomType = message.roomType;
+                            object.roomType = options.enums === String ? $root.com.miti99.gomoku.proto.RoomType[message.roomType] === undefined ? message.roomType : $root.com.miti99.gomoku.proto.RoomType[message.roomType] : message.roomType;
                         return object;
                     };
 
@@ -5422,7 +5267,7 @@ export const com = $root.com = (() => {
                      * @interface IRoomCreateSuccessResponse
                      * @property {number|null} [id] RoomCreateSuccessResponse id
                      * @property {string|null} [roomOwner] RoomCreateSuccessResponse roomOwner
-                     * @property {string|null} [roomType] RoomCreateSuccessResponse roomType
+                     * @property {com.miti99.gomoku.proto.RoomType|null} [roomType] RoomCreateSuccessResponse roomType
                      */
 
                     /**
@@ -5458,11 +5303,11 @@ export const com = $root.com = (() => {
 
                     /**
                      * RoomCreateSuccessResponse roomType.
-                     * @member {string} roomType
+                     * @member {com.miti99.gomoku.proto.RoomType} roomType
                      * @memberof com.miti99.gomoku.proto.RoomCreateSuccessResponse
                      * @instance
                      */
-                    RoomCreateSuccessResponse.prototype.roomType = "";
+                    RoomCreateSuccessResponse.prototype.roomType = 0;
 
                     /**
                      * Creates a new RoomCreateSuccessResponse instance using the specified properties.
@@ -5493,7 +5338,7 @@ export const com = $root.com = (() => {
                         if (message.roomOwner != null && Object.hasOwnProperty.call(message, "roomOwner"))
                             writer.uint32(/* id 2, wireType 2 =*/18).string(message.roomOwner);
                         if (message.roomType != null && Object.hasOwnProperty.call(message, "roomType"))
-                            writer.uint32(/* id 3, wireType 2 =*/26).string(message.roomType);
+                            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.roomType);
                         return writer;
                     };
 
@@ -5539,7 +5384,7 @@ export const com = $root.com = (() => {
                                     break;
                                 }
                             case 3: {
-                                    message.roomType = reader.string();
+                                    message.roomType = reader.int32();
                                     break;
                                 }
                             default:
@@ -5584,8 +5429,14 @@ export const com = $root.com = (() => {
                             if (!$util.isString(message.roomOwner))
                                 return "roomOwner: string expected";
                         if (message.roomType != null && message.hasOwnProperty("roomType"))
-                            if (!$util.isString(message.roomType))
-                                return "roomType: string expected";
+                            switch (message.roomType) {
+                            default:
+                                return "roomType: enum value expected";
+                            case 0:
+                            case 1:
+                            case 2:
+                                break;
+                            }
                         return null;
                     };
 
@@ -5605,8 +5456,26 @@ export const com = $root.com = (() => {
                             message.id = object.id | 0;
                         if (object.roomOwner != null)
                             message.roomOwner = String(object.roomOwner);
-                        if (object.roomType != null)
-                            message.roomType = String(object.roomType);
+                        switch (object.roomType) {
+                        default:
+                            if (typeof object.roomType === "number") {
+                                message.roomType = object.roomType;
+                                break;
+                            }
+                            break;
+                        case "ROOM_TYPE_UNSPECIFIED":
+                        case 0:
+                            message.roomType = 0;
+                            break;
+                        case "PVP":
+                        case 1:
+                            message.roomType = 1;
+                            break;
+                        case "PVE":
+                        case 2:
+                            message.roomType = 2;
+                            break;
+                        }
                         return message;
                     };
 
@@ -5626,14 +5495,14 @@ export const com = $root.com = (() => {
                         if (options.defaults) {
                             object.id = 0;
                             object.roomOwner = "";
-                            object.roomType = "";
+                            object.roomType = options.enums === String ? "ROOM_TYPE_UNSPECIFIED" : 0;
                         }
                         if (message.id != null && message.hasOwnProperty("id"))
                             object.id = message.id;
                         if (message.roomOwner != null && message.hasOwnProperty("roomOwner"))
                             object.roomOwner = message.roomOwner;
                         if (message.roomType != null && message.hasOwnProperty("roomType"))
-                            object.roomType = message.roomType;
+                            object.roomType = options.enums === String ? $root.com.miti99.gomoku.proto.RoomType[message.roomType] === undefined ? message.roomType : $root.com.miti99.gomoku.proto.RoomType[message.roomType] : message.roomType;
                         return object;
                     };
 
@@ -6896,258 +6765,6 @@ export const com = $root.com = (() => {
                     return GameStartingResponse;
                 })();
 
-                proto.GameReadyResponse = (function() {
-
-                    /**
-                     * Properties of a GameReadyResponse.
-                     * @memberof com.miti99.gomoku.proto
-                     * @interface IGameReadyResponse
-                     * @property {string|null} [clientNickname] GameReadyResponse clientNickname
-                     * @property {string|null} [status] GameReadyResponse status
-                     * @property {number|null} [clientId] GameReadyResponse clientId
-                     */
-
-                    /**
-                     * Constructs a new GameReadyResponse.
-                     * @memberof com.miti99.gomoku.proto
-                     * @classdesc Represents a GameReadyResponse.
-                     * @implements IGameReadyResponse
-                     * @constructor
-                     * @param {com.miti99.gomoku.proto.IGameReadyResponse=} [properties] Properties to set
-                     */
-                    function GameReadyResponse(properties) {
-                        if (properties)
-                            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                                if (properties[keys[i]] != null)
-                                    this[keys[i]] = properties[keys[i]];
-                    }
-
-                    /**
-                     * GameReadyResponse clientNickname.
-                     * @member {string} clientNickname
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @instance
-                     */
-                    GameReadyResponse.prototype.clientNickname = "";
-
-                    /**
-                     * GameReadyResponse status.
-                     * @member {string} status
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @instance
-                     */
-                    GameReadyResponse.prototype.status = "";
-
-                    /**
-                     * GameReadyResponse clientId.
-                     * @member {number} clientId
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @instance
-                     */
-                    GameReadyResponse.prototype.clientId = 0;
-
-                    /**
-                     * Creates a new GameReadyResponse instance using the specified properties.
-                     * @function create
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @static
-                     * @param {com.miti99.gomoku.proto.IGameReadyResponse=} [properties] Properties to set
-                     * @returns {com.miti99.gomoku.proto.GameReadyResponse} GameReadyResponse instance
-                     */
-                    GameReadyResponse.create = function create(properties) {
-                        return new GameReadyResponse(properties);
-                    };
-
-                    /**
-                     * Encodes the specified GameReadyResponse message. Does not implicitly {@link com.miti99.gomoku.proto.GameReadyResponse.verify|verify} messages.
-                     * @function encode
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @static
-                     * @param {com.miti99.gomoku.proto.IGameReadyResponse} message GameReadyResponse message or plain object to encode
-                     * @param {$protobuf.Writer} [writer] Writer to encode to
-                     * @returns {$protobuf.Writer} Writer
-                     */
-                    GameReadyResponse.encode = function encode(message, writer) {
-                        if (!writer)
-                            writer = $Writer.create();
-                        if (message.clientNickname != null && Object.hasOwnProperty.call(message, "clientNickname"))
-                            writer.uint32(/* id 1, wireType 2 =*/10).string(message.clientNickname);
-                        if (message.status != null && Object.hasOwnProperty.call(message, "status"))
-                            writer.uint32(/* id 2, wireType 2 =*/18).string(message.status);
-                        if (message.clientId != null && Object.hasOwnProperty.call(message, "clientId"))
-                            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.clientId);
-                        return writer;
-                    };
-
-                    /**
-                     * Encodes the specified GameReadyResponse message, length delimited. Does not implicitly {@link com.miti99.gomoku.proto.GameReadyResponse.verify|verify} messages.
-                     * @function encodeDelimited
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @static
-                     * @param {com.miti99.gomoku.proto.IGameReadyResponse} message GameReadyResponse message or plain object to encode
-                     * @param {$protobuf.Writer} [writer] Writer to encode to
-                     * @returns {$protobuf.Writer} Writer
-                     */
-                    GameReadyResponse.encodeDelimited = function encodeDelimited(message, writer) {
-                        return this.encode(message, writer).ldelim();
-                    };
-
-                    /**
-                     * Decodes a GameReadyResponse message from the specified reader or buffer.
-                     * @function decode
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @static
-                     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-                     * @param {number} [length] Message length if known beforehand
-                     * @returns {com.miti99.gomoku.proto.GameReadyResponse} GameReadyResponse
-                     * @throws {Error} If the payload is not a reader or valid buffer
-                     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-                     */
-                    GameReadyResponse.decode = function decode(reader, length, error) {
-                        if (!(reader instanceof $Reader))
-                            reader = $Reader.create(reader);
-                        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.miti99.gomoku.proto.GameReadyResponse();
-                        while (reader.pos < end) {
-                            let tag = reader.uint32();
-                            if (tag === error)
-                                break;
-                            switch (tag >>> 3) {
-                            case 1: {
-                                    message.clientNickname = reader.string();
-                                    break;
-                                }
-                            case 2: {
-                                    message.status = reader.string();
-                                    break;
-                                }
-                            case 3: {
-                                    message.clientId = reader.int32();
-                                    break;
-                                }
-                            default:
-                                reader.skipType(tag & 7);
-                                break;
-                            }
-                        }
-                        return message;
-                    };
-
-                    /**
-                     * Decodes a GameReadyResponse message from the specified reader or buffer, length delimited.
-                     * @function decodeDelimited
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @static
-                     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-                     * @returns {com.miti99.gomoku.proto.GameReadyResponse} GameReadyResponse
-                     * @throws {Error} If the payload is not a reader or valid buffer
-                     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-                     */
-                    GameReadyResponse.decodeDelimited = function decodeDelimited(reader) {
-                        if (!(reader instanceof $Reader))
-                            reader = new $Reader(reader);
-                        return this.decode(reader, reader.uint32());
-                    };
-
-                    /**
-                     * Verifies a GameReadyResponse message.
-                     * @function verify
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @static
-                     * @param {Object.<string,*>} message Plain object to verify
-                     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-                     */
-                    GameReadyResponse.verify = function verify(message) {
-                        if (typeof message !== "object" || message === null)
-                            return "object expected";
-                        if (message.clientNickname != null && message.hasOwnProperty("clientNickname"))
-                            if (!$util.isString(message.clientNickname))
-                                return "clientNickname: string expected";
-                        if (message.status != null && message.hasOwnProperty("status"))
-                            if (!$util.isString(message.status))
-                                return "status: string expected";
-                        if (message.clientId != null && message.hasOwnProperty("clientId"))
-                            if (!$util.isInteger(message.clientId))
-                                return "clientId: integer expected";
-                        return null;
-                    };
-
-                    /**
-                     * Creates a GameReadyResponse message from a plain object. Also converts values to their respective internal types.
-                     * @function fromObject
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @static
-                     * @param {Object.<string,*>} object Plain object
-                     * @returns {com.miti99.gomoku.proto.GameReadyResponse} GameReadyResponse
-                     */
-                    GameReadyResponse.fromObject = function fromObject(object) {
-                        if (object instanceof $root.com.miti99.gomoku.proto.GameReadyResponse)
-                            return object;
-                        let message = new $root.com.miti99.gomoku.proto.GameReadyResponse();
-                        if (object.clientNickname != null)
-                            message.clientNickname = String(object.clientNickname);
-                        if (object.status != null)
-                            message.status = String(object.status);
-                        if (object.clientId != null)
-                            message.clientId = object.clientId | 0;
-                        return message;
-                    };
-
-                    /**
-                     * Creates a plain object from a GameReadyResponse message. Also converts values to other types if specified.
-                     * @function toObject
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @static
-                     * @param {com.miti99.gomoku.proto.GameReadyResponse} message GameReadyResponse
-                     * @param {$protobuf.IConversionOptions} [options] Conversion options
-                     * @returns {Object.<string,*>} Plain object
-                     */
-                    GameReadyResponse.toObject = function toObject(message, options) {
-                        if (!options)
-                            options = {};
-                        let object = {};
-                        if (options.defaults) {
-                            object.clientNickname = "";
-                            object.status = "";
-                            object.clientId = 0;
-                        }
-                        if (message.clientNickname != null && message.hasOwnProperty("clientNickname"))
-                            object.clientNickname = message.clientNickname;
-                        if (message.status != null && message.hasOwnProperty("status"))
-                            object.status = message.status;
-                        if (message.clientId != null && message.hasOwnProperty("clientId"))
-                            object.clientId = message.clientId;
-                        return object;
-                    };
-
-                    /**
-                     * Converts this GameReadyResponse to JSON.
-                     * @function toJSON
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @instance
-                     * @returns {Object.<string,*>} JSON object
-                     */
-                    GameReadyResponse.prototype.toJSON = function toJSON() {
-                        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-                    };
-
-                    /**
-                     * Gets the default type url for GameReadyResponse
-                     * @function getTypeUrl
-                     * @memberof com.miti99.gomoku.proto.GameReadyResponse
-                     * @static
-                     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-                     * @returns {string} The default type url
-                     */
-                    GameReadyResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                        if (typeUrlPrefix === undefined) {
-                            typeUrlPrefix = "type.googleapis.com";
-                        }
-                        return typeUrlPrefix + "/com.miti99.gomoku.proto.GameReadyResponse";
-                    };
-
-                    return GameReadyResponse;
-                })();
-
                 proto.GameMoveSuccessResponse = (function() {
 
                     /**
@@ -7156,7 +6773,7 @@ export const com = $root.com = (() => {
                      * @interface IGameMoveSuccessResponse
                      * @property {number|null} [row] GameMoveSuccessResponse row
                      * @property {number|null} [col] GameMoveSuccessResponse col
-                     * @property {string|null} [piece] GameMoveSuccessResponse piece
+                     * @property {com.miti99.gomoku.proto.Piece|null} [piece] GameMoveSuccessResponse piece
                      * @property {string|null} [playerNickname] GameMoveSuccessResponse playerNickname
                      * @property {number|null} [playerId] GameMoveSuccessResponse playerId
                      */
@@ -7194,11 +6811,11 @@ export const com = $root.com = (() => {
 
                     /**
                      * GameMoveSuccessResponse piece.
-                     * @member {string} piece
+                     * @member {com.miti99.gomoku.proto.Piece} piece
                      * @memberof com.miti99.gomoku.proto.GameMoveSuccessResponse
                      * @instance
                      */
-                    GameMoveSuccessResponse.prototype.piece = "";
+                    GameMoveSuccessResponse.prototype.piece = 0;
 
                     /**
                      * GameMoveSuccessResponse playerNickname.
@@ -7245,7 +6862,7 @@ export const com = $root.com = (() => {
                         if (message.col != null && Object.hasOwnProperty.call(message, "col"))
                             writer.uint32(/* id 2, wireType 0 =*/16).int32(message.col);
                         if (message.piece != null && Object.hasOwnProperty.call(message, "piece"))
-                            writer.uint32(/* id 3, wireType 2 =*/26).string(message.piece);
+                            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.piece);
                         if (message.playerNickname != null && Object.hasOwnProperty.call(message, "playerNickname"))
                             writer.uint32(/* id 4, wireType 2 =*/34).string(message.playerNickname);
                         if (message.playerId != null && Object.hasOwnProperty.call(message, "playerId"))
@@ -7295,7 +6912,7 @@ export const com = $root.com = (() => {
                                     break;
                                 }
                             case 3: {
-                                    message.piece = reader.string();
+                                    message.piece = reader.int32();
                                     break;
                                 }
                             case 4: {
@@ -7348,8 +6965,14 @@ export const com = $root.com = (() => {
                             if (!$util.isInteger(message.col))
                                 return "col: integer expected";
                         if (message.piece != null && message.hasOwnProperty("piece"))
-                            if (!$util.isString(message.piece))
-                                return "piece: string expected";
+                            switch (message.piece) {
+                            default:
+                                return "piece: enum value expected";
+                            case 0:
+                            case 1:
+                            case 2:
+                                break;
+                            }
                         if (message.playerNickname != null && message.hasOwnProperty("playerNickname"))
                             if (!$util.isString(message.playerNickname))
                                 return "playerNickname: string expected";
@@ -7375,8 +6998,26 @@ export const com = $root.com = (() => {
                             message.row = object.row | 0;
                         if (object.col != null)
                             message.col = object.col | 0;
-                        if (object.piece != null)
-                            message.piece = String(object.piece);
+                        switch (object.piece) {
+                        default:
+                            if (typeof object.piece === "number") {
+                                message.piece = object.piece;
+                                break;
+                            }
+                            break;
+                        case "PIECE_UNSPECIFIED":
+                        case 0:
+                            message.piece = 0;
+                            break;
+                        case "BLACK":
+                        case 1:
+                            message.piece = 1;
+                            break;
+                        case "WHITE":
+                        case 2:
+                            message.piece = 2;
+                            break;
+                        }
                         if (object.playerNickname != null)
                             message.playerNickname = String(object.playerNickname);
                         if (object.playerId != null)
@@ -7400,7 +7041,7 @@ export const com = $root.com = (() => {
                         if (options.defaults) {
                             object.row = 0;
                             object.col = 0;
-                            object.piece = "";
+                            object.piece = options.enums === String ? "PIECE_UNSPECIFIED" : 0;
                             object.playerNickname = "";
                             object.playerId = 0;
                         }
@@ -7409,7 +7050,7 @@ export const com = $root.com = (() => {
                         if (message.col != null && message.hasOwnProperty("col"))
                             object.col = message.col;
                         if (message.piece != null && message.hasOwnProperty("piece"))
-                            object.piece = message.piece;
+                            object.piece = options.enums === String ? $root.com.miti99.gomoku.proto.Piece[message.piece] === undefined ? message.piece : $root.com.miti99.gomoku.proto.Piece[message.piece] : message.piece;
                         if (message.playerNickname != null && message.hasOwnProperty("playerNickname"))
                             object.playerNickname = message.playerNickname;
                         if (message.playerId != null && message.hasOwnProperty("playerId"))
@@ -8160,7 +7801,7 @@ export const com = $root.com = (() => {
                      * Properties of a GameOverResponse.
                      * @memberof com.miti99.gomoku.proto
                      * @interface IGameOverResponse
-                     * @property {string|null} [result] GameOverResponse result
+                     * @property {com.miti99.gomoku.proto.GameResult|null} [result] GameOverResponse result
                      * @property {string|null} [winnerNickname] GameOverResponse winnerNickname
                      */
 
@@ -8181,11 +7822,11 @@ export const com = $root.com = (() => {
 
                     /**
                      * GameOverResponse result.
-                     * @member {string} result
+                     * @member {com.miti99.gomoku.proto.GameResult} result
                      * @memberof com.miti99.gomoku.proto.GameOverResponse
                      * @instance
                      */
-                    GameOverResponse.prototype.result = "";
+                    GameOverResponse.prototype.result = 0;
 
                     /**
                      * GameOverResponse winnerNickname.
@@ -8220,7 +7861,7 @@ export const com = $root.com = (() => {
                         if (!writer)
                             writer = $Writer.create();
                         if (message.result != null && Object.hasOwnProperty.call(message, "result"))
-                            writer.uint32(/* id 1, wireType 2 =*/10).string(message.result);
+                            writer.uint32(/* id 1, wireType 0 =*/8).int32(message.result);
                         if (message.winnerNickname != null && Object.hasOwnProperty.call(message, "winnerNickname"))
                             writer.uint32(/* id 2, wireType 2 =*/18).string(message.winnerNickname);
                         return writer;
@@ -8260,7 +7901,7 @@ export const com = $root.com = (() => {
                                 break;
                             switch (tag >>> 3) {
                             case 1: {
-                                    message.result = reader.string();
+                                    message.result = reader.int32();
                                     break;
                                 }
                             case 2: {
@@ -8303,8 +7944,15 @@ export const com = $root.com = (() => {
                         if (typeof message !== "object" || message === null)
                             return "object expected";
                         if (message.result != null && message.hasOwnProperty("result"))
-                            if (!$util.isString(message.result))
-                                return "result: string expected";
+                            switch (message.result) {
+                            default:
+                                return "result: enum value expected";
+                            case 0:
+                            case 1:
+                            case 2:
+                            case 3:
+                                break;
+                            }
                         if (message.winnerNickname != null && message.hasOwnProperty("winnerNickname"))
                             if (!$util.isString(message.winnerNickname))
                                 return "winnerNickname: string expected";
@@ -8323,8 +7971,30 @@ export const com = $root.com = (() => {
                         if (object instanceof $root.com.miti99.gomoku.proto.GameOverResponse)
                             return object;
                         let message = new $root.com.miti99.gomoku.proto.GameOverResponse();
-                        if (object.result != null)
-                            message.result = String(object.result);
+                        switch (object.result) {
+                        default:
+                            if (typeof object.result === "number") {
+                                message.result = object.result;
+                                break;
+                            }
+                            break;
+                        case "GAME_RESULT_UNSPECIFIED":
+                        case 0:
+                            message.result = 0;
+                            break;
+                        case "BLACK_WIN":
+                        case 1:
+                            message.result = 1;
+                            break;
+                        case "WHITE_WIN":
+                        case 2:
+                            message.result = 2;
+                            break;
+                        case "DRAW":
+                        case 3:
+                            message.result = 3;
+                            break;
+                        }
                         if (object.winnerNickname != null)
                             message.winnerNickname = String(object.winnerNickname);
                         return message;
@@ -8344,11 +8014,11 @@ export const com = $root.com = (() => {
                             options = {};
                         let object = {};
                         if (options.defaults) {
-                            object.result = "";
+                            object.result = options.enums === String ? "GAME_RESULT_UNSPECIFIED" : 0;
                             object.winnerNickname = "";
                         }
                         if (message.result != null && message.hasOwnProperty("result"))
-                            object.result = message.result;
+                            object.result = options.enums === String ? $root.com.miti99.gomoku.proto.GameResult[message.result] === undefined ? message.result : $root.com.miti99.gomoku.proto.GameResult[message.result] : message.result;
                         if (message.winnerNickname != null && message.hasOwnProperty("winnerNickname"))
                             object.winnerNickname = message.winnerNickname;
                         return object;
@@ -8567,7 +8237,7 @@ export const com = $root.com = (() => {
                      * @memberof com.miti99.gomoku.proto
                      * @interface IWatchGameSuccessResponse
                      * @property {string|null} [owner] WatchGameSuccessResponse owner
-                     * @property {string|null} [status] WatchGameSuccessResponse status
+                     * @property {com.miti99.gomoku.proto.RoomStatus|null} [status] WatchGameSuccessResponse status
                      */
 
                     /**
@@ -8595,11 +8265,11 @@ export const com = $root.com = (() => {
 
                     /**
                      * WatchGameSuccessResponse status.
-                     * @member {string} status
+                     * @member {com.miti99.gomoku.proto.RoomStatus} status
                      * @memberof com.miti99.gomoku.proto.WatchGameSuccessResponse
                      * @instance
                      */
-                    WatchGameSuccessResponse.prototype.status = "";
+                    WatchGameSuccessResponse.prototype.status = 0;
 
                     /**
                      * Creates a new WatchGameSuccessResponse instance using the specified properties.
@@ -8628,7 +8298,7 @@ export const com = $root.com = (() => {
                         if (message.owner != null && Object.hasOwnProperty.call(message, "owner"))
                             writer.uint32(/* id 1, wireType 2 =*/10).string(message.owner);
                         if (message.status != null && Object.hasOwnProperty.call(message, "status"))
-                            writer.uint32(/* id 2, wireType 2 =*/18).string(message.status);
+                            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.status);
                         return writer;
                     };
 
@@ -8670,7 +8340,7 @@ export const com = $root.com = (() => {
                                     break;
                                 }
                             case 2: {
-                                    message.status = reader.string();
+                                    message.status = reader.int32();
                                     break;
                                 }
                             default:
@@ -8712,8 +8382,15 @@ export const com = $root.com = (() => {
                             if (!$util.isString(message.owner))
                                 return "owner: string expected";
                         if (message.status != null && message.hasOwnProperty("status"))
-                            if (!$util.isString(message.status))
-                                return "status: string expected";
+                            switch (message.status) {
+                            default:
+                                return "status: enum value expected";
+                            case 0:
+                            case 1:
+                            case 2:
+                            case 3:
+                                break;
+                            }
                         return null;
                     };
 
@@ -8731,8 +8408,30 @@ export const com = $root.com = (() => {
                         let message = new $root.com.miti99.gomoku.proto.WatchGameSuccessResponse();
                         if (object.owner != null)
                             message.owner = String(object.owner);
-                        if (object.status != null)
-                            message.status = String(object.status);
+                        switch (object.status) {
+                        default:
+                            if (typeof object.status === "number") {
+                                message.status = object.status;
+                                break;
+                            }
+                            break;
+                        case "ROOM_STATUS_UNSPECIFIED":
+                        case 0:
+                            message.status = 0;
+                            break;
+                        case "WAITING":
+                        case 1:
+                            message.status = 1;
+                            break;
+                        case "PLAYING":
+                        case 2:
+                            message.status = 2;
+                            break;
+                        case "FINISHED":
+                        case 3:
+                            message.status = 3;
+                            break;
+                        }
                         return message;
                     };
 
@@ -8751,12 +8450,12 @@ export const com = $root.com = (() => {
                         let object = {};
                         if (options.defaults) {
                             object.owner = "";
-                            object.status = "";
+                            object.status = options.enums === String ? "ROOM_STATUS_UNSPECIFIED" : 0;
                         }
                         if (message.owner != null && message.hasOwnProperty("owner"))
                             object.owner = message.owner;
                         if (message.status != null && message.hasOwnProperty("status"))
-                            object.status = message.status;
+                            object.status = options.enums === String ? $root.com.miti99.gomoku.proto.RoomStatus[message.status] === undefined ? message.status : $root.com.miti99.gomoku.proto.RoomStatus[message.status] : message.status;
                         return object;
                     };
 

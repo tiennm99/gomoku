@@ -12,19 +12,19 @@ import (
 func sendRoomSnapshot(player *database.Player, room *database.NewRoom) {
 	snap := room.Snapshot()
 
-	statusStr := "waiting"
-	switch room.Status { // read without lock: string constant; race-safe for a single int read
+	status := protocol.RoomStatus_WAITING
+	switch room.Status { // read without lock: single int read, race-safe
 	case database.RoomStatusPlaying:
-		statusStr = "playing"
+		status = protocol.RoomStatus_PLAYING
 	case database.RoomStatusFinished:
-		statusStr = "finished"
+		status = protocol.RoomStatus_FINISHED
 	}
 
 	_ = player.Send(&protocol.Response{
 		Payload: &protocol.Response_WatchGameSuccess{
 			WatchGameSuccess: &protocol.WatchGameSuccessResponse{
 				Owner:  snap.PlayerNames[snap.BlackPlayerID],
-				Status: statusStr,
+				Status: status,
 			},
 		},
 	})
@@ -61,9 +61,8 @@ func sendRoomSnapshot(player *database.Player, room *database.NewRoom) {
 }
 
 // buildGameStartingResponse constructs a GameStartingResponse from room state.
-// Caller must hold at least room.RLock() or read under protection.
-// This function acquires RLock internally for safety.
-func buildGameStartingResponse(room *database.NewRoom, forPlayer *database.Player) *protocol.Response {
+// Acquires RLock internally for safety.
+func buildGameStartingResponse(room *database.NewRoom) *protocol.Response {
 	room.RLock()
 	blackID := room.BlackPlayerID
 	whiteID := room.WhitePlayerID
@@ -101,18 +100,18 @@ func resolveNickname(room *database.NewRoom, playerID int64) string {
 	return "Unknown"
 }
 
-// buildMoveSuccessResponse constructs a GameMoveSuccessResponse.
+// buildMoveSuccessResponse constructs a GameMoveSuccessResponse using the typed Piece enum.
 func buildMoveSuccessResponse(row, col int, piece game.Piece, playerID int64, nickname string) *protocol.Response {
-	pieceStr := "black"
+	p := protocol.Piece_BLACK
 	if piece == game.White {
-		pieceStr = "white"
+		p = protocol.Piece_WHITE
 	}
 	return &protocol.Response{
 		Payload: &protocol.Response_GameMoveSuccess{
 			GameMoveSuccess: &protocol.GameMoveSuccessResponse{
 				Row:            int32(row),
 				Col:            int32(col),
-				Piece:          pieceStr,
+				Piece:          p,
 				PlayerNickname: nickname,
 				PlayerId:       int32(playerID),
 			},
@@ -120,21 +119,20 @@ func buildMoveSuccessResponse(row, col int, piece game.Piece, playerID int64, ni
 	}
 }
 
-// buildGameOverResponse constructs a GameOverResponse.
-// result: game.BlackWin / game.WhiteWin / game.Draw
-// winnerNickname: name of winning player, empty string for draw.
+// buildGameOverResponse constructs a GameOverResponse using the typed GameResult enum.
+// winnerNickname is empty string for a draw.
 func buildGameOverResponse(result game.GameResult, winnerNickname string) *protocol.Response {
-	resultStr := "draw"
+	r := protocol.GameResult_DRAW
 	switch result {
 	case game.BlackWin:
-		resultStr = "black_win"
+		r = protocol.GameResult_BLACK_WIN
 	case game.WhiteWin:
-		resultStr = "white_win"
+		r = protocol.GameResult_WHITE_WIN
 	}
 	return &protocol.Response{
 		Payload: &protocol.Response_GameOver{
 			GameOver: &protocol.GameOverResponse{
-				Result:         resultStr,
+				Result:         r,
 				WinnerNickname: winnerNickname,
 			},
 		},

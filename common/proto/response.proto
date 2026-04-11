@@ -4,6 +4,40 @@ package com.miti99.gomoku.proto;
 
 option go_package = "github.com/tiennm99/gomoku/server/protocol;protocol";
 
+// ---------- Typed enums (replace unsafe string fields) ----------
+
+// Piece color for gomoku stones.
+enum Piece {
+  PIECE_UNSPECIFIED = 0;
+  BLACK = 1;
+  WHITE = 2;
+}
+
+// Outcome of a finished game.
+enum GameResult {
+  GAME_RESULT_UNSPECIFIED = 0;
+  BLACK_WIN = 1;
+  WHITE_WIN = 2;
+  DRAW = 3;
+}
+
+// Room mode: player-vs-player or player-vs-AI.
+enum RoomType {
+  ROOM_TYPE_UNSPECIFIED = 0;
+  PVP = 1;
+  PVE = 2;
+}
+
+// Room lifecycle status.
+enum RoomStatus {
+  ROOM_STATUS_UNSPECIFIED = 0;
+  WAITING = 1;
+  PLAYING = 2;
+  FINISHED = 3;
+}
+
+// ---------- Response wrapper ----------
+
 // Wrapper for all server -> client messages. The oneof case IS the event code.
 message Response {
   oneof payload {
@@ -17,19 +51,20 @@ message Response {
     RoomJoinFailNotFoundResponse room_join_fail_not_found = 8;
     RoomPlayFailNotFoundResponse room_play_fail_not_found = 9;
     GameStartingResponse game_starting = 10;
-    GameReadyResponse game_ready = 11;
-    GameMoveSuccessResponse game_move_success = 12;
-    GameMoveInvalidResponse game_move_invalid = 13;
-    GameMoveOccupiedResponse game_move_occupied = 14;
-    GameMoveOutOfBoundsResponse game_move_out_of_bounds = 15;
-    GameMoveNotYourTurnResponse game_move_not_your_turn = 16;
-    GameOverResponse game_over = 17;
-    PveDifficultyNotSupportResponse pve_difficulty_not_support = 18;
-    WatchGameSuccessResponse watch_game_success = 19;
-    ClientExitResponse client_exit = 20;
-    SpectatorCannotActResponse spectator_cannot_act = 21;
+    GameMoveSuccessResponse game_move_success = 11;
+    GameMoveInvalidResponse game_move_invalid = 12;
+    GameMoveOccupiedResponse game_move_occupied = 13;
+    GameMoveOutOfBoundsResponse game_move_out_of_bounds = 14;
+    GameMoveNotYourTurnResponse game_move_not_your_turn = 15;
+    GameOverResponse game_over = 16;
+    PveDifficultyNotSupportResponse pve_difficulty_not_support = 17;
+    WatchGameSuccessResponse watch_game_success = 18;
+    ClientExitResponse client_exit = 19;
+    SpectatorCannotActResponse spectator_cannot_act = 20;
   }
 }
+
+// ---------- Message payloads ----------
 
 message ClientConnectResponse { int32 client_id = 1; }
 
@@ -42,7 +77,7 @@ message RoomSummary {
   int32 room_id = 1;
   string room_owner = 2;
   int32 room_client_count = 3;
-  string room_type = 4;
+  RoomType room_type = 4;
 }
 
 message ShowRoomsResponse { repeated RoomSummary rooms = 1; }
@@ -50,7 +85,7 @@ message ShowRoomsResponse { repeated RoomSummary rooms = 1; }
 message RoomCreateSuccessResponse {
   int32 id = 1;
   string room_owner = 2;
-  string room_type = 3;
+  RoomType room_type = 3;
 }
 
 message RoomJoinSuccessResponse {
@@ -79,16 +114,10 @@ message GameStartingResponse {
   int32 board_size = 6;
 }
 
-message GameReadyResponse {
-  string client_nickname = 1;
-  string status = 2;
-  int32 client_id = 3;
-}
-
 message GameMoveSuccessResponse {
   int32 row = 1;
   int32 col = 2;
-  string piece = 3;
+  Piece piece = 3;
   string player_nickname = 4;
   int32 player_id = 5;
 }
@@ -99,7 +128,7 @@ message GameMoveOutOfBoundsResponse {}
 message GameMoveNotYourTurnResponse {}
 
 message GameOverResponse {
-  string result = 1;
+  GameResult result = 1;
   string winner_nickname = 2;
 }
 
@@ -107,7 +136,7 @@ message PveDifficultyNotSupportResponse {}
 
 message WatchGameSuccessResponse {
   string owner = 1;
-  string status = 2;
+  RoomStatus status = 2;
 }
 
 message ClientExitResponse {
@@ -117,5 +146,4 @@ message ClientExitResponse {
 }
 
 // Sent when a spectator attempts an action that requires being a player.
-// Phase-07 dispatch sends this in response to GameMoveRequest from a spectator.
 message SpectatorCannotActResponse {}

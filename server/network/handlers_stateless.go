@@ -70,9 +70,9 @@ func handleGetRooms(player *database.Player, _ *protocol.Request) {
 	summaries := make([]*protocol.RoomSummary, 0, len(rooms))
 	for _, r := range rooms {
 		r.RLock()
-		roomType := "PVP"
+		roomType := protocol.RoomType_PVP
 		if r.RoomType == database.RoomTypePve {
-			roomType = "PVE"
+			roomType = protocol.RoomType_PVE
 		}
 		summary := &protocol.RoomSummary{
 			RoomId:          int32(r.ID),

@@ -39,9 +39,6 @@ export namespace com {
                     /** Request gameStarting */
                     gameStarting?: (com.miti99.gomoku.proto.IGameStartingRequest|null);
 
-                    /** Request gameReady */
-                    gameReady?: (com.miti99.gomoku.proto.IGameReadyRequest|null);
-
                     /** Request gameMove */
                     gameMove?: (com.miti99.gomoku.proto.IGameMoveRequest|null);
 
@@ -91,9 +88,6 @@ export namespace com {
                     /** Request gameStarting. */
                     public gameStarting?: (com.miti99.gomoku.proto.IGameStartingRequest|null);
 
-                    /** Request gameReady. */
-                    public gameReady?: (com.miti99.gomoku.proto.IGameReadyRequest|null);
-
                     /** Request gameMove. */
                     public gameMove?: (com.miti99.gomoku.proto.IGameMoveRequest|null);
 
@@ -110,7 +104,7 @@ export namespace com {
                     public clientExit?: (com.miti99.gomoku.proto.IClientExitRequest|null);
 
                     /** Request payload. */
-                    public payload?: ("heartbeat"|"setNickname"|"setClientInfo"|"createRoom"|"createPveRoom"|"getRooms"|"joinRoom"|"gameStarting"|"gameReady"|"gameMove"|"gameReset"|"watchGame"|"watchGameExit"|"clientExit");
+                    public payload?: ("heartbeat"|"setNickname"|"setClientInfo"|"createRoom"|"createPveRoom"|"getRooms"|"joinRoom"|"gameStarting"|"gameMove"|"gameReset"|"watchGame"|"watchGameExit"|"clientExit");
 
                     /**
                      * Creates a new Request instance using the specified properties.
@@ -942,97 +936,6 @@ export namespace com {
                     public static getTypeUrl(typeUrlPrefix?: string): string;
                 }
 
-                /** Properties of a GameReadyRequest. */
-                interface IGameReadyRequest {
-                }
-
-                /** Represents a GameReadyRequest. */
-                class GameReadyRequest implements IGameReadyRequest {
-
-                    /**
-                     * Constructs a new GameReadyRequest.
-                     * @param [properties] Properties to set
-                     */
-                    constructor(properties?: com.miti99.gomoku.proto.IGameReadyRequest);
-
-                    /**
-                     * Creates a new GameReadyRequest instance using the specified properties.
-                     * @param [properties] Properties to set
-                     * @returns GameReadyRequest instance
-                     */
-                    public static create(properties?: com.miti99.gomoku.proto.IGameReadyRequest): com.miti99.gomoku.proto.GameReadyRequest;
-
-                    /**
-                     * Encodes the specified GameReadyRequest message. Does not implicitly {@link com.miti99.gomoku.proto.GameReadyRequest.verify|verify} messages.
-                     * @param message GameReadyRequest message or plain object to encode
-                     * @param [writer] Writer to encode to
-                     * @returns Writer
-                     */
-                    public static encode(message: com.miti99.gomoku.proto.IGameReadyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
-
-                    /**
-                     * Encodes the specified GameReadyRequest message, length delimited. Does not implicitly {@link com.miti99.gomoku.proto.GameReadyRequest.verify|verify} messages.
-                     * @param message GameReadyRequest message or plain object to encode
-                     * @param [writer] Writer to encode to
-                     * @returns Writer
-                     */
-                    public static encodeDelimited(message: com.miti99.gomoku.proto.IGameReadyRequest, writer?: $protobuf.Writer): $protobuf.Writer;
-
-                    /**
-                     * Decodes a GameReadyRequest message from the specified reader or buffer.
-                     * @param reader Reader or buffer to decode from
-                     * @param [length] Message length if known beforehand
-                     * @returns GameReadyRequest
-                     * @throws {Error} If the payload is not a reader or valid buffer
-                     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-                     */
-                    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.miti99.gomoku.proto.GameReadyRequest;
-
-                    /**
-                     * Decodes a GameReadyRequest message from the specified reader or buffer, length delimited.
-                     * @param reader Reader or buffer to decode from
-                     * @returns GameReadyRequest
-                     * @throws {Error} If the payload is not a reader or valid buffer
-                     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-                     */
-                    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.miti99.gomoku.proto.GameReadyRequest;
-
-                    /**
-                     * Verifies a GameReadyRequest message.
-                     * @param message Plain object to verify
-                     * @returns `null` if valid, otherwise the reason why it is not
-                     */
-                    public static verify(message: { [k: string]: any }): (string|null);
-
-                    /**
-                     * Creates a GameReadyRequest message from a plain object. Also converts values to their respective internal types.
-                     * @param object Plain object
-                     * @returns GameReadyRequest
-                     */
-                    public static fromObject(object: { [k: string]: any }): com.miti99.gomoku.proto.GameReadyRequest;
-
-                    /**
-                     * Creates a plain object from a GameReadyRequest message. Also converts values to other types if specified.
-                     * @param message GameReadyRequest
-                     * @param [options] Conversion options
-                     * @returns Plain object
-                     */
-                    public static toObject(message: com.miti99.gomoku.proto.GameReadyRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-                    /**
-                     * Converts this GameReadyRequest to JSON.
-                     * @returns JSON object
-                     */
-                    public toJSON(): { [k: string]: any };
-
-                    /**
-                     * Gets the default type url for GameReadyRequest
-                     * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-                     * @returns The default type url
-                     */
-                    public static getTypeUrl(typeUrlPrefix?: string): string;
-                }
-
                 /** Properties of a GameMoveRequest. */
                 interface IGameMoveRequest {
 
@@ -1506,6 +1409,36 @@ export namespace com {
                     public static getTypeUrl(typeUrlPrefix?: string): string;
                 }
 
+                /** Piece enum. */
+                enum Piece {
+                    PIECE_UNSPECIFIED = 0,
+                    BLACK = 1,
+                    WHITE = 2
+                }
+
+                /** GameResult enum. */
+                enum GameResult {
+                    GAME_RESULT_UNSPECIFIED = 0,
+                    BLACK_WIN = 1,
+                    WHITE_WIN = 2,
+                    DRAW = 3
+                }
+
+                /** RoomType enum. */
+                enum RoomType {
+                    ROOM_TYPE_UNSPECIFIED = 0,
+                    PVP = 1,
+                    PVE = 2
+                }
+
+                /** RoomStatus enum. */
+                enum RoomStatus {
+                    ROOM_STATUS_UNSPECIFIED = 0,
+                    WAITING = 1,
+                    PLAYING = 2,
+                    FINISHED = 3
+                }
+
                 /** Properties of a Response. */
                 interface IResponse {
 
@@ -1538,9 +1471,6 @@ export namespace com {
 
                     /** Response gameStarting */
                     gameStarting?: (com.miti99.gomoku.proto.IGameStartingResponse|null);
-
-                    /** Response gameReady */
-                    gameReady?: (com.miti99.gomoku.proto.IGameReadyResponse|null);
 
                     /** Response gameMoveSuccess */
                     gameMoveSuccess?: (com.miti99.gomoku.proto.IGameMoveSuccessResponse|null);
@@ -1612,9 +1542,6 @@ export namespace com {
                     /** Response gameStarting. */
                     public gameStarting?: (com.miti99.gomoku.proto.IGameStartingResponse|null);
 
-                    /** Response gameReady. */
-                    public gameReady?: (com.miti99.gomoku.proto.IGameReadyResponse|null);
-
                     /** Response gameMoveSuccess. */
                     public gameMoveSuccess?: (com.miti99.gomoku.proto.IGameMoveSuccessResponse|null);
 
@@ -1646,7 +1573,7 @@ export namespace com {
                     public spectatorCannotAct?: (com.miti99.gomoku.proto.ISpectatorCannotActResponse|null);
 
                     /** Response payload. */
-                    public payload?: ("clientConnect"|"nicknameSet"|"showOptions"|"showRooms"|"roomCreateSuccess"|"roomJoinSuccess"|"roomJoinFailFull"|"roomJoinFailNotFound"|"roomPlayFailNotFound"|"gameStarting"|"gameReady"|"gameMoveSuccess"|"gameMoveInvalid"|"gameMoveOccupied"|"gameMoveOutOfBounds"|"gameMoveNotYourTurn"|"gameOver"|"pveDifficultyNotSupport"|"watchGameSuccess"|"clientExit"|"spectatorCannotAct");
+                    public payload?: ("clientConnect"|"nicknameSet"|"showOptions"|"showRooms"|"roomCreateSuccess"|"roomJoinSuccess"|"roomJoinFailFull"|"roomJoinFailNotFound"|"roomPlayFailNotFound"|"gameStarting"|"gameMoveSuccess"|"gameMoveInvalid"|"gameMoveOccupied"|"gameMoveOutOfBounds"|"gameMoveNotYourTurn"|"gameOver"|"pveDifficultyNotSupport"|"watchGameSuccess"|"clientExit"|"spectatorCannotAct");
 
                     /**
                      * Creates a new Response instance using the specified properties.
@@ -2024,7 +1951,7 @@ export namespace com {
                     roomClientCount?: (number|null);
 
                     /** RoomSummary roomType */
-                    roomType?: (string|null);
+                    roomType?: (com.miti99.gomoku.proto.RoomType|null);
                 }
 
                 /** Represents a RoomSummary. */
@@ -2046,7 +1973,7 @@ export namespace com {
                     public roomClientCount: number;
 
                     /** RoomSummary roomType. */
-                    public roomType: string;
+                    public roomType: com.miti99.gomoku.proto.RoomType;
 
                     /**
                      * Creates a new RoomSummary instance using the specified properties.
@@ -2233,7 +2160,7 @@ export namespace com {
                     roomOwner?: (string|null);
 
                     /** RoomCreateSuccessResponse roomType */
-                    roomType?: (string|null);
+                    roomType?: (com.miti99.gomoku.proto.RoomType|null);
                 }
 
                 /** Represents a RoomCreateSuccessResponse. */
@@ -2252,7 +2179,7 @@ export namespace com {
                     public roomOwner: string;
 
                     /** RoomCreateSuccessResponse roomType. */
-                    public roomType: string;
+                    public roomType: com.miti99.gomoku.proto.RoomType;
 
                     /**
                      * Creates a new RoomCreateSuccessResponse instance using the specified properties.
@@ -2871,115 +2798,6 @@ export namespace com {
                     public static getTypeUrl(typeUrlPrefix?: string): string;
                 }
 
-                /** Properties of a GameReadyResponse. */
-                interface IGameReadyResponse {
-
-                    /** GameReadyResponse clientNickname */
-                    clientNickname?: (string|null);
-
-                    /** GameReadyResponse status */
-                    status?: (string|null);
-
-                    /** GameReadyResponse clientId */
-                    clientId?: (number|null);
-                }
-
-                /** Represents a GameReadyResponse. */
-                class GameReadyResponse implements IGameReadyResponse {
-
-                    /**
-                     * Constructs a new GameReadyResponse.
-                     * @param [properties] Properties to set
-                     */
-                    constructor(properties?: com.miti99.gomoku.proto.IGameReadyResponse);
-
-                    /** GameReadyResponse clientNickname. */
-                    public clientNickname: string;
-
-                    /** GameReadyResponse status. */
-                    public status: string;
-
-                    /** GameReadyResponse clientId. */
-                    public clientId: number;
-
-                    /**
-                     * Creates a new GameReadyResponse instance using the specified properties.
-                     * @param [properties] Properties to set
-                     * @returns GameReadyResponse instance
-                     */
-                    public static create(properties?: com.miti99.gomoku.proto.IGameReadyResponse): com.miti99.gomoku.proto.GameReadyResponse;
-
-                    /**
-                     * Encodes the specified GameReadyResponse message. Does not implicitly {@link com.miti99.gomoku.proto.GameReadyResponse.verify|verify} messages.
-                     * @param message GameReadyResponse message or plain object to encode
-                     * @param [writer] Writer to encode to
-                     * @returns Writer
-                     */
-                    public static encode(message: com.miti99.gomoku.proto.IGameReadyResponse, writer?: $protobuf.Writer): $protobuf.Writer;
-
-                    /**
-                     * Encodes the specified GameReadyResponse message, length delimited. Does not implicitly {@link com.miti99.gomoku.proto.GameReadyResponse.verify|verify} messages.
-                     * @param message GameReadyResponse message or plain object to encode
-                     * @param [writer] Writer to encode to
-                     * @returns Writer
-                     */
-                    public static encodeDelimited(message: com.miti99.gomoku.proto.IGameReadyResponse, writer?: $protobuf.Writer): $protobuf.Writer;
-
-                    /**
-                     * Decodes a GameReadyResponse message from the specified reader or buffer.
-                     * @param reader Reader or buffer to decode from
-                     * @param [length] Message length if known beforehand
-                     * @returns GameReadyResponse
-                     * @throws {Error} If the payload is not a reader or valid buffer
-                     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-                     */
-                    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.miti99.gomoku.proto.GameReadyResponse;
-
-                    /**
-                     * Decodes a GameReadyResponse message from the specified reader or buffer, length delimited.
-                     * @param reader Reader or buffer to decode from
-                     * @returns GameReadyResponse
-                     * @throws {Error} If the payload is not a reader or valid buffer
-                     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-                     */
-                    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.miti99.gomoku.proto.GameReadyResponse;
-
-                    /**
-                     * Verifies a GameReadyResponse message.
-                     * @param message Plain object to verify
-                     * @returns `null` if valid, otherwise the reason why it is not
-                     */
-                    public static verify(message: { [k: string]: any }): (string|null);
-
-                    /**
-                     * Creates a GameReadyResponse message from a plain object. Also converts values to their respective internal types.
-                     * @param object Plain object
-                     * @returns GameReadyResponse
-                     */
-                    public static fromObject(object: { [k: string]: any }): com.miti99.gomoku.proto.GameReadyResponse;
-
-                    /**
-                     * Creates a plain object from a GameReadyResponse message. Also converts values to other types if specified.
-                     * @param message GameReadyResponse
-                     * @param [options] Conversion options
-                     * @returns Plain object
-                     */
-                    public static toObject(message: com.miti99.gomoku.proto.GameReadyResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-                    /**
-                     * Converts this GameReadyResponse to JSON.
-                     * @returns JSON object
-                     */
-                    public toJSON(): { [k: string]: any };
-
-                    /**
-                     * Gets the default type url for GameReadyResponse
-                     * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-                     * @returns The default type url
-                     */
-                    public static getTypeUrl(typeUrlPrefix?: string): string;
-                }
-
                 /** Properties of a GameMoveSuccessResponse. */
                 interface IGameMoveSuccessResponse {
 
@@ -2990,7 +2808,7 @@ export namespace com {
                     col?: (number|null);
 
                     /** GameMoveSuccessResponse piece */
-                    piece?: (string|null);
+                    piece?: (com.miti99.gomoku.proto.Piece|null);
 
                     /** GameMoveSuccessResponse playerNickname */
                     playerNickname?: (string|null);
@@ -3015,7 +2833,7 @@ export namespace com {
                     public col: number;
 
                     /** GameMoveSuccessResponse piece. */
-                    public piece: string;
+                    public piece: com.miti99.gomoku.proto.Piece;
 
                     /** GameMoveSuccessResponse playerNickname. */
                     public playerNickname: string;
@@ -3469,7 +3287,7 @@ export namespace com {
                 interface IGameOverResponse {
 
                     /** GameOverResponse result */
-                    result?: (string|null);
+                    result?: (com.miti99.gomoku.proto.GameResult|null);
 
                     /** GameOverResponse winnerNickname */
                     winnerNickname?: (string|null);
@@ -3485,7 +3303,7 @@ export namespace com {
                     constructor(properties?: com.miti99.gomoku.proto.IGameOverResponse);
 
                     /** GameOverResponse result. */
-                    public result: string;
+                    public result: com.miti99.gomoku.proto.GameResult;
 
                     /** GameOverResponse winnerNickname. */
                     public winnerNickname: string;
@@ -3666,7 +3484,7 @@ export namespace com {
                     owner?: (string|null);
 
                     /** WatchGameSuccessResponse status */
-                    status?: (string|null);
+                    status?: (com.miti99.gomoku.proto.RoomStatus|null);
                 }
 
                 /** Represents a WatchGameSuccessResponse. */
@@ -3682,7 +3500,7 @@ export namespace com {
                     public owner: string;
 
                     /** WatchGameSuccessResponse status. */
-                    public status: string;
+                    public status: com.miti99.gomoku.proto.RoomStatus;
 
                     /**
                      * Creates a new WatchGameSuccessResponse instance using the specified properties.

@@ -28,7 +28,7 @@ func (*gamePveState) Next(player *database.Player) (consts.StateID, error) {
 
 	// If human is White, AI (Black) moves first.
 	if humanPiece == game.White {
-		nextState, done := runAIMove(player, room)
+		nextState, done := runAIMove(room)
 		if done {
 			return nextState, nil
 		}
@@ -100,12 +100,12 @@ func applyHumanMove(player *database.Player, room *database.NewRoom, humanPiece 
 	}
 
 	// AI's turn.
-	return runAIMove(player, room)
+	return runAIMove(room)
 }
 
 // runAIMove computes and applies the AI's next move, broadcasts it, and checks result.
 // Returns (nextState, true) if the game ends, (0, false) to continue.
-func runAIMove(player *database.Player, room *database.NewRoom) (consts.StateID, bool) {
+func runAIMove(room *database.NewRoom) (consts.StateID, bool) {
 	room.RLock()
 	ai := room.AI
 	board := room.Board.Clone() // safe value copy for AI computation

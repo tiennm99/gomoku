@@ -21,6 +21,212 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Piece color for gomoku stones.
+type Piece int32
+
+const (
+	Piece_PIECE_UNSPECIFIED Piece = 0
+	Piece_BLACK             Piece = 1
+	Piece_WHITE             Piece = 2
+)
+
+// Enum value maps for Piece.
+var (
+	Piece_name = map[int32]string{
+		0: "PIECE_UNSPECIFIED",
+		1: "BLACK",
+		2: "WHITE",
+	}
+	Piece_value = map[string]int32{
+		"PIECE_UNSPECIFIED": 0,
+		"BLACK":             1,
+		"WHITE":             2,
+	}
+)
+
+func (x Piece) Enum() *Piece {
+	p := new(Piece)
+	*p = x
+	return p
+}
+
+func (x Piece) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Piece) Descriptor() protoreflect.EnumDescriptor {
+	return file_response_proto_enumTypes[0].Descriptor()
+}
+
+func (Piece) Type() protoreflect.EnumType {
+	return &file_response_proto_enumTypes[0]
+}
+
+func (x Piece) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Piece.Descriptor instead.
+func (Piece) EnumDescriptor() ([]byte, []int) {
+	return file_response_proto_rawDescGZIP(), []int{0}
+}
+
+// Outcome of a finished game.
+type GameResult int32
+
+const (
+	GameResult_GAME_RESULT_UNSPECIFIED GameResult = 0
+	GameResult_BLACK_WIN               GameResult = 1
+	GameResult_WHITE_WIN               GameResult = 2
+	GameResult_DRAW                    GameResult = 3
+)
+
+// Enum value maps for GameResult.
+var (
+	GameResult_name = map[int32]string{
+		0: "GAME_RESULT_UNSPECIFIED",
+		1: "BLACK_WIN",
+		2: "WHITE_WIN",
+		3: "DRAW",
+	}
+	GameResult_value = map[string]int32{
+		"GAME_RESULT_UNSPECIFIED": 0,
+		"BLACK_WIN":               1,
+		"WHITE_WIN":               2,
+		"DRAW":                    3,
+	}
+)
+
+func (x GameResult) Enum() *GameResult {
+	p := new(GameResult)
+	*p = x
+	return p
+}
+
+func (x GameResult) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (GameResult) Descriptor() protoreflect.EnumDescriptor {
+	return file_response_proto_enumTypes[1].Descriptor()
+}
+
+func (GameResult) Type() protoreflect.EnumType {
+	return &file_response_proto_enumTypes[1]
+}
+
+func (x GameResult) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use GameResult.Descriptor instead.
+func (GameResult) EnumDescriptor() ([]byte, []int) {
+	return file_response_proto_rawDescGZIP(), []int{1}
+}
+
+// Room mode: player-vs-player or player-vs-AI.
+type RoomType int32
+
+const (
+	RoomType_ROOM_TYPE_UNSPECIFIED RoomType = 0
+	RoomType_PVP                   RoomType = 1
+	RoomType_PVE                   RoomType = 2
+)
+
+// Enum value maps for RoomType.
+var (
+	RoomType_name = map[int32]string{
+		0: "ROOM_TYPE_UNSPECIFIED",
+		1: "PVP",
+		2: "PVE",
+	}
+	RoomType_value = map[string]int32{
+		"ROOM_TYPE_UNSPECIFIED": 0,
+		"PVP":                   1,
+		"PVE":                   2,
+	}
+)
+
+func (x RoomType) Enum() *RoomType {
+	p := new(RoomType)
+	*p = x
+	return p
+}
+
+func (x RoomType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RoomType) Descriptor() protoreflect.EnumDescriptor {
+	return file_response_proto_enumTypes[2].Descriptor()
+}
+
+func (RoomType) Type() protoreflect.EnumType {
+	return &file_response_proto_enumTypes[2]
+}
+
+func (x RoomType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RoomType.Descriptor instead.
+func (RoomType) EnumDescriptor() ([]byte, []int) {
+	return file_response_proto_rawDescGZIP(), []int{2}
+}
+
+// Room lifecycle status.
+type RoomStatus int32
+
+const (
+	RoomStatus_ROOM_STATUS_UNSPECIFIED RoomStatus = 0
+	RoomStatus_WAITING                 RoomStatus = 1
+	RoomStatus_PLAYING                 RoomStatus = 2
+	RoomStatus_FINISHED                RoomStatus = 3
+)
+
+// Enum value maps for RoomStatus.
+var (
+	RoomStatus_name = map[int32]string{
+		0: "ROOM_STATUS_UNSPECIFIED",
+		1: "WAITING",
+		2: "PLAYING",
+		3: "FINISHED",
+	}
+	RoomStatus_value = map[string]int32{
+		"ROOM_STATUS_UNSPECIFIED": 0,
+		"WAITING":                 1,
+		"PLAYING":                 2,
+		"FINISHED":                3,
+	}
+)
+
+func (x RoomStatus) Enum() *RoomStatus {
+	p := new(RoomStatus)
+	*p = x
+	return p
+}
+
+func (x RoomStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RoomStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_response_proto_enumTypes[3].Descriptor()
+}
+
+func (RoomStatus) Type() protoreflect.EnumType {
+	return &file_response_proto_enumTypes[3]
+}
+
+func (x RoomStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RoomStatus.Descriptor instead.
+func (RoomStatus) EnumDescriptor() ([]byte, []int) {
+	return file_response_proto_rawDescGZIP(), []int{3}
+}
+
 // Wrapper for all server -> client messages. The oneof case IS the event code.
 type Response struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -36,7 +242,6 @@ type Response struct {
 	//	*Response_RoomJoinFailNotFound
 	//	*Response_RoomPlayFailNotFound
 	//	*Response_GameStarting
-	//	*Response_GameReady
 	//	*Response_GameMoveSuccess
 	//	*Response_GameMoveInvalid
 	//	*Response_GameMoveOccupied
@@ -179,15 +384,6 @@ func (x *Response) GetGameStarting() *GameStartingResponse {
 	return nil
 }
 
-func (x *Response) GetGameReady() *GameReadyResponse {
-	if x != nil {
-		if x, ok := x.Payload.(*Response_GameReady); ok {
-			return x.GameReady
-		}
-	}
-	return nil
-}
-
 func (x *Response) GetGameMoveSuccess() *GameMoveSuccessResponse {
 	if x != nil {
 		if x, ok := x.Payload.(*Response_GameMoveSuccess); ok {
@@ -322,48 +518,44 @@ type Response_GameStarting struct {
 	GameStarting *GameStartingResponse `protobuf:"bytes,10,opt,name=game_starting,json=gameStarting,proto3,oneof"`
 }
 
-type Response_GameReady struct {
-	GameReady *GameReadyResponse `protobuf:"bytes,11,opt,name=game_ready,json=gameReady,proto3,oneof"`
-}
-
 type Response_GameMoveSuccess struct {
-	GameMoveSuccess *GameMoveSuccessResponse `protobuf:"bytes,12,opt,name=game_move_success,json=gameMoveSuccess,proto3,oneof"`
+	GameMoveSuccess *GameMoveSuccessResponse `protobuf:"bytes,11,opt,name=game_move_success,json=gameMoveSuccess,proto3,oneof"`
 }
 
 type Response_GameMoveInvalid struct {
-	GameMoveInvalid *GameMoveInvalidResponse `protobuf:"bytes,13,opt,name=game_move_invalid,json=gameMoveInvalid,proto3,oneof"`
+	GameMoveInvalid *GameMoveInvalidResponse `protobuf:"bytes,12,opt,name=game_move_invalid,json=gameMoveInvalid,proto3,oneof"`
 }
 
 type Response_GameMoveOccupied struct {
-	GameMoveOccupied *GameMoveOccupiedResponse `protobuf:"bytes,14,opt,name=game_move_occupied,json=gameMoveOccupied,proto3,oneof"`
+	GameMoveOccupied *GameMoveOccupiedResponse `protobuf:"bytes,13,opt,name=game_move_occupied,json=gameMoveOccupied,proto3,oneof"`
 }
 
 type Response_GameMoveOutOfBounds struct {
-	GameMoveOutOfBounds *GameMoveOutOfBoundsResponse `protobuf:"bytes,15,opt,name=game_move_out_of_bounds,json=gameMoveOutOfBounds,proto3,oneof"`
+	GameMoveOutOfBounds *GameMoveOutOfBoundsResponse `protobuf:"bytes,14,opt,name=game_move_out_of_bounds,json=gameMoveOutOfBounds,proto3,oneof"`
 }
 
 type Response_GameMoveNotYourTurn struct {
-	GameMoveNotYourTurn *GameMoveNotYourTurnResponse `protobuf:"bytes,16,opt,name=game_move_not_your_turn,json=gameMoveNotYourTurn,proto3,oneof"`
+	GameMoveNotYourTurn *GameMoveNotYourTurnResponse `protobuf:"bytes,15,opt,name=game_move_not_your_turn,json=gameMoveNotYourTurn,proto3,oneof"`
 }
 
 type Response_GameOver struct {
-	GameOver *GameOverResponse `protobuf:"bytes,17,opt,name=game_over,json=gameOver,proto3,oneof"`
+	GameOver *GameOverResponse `protobuf:"bytes,16,opt,name=game_over,json=gameOver,proto3,oneof"`
 }
 
 type Response_PveDifficultyNotSupport struct {
-	PveDifficultyNotSupport *PveDifficultyNotSupportResponse `protobuf:"bytes,18,opt,name=pve_difficulty_not_support,json=pveDifficultyNotSupport,proto3,oneof"`
+	PveDifficultyNotSupport *PveDifficultyNotSupportResponse `protobuf:"bytes,17,opt,name=pve_difficulty_not_support,json=pveDifficultyNotSupport,proto3,oneof"`
 }
 
 type Response_WatchGameSuccess struct {
-	WatchGameSuccess *WatchGameSuccessResponse `protobuf:"bytes,19,opt,name=watch_game_success,json=watchGameSuccess,proto3,oneof"`
+	WatchGameSuccess *WatchGameSuccessResponse `protobuf:"bytes,18,opt,name=watch_game_success,json=watchGameSuccess,proto3,oneof"`
 }
 
 type Response_ClientExit struct {
-	ClientExit *ClientExitResponse `protobuf:"bytes,20,opt,name=client_exit,json=clientExit,proto3,oneof"`
+	ClientExit *ClientExitResponse `protobuf:"bytes,19,opt,name=client_exit,json=clientExit,proto3,oneof"`
 }
 
 type Response_SpectatorCannotAct struct {
-	SpectatorCannotAct *SpectatorCannotActResponse `protobuf:"bytes,21,opt,name=spectator_cannot_act,json=spectatorCannotAct,proto3,oneof"`
+	SpectatorCannotAct *SpectatorCannotActResponse `protobuf:"bytes,20,opt,name=spectator_cannot_act,json=spectatorCannotAct,proto3,oneof"`
 }
 
 func (*Response_ClientConnect) isResponse_Payload() {}
@@ -385,8 +577,6 @@ func (*Response_RoomJoinFailNotFound) isResponse_Payload() {}
 func (*Response_RoomPlayFailNotFound) isResponse_Payload() {}
 
 func (*Response_GameStarting) isResponse_Payload() {}
-
-func (*Response_GameReady) isResponse_Payload() {}
 
 func (*Response_GameMoveSuccess) isResponse_Payload() {}
 
@@ -538,7 +728,7 @@ type RoomSummary struct {
 	RoomId          int32                  `protobuf:"varint,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
 	RoomOwner       string                 `protobuf:"bytes,2,opt,name=room_owner,json=roomOwner,proto3" json:"room_owner,omitempty"`
 	RoomClientCount int32                  `protobuf:"varint,3,opt,name=room_client_count,json=roomClientCount,proto3" json:"room_client_count,omitempty"`
-	RoomType        string                 `protobuf:"bytes,4,opt,name=room_type,json=roomType,proto3" json:"room_type,omitempty"`
+	RoomType        RoomType               `protobuf:"varint,4,opt,name=room_type,json=roomType,proto3,enum=com.miti99.gomoku.proto.RoomType" json:"room_type,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -594,11 +784,11 @@ func (x *RoomSummary) GetRoomClientCount() int32 {
 	return 0
 }
 
-func (x *RoomSummary) GetRoomType() string {
+func (x *RoomSummary) GetRoomType() RoomType {
 	if x != nil {
 		return x.RoomType
 	}
-	return ""
+	return RoomType_ROOM_TYPE_UNSPECIFIED
 }
 
 type ShowRoomsResponse struct {
@@ -649,7 +839,7 @@ type RoomCreateSuccessResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	RoomOwner     string                 `protobuf:"bytes,2,opt,name=room_owner,json=roomOwner,proto3" json:"room_owner,omitempty"`
-	RoomType      string                 `protobuf:"bytes,3,opt,name=room_type,json=roomType,proto3" json:"room_type,omitempty"`
+	RoomType      RoomType               `protobuf:"varint,3,opt,name=room_type,json=roomType,proto3,enum=com.miti99.gomoku.proto.RoomType" json:"room_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -698,11 +888,11 @@ func (x *RoomCreateSuccessResponse) GetRoomOwner() string {
 	return ""
 }
 
-func (x *RoomCreateSuccessResponse) GetRoomType() string {
+func (x *RoomCreateSuccessResponse) GetRoomType() RoomType {
 	if x != nil {
 		return x.RoomType
 	}
-	return ""
+	return RoomType_ROOM_TYPE_UNSPECIFIED
 }
 
 type RoomJoinSuccessResponse struct {
@@ -997,71 +1187,11 @@ func (x *GameStartingResponse) GetBoardSize() int32 {
 	return 0
 }
 
-type GameReadyResponse struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	ClientNickname string                 `protobuf:"bytes,1,opt,name=client_nickname,json=clientNickname,proto3" json:"client_nickname,omitempty"`
-	Status         string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
-	ClientId       int32                  `protobuf:"varint,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *GameReadyResponse) Reset() {
-	*x = GameReadyResponse{}
-	mi := &file_response_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GameReadyResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GameReadyResponse) ProtoMessage() {}
-
-func (x *GameReadyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_response_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GameReadyResponse.ProtoReflect.Descriptor instead.
-func (*GameReadyResponse) Descriptor() ([]byte, []int) {
-	return file_response_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *GameReadyResponse) GetClientNickname() string {
-	if x != nil {
-		return x.ClientNickname
-	}
-	return ""
-}
-
-func (x *GameReadyResponse) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
-}
-
-func (x *GameReadyResponse) GetClientId() int32 {
-	if x != nil {
-		return x.ClientId
-	}
-	return 0
-}
-
 type GameMoveSuccessResponse struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Row            int32                  `protobuf:"varint,1,opt,name=row,proto3" json:"row,omitempty"`
 	Col            int32                  `protobuf:"varint,2,opt,name=col,proto3" json:"col,omitempty"`
-	Piece          string                 `protobuf:"bytes,3,opt,name=piece,proto3" json:"piece,omitempty"`
+	Piece          Piece                  `protobuf:"varint,3,opt,name=piece,proto3,enum=com.miti99.gomoku.proto.Piece" json:"piece,omitempty"`
 	PlayerNickname string                 `protobuf:"bytes,4,opt,name=player_nickname,json=playerNickname,proto3" json:"player_nickname,omitempty"`
 	PlayerId       int32                  `protobuf:"varint,5,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
@@ -1070,7 +1200,7 @@ type GameMoveSuccessResponse struct {
 
 func (x *GameMoveSuccessResponse) Reset() {
 	*x = GameMoveSuccessResponse{}
-	mi := &file_response_proto_msgTypes[13]
+	mi := &file_response_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1082,7 +1212,7 @@ func (x *GameMoveSuccessResponse) String() string {
 func (*GameMoveSuccessResponse) ProtoMessage() {}
 
 func (x *GameMoveSuccessResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_response_proto_msgTypes[13]
+	mi := &file_response_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1095,7 +1225,7 @@ func (x *GameMoveSuccessResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameMoveSuccessResponse.ProtoReflect.Descriptor instead.
 func (*GameMoveSuccessResponse) Descriptor() ([]byte, []int) {
-	return file_response_proto_rawDescGZIP(), []int{13}
+	return file_response_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GameMoveSuccessResponse) GetRow() int32 {
@@ -1112,11 +1242,11 @@ func (x *GameMoveSuccessResponse) GetCol() int32 {
 	return 0
 }
 
-func (x *GameMoveSuccessResponse) GetPiece() string {
+func (x *GameMoveSuccessResponse) GetPiece() Piece {
 	if x != nil {
 		return x.Piece
 	}
-	return ""
+	return Piece_PIECE_UNSPECIFIED
 }
 
 func (x *GameMoveSuccessResponse) GetPlayerNickname() string {
@@ -1141,7 +1271,7 @@ type GameMoveInvalidResponse struct {
 
 func (x *GameMoveInvalidResponse) Reset() {
 	*x = GameMoveInvalidResponse{}
-	mi := &file_response_proto_msgTypes[14]
+	mi := &file_response_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1153,7 +1283,7 @@ func (x *GameMoveInvalidResponse) String() string {
 func (*GameMoveInvalidResponse) ProtoMessage() {}
 
 func (x *GameMoveInvalidResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_response_proto_msgTypes[14]
+	mi := &file_response_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1166,7 +1296,7 @@ func (x *GameMoveInvalidResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameMoveInvalidResponse.ProtoReflect.Descriptor instead.
 func (*GameMoveInvalidResponse) Descriptor() ([]byte, []int) {
-	return file_response_proto_rawDescGZIP(), []int{14}
+	return file_response_proto_rawDescGZIP(), []int{13}
 }
 
 type GameMoveOccupiedResponse struct {
@@ -1177,7 +1307,7 @@ type GameMoveOccupiedResponse struct {
 
 func (x *GameMoveOccupiedResponse) Reset() {
 	*x = GameMoveOccupiedResponse{}
-	mi := &file_response_proto_msgTypes[15]
+	mi := &file_response_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1189,7 +1319,7 @@ func (x *GameMoveOccupiedResponse) String() string {
 func (*GameMoveOccupiedResponse) ProtoMessage() {}
 
 func (x *GameMoveOccupiedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_response_proto_msgTypes[15]
+	mi := &file_response_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1202,7 +1332,7 @@ func (x *GameMoveOccupiedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameMoveOccupiedResponse.ProtoReflect.Descriptor instead.
 func (*GameMoveOccupiedResponse) Descriptor() ([]byte, []int) {
-	return file_response_proto_rawDescGZIP(), []int{15}
+	return file_response_proto_rawDescGZIP(), []int{14}
 }
 
 type GameMoveOutOfBoundsResponse struct {
@@ -1213,7 +1343,7 @@ type GameMoveOutOfBoundsResponse struct {
 
 func (x *GameMoveOutOfBoundsResponse) Reset() {
 	*x = GameMoveOutOfBoundsResponse{}
-	mi := &file_response_proto_msgTypes[16]
+	mi := &file_response_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1225,7 +1355,7 @@ func (x *GameMoveOutOfBoundsResponse) String() string {
 func (*GameMoveOutOfBoundsResponse) ProtoMessage() {}
 
 func (x *GameMoveOutOfBoundsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_response_proto_msgTypes[16]
+	mi := &file_response_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1238,7 +1368,7 @@ func (x *GameMoveOutOfBoundsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameMoveOutOfBoundsResponse.ProtoReflect.Descriptor instead.
 func (*GameMoveOutOfBoundsResponse) Descriptor() ([]byte, []int) {
-	return file_response_proto_rawDescGZIP(), []int{16}
+	return file_response_proto_rawDescGZIP(), []int{15}
 }
 
 type GameMoveNotYourTurnResponse struct {
@@ -1249,7 +1379,7 @@ type GameMoveNotYourTurnResponse struct {
 
 func (x *GameMoveNotYourTurnResponse) Reset() {
 	*x = GameMoveNotYourTurnResponse{}
-	mi := &file_response_proto_msgTypes[17]
+	mi := &file_response_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1261,7 +1391,7 @@ func (x *GameMoveNotYourTurnResponse) String() string {
 func (*GameMoveNotYourTurnResponse) ProtoMessage() {}
 
 func (x *GameMoveNotYourTurnResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_response_proto_msgTypes[17]
+	mi := &file_response_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1274,12 +1404,12 @@ func (x *GameMoveNotYourTurnResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameMoveNotYourTurnResponse.ProtoReflect.Descriptor instead.
 func (*GameMoveNotYourTurnResponse) Descriptor() ([]byte, []int) {
-	return file_response_proto_rawDescGZIP(), []int{17}
+	return file_response_proto_rawDescGZIP(), []int{16}
 }
 
 type GameOverResponse struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	Result         string                 `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
+	Result         GameResult             `protobuf:"varint,1,opt,name=result,proto3,enum=com.miti99.gomoku.proto.GameResult" json:"result,omitempty"`
 	WinnerNickname string                 `protobuf:"bytes,2,opt,name=winner_nickname,json=winnerNickname,proto3" json:"winner_nickname,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -1287,7 +1417,7 @@ type GameOverResponse struct {
 
 func (x *GameOverResponse) Reset() {
 	*x = GameOverResponse{}
-	mi := &file_response_proto_msgTypes[18]
+	mi := &file_response_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1299,7 +1429,7 @@ func (x *GameOverResponse) String() string {
 func (*GameOverResponse) ProtoMessage() {}
 
 func (x *GameOverResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_response_proto_msgTypes[18]
+	mi := &file_response_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1312,14 +1442,14 @@ func (x *GameOverResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameOverResponse.ProtoReflect.Descriptor instead.
 func (*GameOverResponse) Descriptor() ([]byte, []int) {
-	return file_response_proto_rawDescGZIP(), []int{18}
+	return file_response_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *GameOverResponse) GetResult() string {
+func (x *GameOverResponse) GetResult() GameResult {
 	if x != nil {
 		return x.Result
 	}
-	return ""
+	return GameResult_GAME_RESULT_UNSPECIFIED
 }
 
 func (x *GameOverResponse) GetWinnerNickname() string {
@@ -1337,7 +1467,7 @@ type PveDifficultyNotSupportResponse struct {
 
 func (x *PveDifficultyNotSupportResponse) Reset() {
 	*x = PveDifficultyNotSupportResponse{}
-	mi := &file_response_proto_msgTypes[19]
+	mi := &file_response_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1349,7 +1479,7 @@ func (x *PveDifficultyNotSupportResponse) String() string {
 func (*PveDifficultyNotSupportResponse) ProtoMessage() {}
 
 func (x *PveDifficultyNotSupportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_response_proto_msgTypes[19]
+	mi := &file_response_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1362,20 +1492,20 @@ func (x *PveDifficultyNotSupportResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PveDifficultyNotSupportResponse.ProtoReflect.Descriptor instead.
 func (*PveDifficultyNotSupportResponse) Descriptor() ([]byte, []int) {
-	return file_response_proto_rawDescGZIP(), []int{19}
+	return file_response_proto_rawDescGZIP(), []int{18}
 }
 
 type WatchGameSuccessResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Owner         string                 `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
-	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Status        RoomStatus             `protobuf:"varint,2,opt,name=status,proto3,enum=com.miti99.gomoku.proto.RoomStatus" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *WatchGameSuccessResponse) Reset() {
 	*x = WatchGameSuccessResponse{}
-	mi := &file_response_proto_msgTypes[20]
+	mi := &file_response_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1387,7 +1517,7 @@ func (x *WatchGameSuccessResponse) String() string {
 func (*WatchGameSuccessResponse) ProtoMessage() {}
 
 func (x *WatchGameSuccessResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_response_proto_msgTypes[20]
+	mi := &file_response_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1400,7 +1530,7 @@ func (x *WatchGameSuccessResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchGameSuccessResponse.ProtoReflect.Descriptor instead.
 func (*WatchGameSuccessResponse) Descriptor() ([]byte, []int) {
-	return file_response_proto_rawDescGZIP(), []int{20}
+	return file_response_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *WatchGameSuccessResponse) GetOwner() string {
@@ -1410,11 +1540,11 @@ func (x *WatchGameSuccessResponse) GetOwner() string {
 	return ""
 }
 
-func (x *WatchGameSuccessResponse) GetStatus() string {
+func (x *WatchGameSuccessResponse) GetStatus() RoomStatus {
 	if x != nil {
 		return x.Status
 	}
-	return ""
+	return RoomStatus_ROOM_STATUS_UNSPECIFIED
 }
 
 type ClientExitResponse struct {
@@ -1428,7 +1558,7 @@ type ClientExitResponse struct {
 
 func (x *ClientExitResponse) Reset() {
 	*x = ClientExitResponse{}
-	mi := &file_response_proto_msgTypes[21]
+	mi := &file_response_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1440,7 +1570,7 @@ func (x *ClientExitResponse) String() string {
 func (*ClientExitResponse) ProtoMessage() {}
 
 func (x *ClientExitResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_response_proto_msgTypes[21]
+	mi := &file_response_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1453,7 +1583,7 @@ func (x *ClientExitResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientExitResponse.ProtoReflect.Descriptor instead.
 func (*ClientExitResponse) Descriptor() ([]byte, []int) {
-	return file_response_proto_rawDescGZIP(), []int{21}
+	return file_response_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ClientExitResponse) GetRoomId() int32 {
@@ -1478,7 +1608,6 @@ func (x *ClientExitResponse) GetExitClientNickname() string {
 }
 
 // Sent when a spectator attempts an action that requires being a player.
-// Phase-07 dispatch sends this in response to GameMoveRequest from a spectator.
 type SpectatorCannotActResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1487,7 +1616,7 @@ type SpectatorCannotActResponse struct {
 
 func (x *SpectatorCannotActResponse) Reset() {
 	*x = SpectatorCannotActResponse{}
-	mi := &file_response_proto_msgTypes[22]
+	mi := &file_response_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1499,7 +1628,7 @@ func (x *SpectatorCannotActResponse) String() string {
 func (*SpectatorCannotActResponse) ProtoMessage() {}
 
 func (x *SpectatorCannotActResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_response_proto_msgTypes[22]
+	mi := &file_response_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1512,14 +1641,14 @@ func (x *SpectatorCannotActResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SpectatorCannotActResponse.ProtoReflect.Descriptor instead.
 func (*SpectatorCannotActResponse) Descriptor() ([]byte, []int) {
-	return file_response_proto_rawDescGZIP(), []int{22}
+	return file_response_proto_rawDescGZIP(), []int{21}
 }
 
 var File_response_proto protoreflect.FileDescriptor
 
 const file_response_proto_rawDesc = "" +
 	"\n" +
-	"\x0eresponse.proto\x12\x17com.miti99.gomoku.proto\"\xee\x0f\n" +
+	"\x0eresponse.proto\x12\x17com.miti99.gomoku.proto\"\xa1\x0f\n" +
 	"\bResponse\x12W\n" +
 	"\x0eclient_connect\x18\x01 \x01(\v2..com.miti99.gomoku.proto.ClientConnectResponseH\x00R\rclientConnect\x12Q\n" +
 	"\fnickname_set\x18\x02 \x01(\v2,.com.miti99.gomoku.proto.NicknameSetResponseH\x00R\vnicknameSet\x12Q\n" +
@@ -1532,39 +1661,37 @@ const file_response_proto_rawDesc = "" +
 	"\x18room_join_fail_not_found\x18\b \x01(\v25.com.miti99.gomoku.proto.RoomJoinFailNotFoundResponseH\x00R\x14roomJoinFailNotFound\x12o\n" +
 	"\x18room_play_fail_not_found\x18\t \x01(\v25.com.miti99.gomoku.proto.RoomPlayFailNotFoundResponseH\x00R\x14roomPlayFailNotFound\x12T\n" +
 	"\rgame_starting\x18\n" +
-	" \x01(\v2-.com.miti99.gomoku.proto.GameStartingResponseH\x00R\fgameStarting\x12K\n" +
-	"\n" +
-	"game_ready\x18\v \x01(\v2*.com.miti99.gomoku.proto.GameReadyResponseH\x00R\tgameReady\x12^\n" +
-	"\x11game_move_success\x18\f \x01(\v20.com.miti99.gomoku.proto.GameMoveSuccessResponseH\x00R\x0fgameMoveSuccess\x12^\n" +
-	"\x11game_move_invalid\x18\r \x01(\v20.com.miti99.gomoku.proto.GameMoveInvalidResponseH\x00R\x0fgameMoveInvalid\x12a\n" +
-	"\x12game_move_occupied\x18\x0e \x01(\v21.com.miti99.gomoku.proto.GameMoveOccupiedResponseH\x00R\x10gameMoveOccupied\x12l\n" +
-	"\x17game_move_out_of_bounds\x18\x0f \x01(\v24.com.miti99.gomoku.proto.GameMoveOutOfBoundsResponseH\x00R\x13gameMoveOutOfBounds\x12l\n" +
-	"\x17game_move_not_your_turn\x18\x10 \x01(\v24.com.miti99.gomoku.proto.GameMoveNotYourTurnResponseH\x00R\x13gameMoveNotYourTurn\x12H\n" +
-	"\tgame_over\x18\x11 \x01(\v2).com.miti99.gomoku.proto.GameOverResponseH\x00R\bgameOver\x12w\n" +
-	"\x1apve_difficulty_not_support\x18\x12 \x01(\v28.com.miti99.gomoku.proto.PveDifficultyNotSupportResponseH\x00R\x17pveDifficultyNotSupport\x12a\n" +
-	"\x12watch_game_success\x18\x13 \x01(\v21.com.miti99.gomoku.proto.WatchGameSuccessResponseH\x00R\x10watchGameSuccess\x12N\n" +
-	"\vclient_exit\x18\x14 \x01(\v2+.com.miti99.gomoku.proto.ClientExitResponseH\x00R\n" +
+	" \x01(\v2-.com.miti99.gomoku.proto.GameStartingResponseH\x00R\fgameStarting\x12^\n" +
+	"\x11game_move_success\x18\v \x01(\v20.com.miti99.gomoku.proto.GameMoveSuccessResponseH\x00R\x0fgameMoveSuccess\x12^\n" +
+	"\x11game_move_invalid\x18\f \x01(\v20.com.miti99.gomoku.proto.GameMoveInvalidResponseH\x00R\x0fgameMoveInvalid\x12a\n" +
+	"\x12game_move_occupied\x18\r \x01(\v21.com.miti99.gomoku.proto.GameMoveOccupiedResponseH\x00R\x10gameMoveOccupied\x12l\n" +
+	"\x17game_move_out_of_bounds\x18\x0e \x01(\v24.com.miti99.gomoku.proto.GameMoveOutOfBoundsResponseH\x00R\x13gameMoveOutOfBounds\x12l\n" +
+	"\x17game_move_not_your_turn\x18\x0f \x01(\v24.com.miti99.gomoku.proto.GameMoveNotYourTurnResponseH\x00R\x13gameMoveNotYourTurn\x12H\n" +
+	"\tgame_over\x18\x10 \x01(\v2).com.miti99.gomoku.proto.GameOverResponseH\x00R\bgameOver\x12w\n" +
+	"\x1apve_difficulty_not_support\x18\x11 \x01(\v28.com.miti99.gomoku.proto.PveDifficultyNotSupportResponseH\x00R\x17pveDifficultyNotSupport\x12a\n" +
+	"\x12watch_game_success\x18\x12 \x01(\v21.com.miti99.gomoku.proto.WatchGameSuccessResponseH\x00R\x10watchGameSuccess\x12N\n" +
+	"\vclient_exit\x18\x13 \x01(\v2+.com.miti99.gomoku.proto.ClientExitResponseH\x00R\n" +
 	"clientExit\x12g\n" +
-	"\x14spectator_cannot_act\x18\x15 \x01(\v23.com.miti99.gomoku.proto.SpectatorCannotActResponseH\x00R\x12spectatorCannotActB\t\n" +
+	"\x14spectator_cannot_act\x18\x14 \x01(\v23.com.miti99.gomoku.proto.SpectatorCannotActResponseH\x00R\x12spectatorCannotActB\t\n" +
 	"\apayload\"4\n" +
 	"\x15ClientConnectResponse\x12\x1b\n" +
 	"\tclient_id\x18\x01 \x01(\x05R\bclientId\"<\n" +
 	"\x13NicknameSetResponse\x12%\n" +
 	"\x0einvalid_length\x18\x01 \x01(\x05R\rinvalidLength\"\x15\n" +
-	"\x13ShowOptionsResponse\"\x8e\x01\n" +
+	"\x13ShowOptionsResponse\"\xb1\x01\n" +
 	"\vRoomSummary\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\x05R\x06roomId\x12\x1d\n" +
 	"\n" +
 	"room_owner\x18\x02 \x01(\tR\troomOwner\x12*\n" +
-	"\x11room_client_count\x18\x03 \x01(\x05R\x0froomClientCount\x12\x1b\n" +
-	"\troom_type\x18\x04 \x01(\tR\broomType\"O\n" +
+	"\x11room_client_count\x18\x03 \x01(\x05R\x0froomClientCount\x12>\n" +
+	"\troom_type\x18\x04 \x01(\x0e2!.com.miti99.gomoku.proto.RoomTypeR\broomType\"O\n" +
 	"\x11ShowRoomsResponse\x12:\n" +
-	"\x05rooms\x18\x01 \x03(\v2$.com.miti99.gomoku.proto.RoomSummaryR\x05rooms\"g\n" +
+	"\x05rooms\x18\x01 \x03(\v2$.com.miti99.gomoku.proto.RoomSummaryR\x05rooms\"\x8a\x01\n" +
 	"\x19RoomCreateSuccessResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1d\n" +
 	"\n" +
-	"room_owner\x18\x02 \x01(\tR\troomOwner\x12\x1b\n" +
-	"\troom_type\x18\x03 \x01(\tR\broomType\"\xc3\x01\n" +
+	"room_owner\x18\x02 \x01(\tR\troomOwner\x12>\n" +
+	"\troom_type\x18\x03 \x01(\x0e2!.com.miti99.gomoku.proto.RoomTypeR\broomType\"\xc3\x01\n" +
 	"\x17RoomJoinSuccessResponse\x12\x1b\n" +
 	"\tclient_id\x18\x01 \x01(\x05R\bclientId\x12'\n" +
 	"\x0fclient_nickname\x18\x02 \x01(\tR\x0eclientNickname\x12\x17\n" +
@@ -1586,33 +1713,49 @@ const file_response_proto_rawDesc = "" +
 	"\x0fwhite_player_id\x18\x04 \x01(\x05R\rwhitePlayerId\x122\n" +
 	"\x15white_player_nickname\x18\x05 \x01(\tR\x13whitePlayerNickname\x12\x1d\n" +
 	"\n" +
-	"board_size\x18\x06 \x01(\x05R\tboardSize\"q\n" +
-	"\x11GameReadyResponse\x12'\n" +
-	"\x0fclient_nickname\x18\x01 \x01(\tR\x0eclientNickname\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\x12\x1b\n" +
-	"\tclient_id\x18\x03 \x01(\x05R\bclientId\"\x99\x01\n" +
+	"board_size\x18\x06 \x01(\x05R\tboardSize\"\xb9\x01\n" +
 	"\x17GameMoveSuccessResponse\x12\x10\n" +
 	"\x03row\x18\x01 \x01(\x05R\x03row\x12\x10\n" +
-	"\x03col\x18\x02 \x01(\x05R\x03col\x12\x14\n" +
-	"\x05piece\x18\x03 \x01(\tR\x05piece\x12'\n" +
+	"\x03col\x18\x02 \x01(\x05R\x03col\x124\n" +
+	"\x05piece\x18\x03 \x01(\x0e2\x1e.com.miti99.gomoku.proto.PieceR\x05piece\x12'\n" +
 	"\x0fplayer_nickname\x18\x04 \x01(\tR\x0eplayerNickname\x12\x1b\n" +
 	"\tplayer_id\x18\x05 \x01(\x05R\bplayerId\"\x19\n" +
 	"\x17GameMoveInvalidResponse\"\x1a\n" +
 	"\x18GameMoveOccupiedResponse\"\x1d\n" +
 	"\x1bGameMoveOutOfBoundsResponse\"\x1d\n" +
-	"\x1bGameMoveNotYourTurnResponse\"S\n" +
-	"\x10GameOverResponse\x12\x16\n" +
-	"\x06result\x18\x01 \x01(\tR\x06result\x12'\n" +
+	"\x1bGameMoveNotYourTurnResponse\"x\n" +
+	"\x10GameOverResponse\x12;\n" +
+	"\x06result\x18\x01 \x01(\x0e2#.com.miti99.gomoku.proto.GameResultR\x06result\x12'\n" +
 	"\x0fwinner_nickname\x18\x02 \x01(\tR\x0ewinnerNickname\"!\n" +
-	"\x1fPveDifficultyNotSupportResponse\"H\n" +
+	"\x1fPveDifficultyNotSupportResponse\"m\n" +
 	"\x18WatchGameSuccessResponse\x12\x14\n" +
-	"\x05owner\x18\x01 \x01(\tR\x05owner\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\"\x85\x01\n" +
+	"\x05owner\x18\x01 \x01(\tR\x05owner\x12;\n" +
+	"\x06status\x18\x02 \x01(\x0e2#.com.miti99.gomoku.proto.RoomStatusR\x06status\"\x85\x01\n" +
 	"\x12ClientExitResponse\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\x05R\x06roomId\x12$\n" +
 	"\x0eexit_client_id\x18\x02 \x01(\x05R\fexitClientId\x120\n" +
 	"\x14exit_client_nickname\x18\x03 \x01(\tR\x12exitClientNickname\"\x1c\n" +
-	"\x1aSpectatorCannotActResponseB5Z3github.com/tiennm99/gomoku/server/protocol;protocolb\x06proto3"
+	"\x1aSpectatorCannotActResponse*4\n" +
+	"\x05Piece\x12\x15\n" +
+	"\x11PIECE_UNSPECIFIED\x10\x00\x12\t\n" +
+	"\x05BLACK\x10\x01\x12\t\n" +
+	"\x05WHITE\x10\x02*Q\n" +
+	"\n" +
+	"GameResult\x12\x1b\n" +
+	"\x17GAME_RESULT_UNSPECIFIED\x10\x00\x12\r\n" +
+	"\tBLACK_WIN\x10\x01\x12\r\n" +
+	"\tWHITE_WIN\x10\x02\x12\b\n" +
+	"\x04DRAW\x10\x03*7\n" +
+	"\bRoomType\x12\x19\n" +
+	"\x15ROOM_TYPE_UNSPECIFIED\x10\x00\x12\a\n" +
+	"\x03PVP\x10\x01\x12\a\n" +
+	"\x03PVE\x10\x02*Q\n" +
+	"\n" +
+	"RoomStatus\x12\x1b\n" +
+	"\x17ROOM_STATUS_UNSPECIFIED\x10\x00\x12\v\n" +
+	"\aWAITING\x10\x01\x12\v\n" +
+	"\aPLAYING\x10\x02\x12\f\n" +
+	"\bFINISHED\x10\x03B5Z3github.com/tiennm99/gomoku/server/protocol;protocolb\x06proto3"
 
 var (
 	file_response_proto_rawDescOnce sync.Once
@@ -1626,60 +1769,68 @@ func file_response_proto_rawDescGZIP() []byte {
 	return file_response_proto_rawDescData
 }
 
-var file_response_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_response_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_response_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_response_proto_goTypes = []any{
-	(*Response)(nil),                        // 0: com.miti99.gomoku.proto.Response
-	(*ClientConnectResponse)(nil),           // 1: com.miti99.gomoku.proto.ClientConnectResponse
-	(*NicknameSetResponse)(nil),             // 2: com.miti99.gomoku.proto.NicknameSetResponse
-	(*ShowOptionsResponse)(nil),             // 3: com.miti99.gomoku.proto.ShowOptionsResponse
-	(*RoomSummary)(nil),                     // 4: com.miti99.gomoku.proto.RoomSummary
-	(*ShowRoomsResponse)(nil),               // 5: com.miti99.gomoku.proto.ShowRoomsResponse
-	(*RoomCreateSuccessResponse)(nil),       // 6: com.miti99.gomoku.proto.RoomCreateSuccessResponse
-	(*RoomJoinSuccessResponse)(nil),         // 7: com.miti99.gomoku.proto.RoomJoinSuccessResponse
-	(*RoomJoinFailFullResponse)(nil),        // 8: com.miti99.gomoku.proto.RoomJoinFailFullResponse
-	(*RoomJoinFailNotFoundResponse)(nil),    // 9: com.miti99.gomoku.proto.RoomJoinFailNotFoundResponse
-	(*RoomPlayFailNotFoundResponse)(nil),    // 10: com.miti99.gomoku.proto.RoomPlayFailNotFoundResponse
-	(*GameStartingResponse)(nil),            // 11: com.miti99.gomoku.proto.GameStartingResponse
-	(*GameReadyResponse)(nil),               // 12: com.miti99.gomoku.proto.GameReadyResponse
-	(*GameMoveSuccessResponse)(nil),         // 13: com.miti99.gomoku.proto.GameMoveSuccessResponse
-	(*GameMoveInvalidResponse)(nil),         // 14: com.miti99.gomoku.proto.GameMoveInvalidResponse
-	(*GameMoveOccupiedResponse)(nil),        // 15: com.miti99.gomoku.proto.GameMoveOccupiedResponse
-	(*GameMoveOutOfBoundsResponse)(nil),     // 16: com.miti99.gomoku.proto.GameMoveOutOfBoundsResponse
-	(*GameMoveNotYourTurnResponse)(nil),     // 17: com.miti99.gomoku.proto.GameMoveNotYourTurnResponse
-	(*GameOverResponse)(nil),                // 18: com.miti99.gomoku.proto.GameOverResponse
-	(*PveDifficultyNotSupportResponse)(nil), // 19: com.miti99.gomoku.proto.PveDifficultyNotSupportResponse
-	(*WatchGameSuccessResponse)(nil),        // 20: com.miti99.gomoku.proto.WatchGameSuccessResponse
-	(*ClientExitResponse)(nil),              // 21: com.miti99.gomoku.proto.ClientExitResponse
-	(*SpectatorCannotActResponse)(nil),      // 22: com.miti99.gomoku.proto.SpectatorCannotActResponse
+	(Piece)(0),                              // 0: com.miti99.gomoku.proto.Piece
+	(GameResult)(0),                         // 1: com.miti99.gomoku.proto.GameResult
+	(RoomType)(0),                           // 2: com.miti99.gomoku.proto.RoomType
+	(RoomStatus)(0),                         // 3: com.miti99.gomoku.proto.RoomStatus
+	(*Response)(nil),                        // 4: com.miti99.gomoku.proto.Response
+	(*ClientConnectResponse)(nil),           // 5: com.miti99.gomoku.proto.ClientConnectResponse
+	(*NicknameSetResponse)(nil),             // 6: com.miti99.gomoku.proto.NicknameSetResponse
+	(*ShowOptionsResponse)(nil),             // 7: com.miti99.gomoku.proto.ShowOptionsResponse
+	(*RoomSummary)(nil),                     // 8: com.miti99.gomoku.proto.RoomSummary
+	(*ShowRoomsResponse)(nil),               // 9: com.miti99.gomoku.proto.ShowRoomsResponse
+	(*RoomCreateSuccessResponse)(nil),       // 10: com.miti99.gomoku.proto.RoomCreateSuccessResponse
+	(*RoomJoinSuccessResponse)(nil),         // 11: com.miti99.gomoku.proto.RoomJoinSuccessResponse
+	(*RoomJoinFailFullResponse)(nil),        // 12: com.miti99.gomoku.proto.RoomJoinFailFullResponse
+	(*RoomJoinFailNotFoundResponse)(nil),    // 13: com.miti99.gomoku.proto.RoomJoinFailNotFoundResponse
+	(*RoomPlayFailNotFoundResponse)(nil),    // 14: com.miti99.gomoku.proto.RoomPlayFailNotFoundResponse
+	(*GameStartingResponse)(nil),            // 15: com.miti99.gomoku.proto.GameStartingResponse
+	(*GameMoveSuccessResponse)(nil),         // 16: com.miti99.gomoku.proto.GameMoveSuccessResponse
+	(*GameMoveInvalidResponse)(nil),         // 17: com.miti99.gomoku.proto.GameMoveInvalidResponse
+	(*GameMoveOccupiedResponse)(nil),        // 18: com.miti99.gomoku.proto.GameMoveOccupiedResponse
+	(*GameMoveOutOfBoundsResponse)(nil),     // 19: com.miti99.gomoku.proto.GameMoveOutOfBoundsResponse
+	(*GameMoveNotYourTurnResponse)(nil),     // 20: com.miti99.gomoku.proto.GameMoveNotYourTurnResponse
+	(*GameOverResponse)(nil),                // 21: com.miti99.gomoku.proto.GameOverResponse
+	(*PveDifficultyNotSupportResponse)(nil), // 22: com.miti99.gomoku.proto.PveDifficultyNotSupportResponse
+	(*WatchGameSuccessResponse)(nil),        // 23: com.miti99.gomoku.proto.WatchGameSuccessResponse
+	(*ClientExitResponse)(nil),              // 24: com.miti99.gomoku.proto.ClientExitResponse
+	(*SpectatorCannotActResponse)(nil),      // 25: com.miti99.gomoku.proto.SpectatorCannotActResponse
 }
 var file_response_proto_depIdxs = []int32{
-	1,  // 0: com.miti99.gomoku.proto.Response.client_connect:type_name -> com.miti99.gomoku.proto.ClientConnectResponse
-	2,  // 1: com.miti99.gomoku.proto.Response.nickname_set:type_name -> com.miti99.gomoku.proto.NicknameSetResponse
-	3,  // 2: com.miti99.gomoku.proto.Response.show_options:type_name -> com.miti99.gomoku.proto.ShowOptionsResponse
-	5,  // 3: com.miti99.gomoku.proto.Response.show_rooms:type_name -> com.miti99.gomoku.proto.ShowRoomsResponse
-	6,  // 4: com.miti99.gomoku.proto.Response.room_create_success:type_name -> com.miti99.gomoku.proto.RoomCreateSuccessResponse
-	7,  // 5: com.miti99.gomoku.proto.Response.room_join_success:type_name -> com.miti99.gomoku.proto.RoomJoinSuccessResponse
-	8,  // 6: com.miti99.gomoku.proto.Response.room_join_fail_full:type_name -> com.miti99.gomoku.proto.RoomJoinFailFullResponse
-	9,  // 7: com.miti99.gomoku.proto.Response.room_join_fail_not_found:type_name -> com.miti99.gomoku.proto.RoomJoinFailNotFoundResponse
-	10, // 8: com.miti99.gomoku.proto.Response.room_play_fail_not_found:type_name -> com.miti99.gomoku.proto.RoomPlayFailNotFoundResponse
-	11, // 9: com.miti99.gomoku.proto.Response.game_starting:type_name -> com.miti99.gomoku.proto.GameStartingResponse
-	12, // 10: com.miti99.gomoku.proto.Response.game_ready:type_name -> com.miti99.gomoku.proto.GameReadyResponse
-	13, // 11: com.miti99.gomoku.proto.Response.game_move_success:type_name -> com.miti99.gomoku.proto.GameMoveSuccessResponse
-	14, // 12: com.miti99.gomoku.proto.Response.game_move_invalid:type_name -> com.miti99.gomoku.proto.GameMoveInvalidResponse
-	15, // 13: com.miti99.gomoku.proto.Response.game_move_occupied:type_name -> com.miti99.gomoku.proto.GameMoveOccupiedResponse
-	16, // 14: com.miti99.gomoku.proto.Response.game_move_out_of_bounds:type_name -> com.miti99.gomoku.proto.GameMoveOutOfBoundsResponse
-	17, // 15: com.miti99.gomoku.proto.Response.game_move_not_your_turn:type_name -> com.miti99.gomoku.proto.GameMoveNotYourTurnResponse
-	18, // 16: com.miti99.gomoku.proto.Response.game_over:type_name -> com.miti99.gomoku.proto.GameOverResponse
-	19, // 17: com.miti99.gomoku.proto.Response.pve_difficulty_not_support:type_name -> com.miti99.gomoku.proto.PveDifficultyNotSupportResponse
-	20, // 18: com.miti99.gomoku.proto.Response.watch_game_success:type_name -> com.miti99.gomoku.proto.WatchGameSuccessResponse
-	21, // 19: com.miti99.gomoku.proto.Response.client_exit:type_name -> com.miti99.gomoku.proto.ClientExitResponse
-	22, // 20: com.miti99.gomoku.proto.Response.spectator_cannot_act:type_name -> com.miti99.gomoku.proto.SpectatorCannotActResponse
-	4,  // 21: com.miti99.gomoku.proto.ShowRoomsResponse.rooms:type_name -> com.miti99.gomoku.proto.RoomSummary
-	22, // [22:22] is the sub-list for method output_type
-	22, // [22:22] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	5,  // 0: com.miti99.gomoku.proto.Response.client_connect:type_name -> com.miti99.gomoku.proto.ClientConnectResponse
+	6,  // 1: com.miti99.gomoku.proto.Response.nickname_set:type_name -> com.miti99.gomoku.proto.NicknameSetResponse
+	7,  // 2: com.miti99.gomoku.proto.Response.show_options:type_name -> com.miti99.gomoku.proto.ShowOptionsResponse
+	9,  // 3: com.miti99.gomoku.proto.Response.show_rooms:type_name -> com.miti99.gomoku.proto.ShowRoomsResponse
+	10, // 4: com.miti99.gomoku.proto.Response.room_create_success:type_name -> com.miti99.gomoku.proto.RoomCreateSuccessResponse
+	11, // 5: com.miti99.gomoku.proto.Response.room_join_success:type_name -> com.miti99.gomoku.proto.RoomJoinSuccessResponse
+	12, // 6: com.miti99.gomoku.proto.Response.room_join_fail_full:type_name -> com.miti99.gomoku.proto.RoomJoinFailFullResponse
+	13, // 7: com.miti99.gomoku.proto.Response.room_join_fail_not_found:type_name -> com.miti99.gomoku.proto.RoomJoinFailNotFoundResponse
+	14, // 8: com.miti99.gomoku.proto.Response.room_play_fail_not_found:type_name -> com.miti99.gomoku.proto.RoomPlayFailNotFoundResponse
+	15, // 9: com.miti99.gomoku.proto.Response.game_starting:type_name -> com.miti99.gomoku.proto.GameStartingResponse
+	16, // 10: com.miti99.gomoku.proto.Response.game_move_success:type_name -> com.miti99.gomoku.proto.GameMoveSuccessResponse
+	17, // 11: com.miti99.gomoku.proto.Response.game_move_invalid:type_name -> com.miti99.gomoku.proto.GameMoveInvalidResponse
+	18, // 12: com.miti99.gomoku.proto.Response.game_move_occupied:type_name -> com.miti99.gomoku.proto.GameMoveOccupiedResponse
+	19, // 13: com.miti99.gomoku.proto.Response.game_move_out_of_bounds:type_name -> com.miti99.gomoku.proto.GameMoveOutOfBoundsResponse
+	20, // 14: com.miti99.gomoku.proto.Response.game_move_not_your_turn:type_name -> com.miti99.gomoku.proto.GameMoveNotYourTurnResponse
+	21, // 15: com.miti99.gomoku.proto.Response.game_over:type_name -> com.miti99.gomoku.proto.GameOverResponse
+	22, // 16: com.miti99.gomoku.proto.Response.pve_difficulty_not_support:type_name -> com.miti99.gomoku.proto.PveDifficultyNotSupportResponse
+	23, // 17: com.miti99.gomoku.proto.Response.watch_game_success:type_name -> com.miti99.gomoku.proto.WatchGameSuccessResponse
+	24, // 18: com.miti99.gomoku.proto.Response.client_exit:type_name -> com.miti99.gomoku.proto.ClientExitResponse
+	25, // 19: com.miti99.gomoku.proto.Response.spectator_cannot_act:type_name -> com.miti99.gomoku.proto.SpectatorCannotActResponse
+	2,  // 20: com.miti99.gomoku.proto.RoomSummary.room_type:type_name -> com.miti99.gomoku.proto.RoomType
+	8,  // 21: com.miti99.gomoku.proto.ShowRoomsResponse.rooms:type_name -> com.miti99.gomoku.proto.RoomSummary
+	2,  // 22: com.miti99.gomoku.proto.RoomCreateSuccessResponse.room_type:type_name -> com.miti99.gomoku.proto.RoomType
+	0,  // 23: com.miti99.gomoku.proto.GameMoveSuccessResponse.piece:type_name -> com.miti99.gomoku.proto.Piece
+	1,  // 24: com.miti99.gomoku.proto.GameOverResponse.result:type_name -> com.miti99.gomoku.proto.GameResult
+	3,  // 25: com.miti99.gomoku.proto.WatchGameSuccessResponse.status:type_name -> com.miti99.gomoku.proto.RoomStatus
+	26, // [26:26] is the sub-list for method output_type
+	26, // [26:26] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_response_proto_init() }
@@ -1698,7 +1849,6 @@ func file_response_proto_init() {
 		(*Response_RoomJoinFailNotFound)(nil),
 		(*Response_RoomPlayFailNotFound)(nil),
 		(*Response_GameStarting)(nil),
-		(*Response_GameReady)(nil),
 		(*Response_GameMoveSuccess)(nil),
 		(*Response_GameMoveInvalid)(nil),
 		(*Response_GameMoveOccupied)(nil),
@@ -1715,13 +1865,14 @@ func file_response_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_response_proto_rawDesc), len(file_response_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   23,
+			NumEnums:      4,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_response_proto_goTypes,
 		DependencyIndexes: file_response_proto_depIdxs,
+		EnumInfos:         file_response_proto_enumTypes,
 		MessageInfos:      file_response_proto_msgTypes,
 	}.Build()
 	File_response_proto = out.File

@@ -96,22 +96,23 @@ export class MenuScene extends Phaser.Scene {
   }
 
   /**
-   * Another player joined the owner's room — update the waiting room live.
-   * If this client IS the joiner, show the joiner waiting view.
-   * @param {{ roomId: number, ownerNickname: string, playerCount: number, joinerNickname: string }} data
+   * A player joined a room — update the waiting room live for both owner and joiner.
+   * Proto field names (from pbjs camelCase):
+   *   clientId, clientNickname (the joiner), roomId, roomOwner, roomClientCount
+   * @param {{ clientId: number, clientNickname: string, roomId: number, roomOwner: string, roomClientCount: number }} data
    * @private
    */
   _onRoomJoinSuccess(data) {
-    const ownerNickname = (data && data.ownerNickname) ? data.ownerNickname : '';
-    const count = (data && data.playerCount) ? data.playerCount : 2;
-    const joinerNickname = (data && data.joinerNickname) ? data.joinerNickname : '';
+    const roomOwner = (data && data.roomOwner) ? data.roomOwner : '';
+    const count = (data && data.roomClientCount) ? data.roomClientCount : 2;
+    const joinerNickname = (data && data.clientNickname) ? data.clientNickname : '';
 
     if (this._waitingHandle) {
       // This client is the owner — a second player just joined, update the view
       this._waitingHandle.update(count, joinerNickname);
     } else {
       // This client is the joiner — show passive waiting screen
-      this._waitingHandle = showWaiting(false, ownerNickname, count, null, null);
+      this._waitingHandle = showWaiting(false, roomOwner, count, null, null);
     }
   }
 

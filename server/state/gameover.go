@@ -32,7 +32,7 @@ func (*gameOverState) Next(player *database.Player) (consts.StateID, error) {
 
 		switch req.Payload.(type) {
 		case *protocol.Request_GameReset:
-			return handleGameReset(player, room)
+			return handleGameReset(room)
 
 		case *protocol.Request_ClientExit:
 			leaveRoom(player, room)
@@ -45,7 +45,7 @@ func (*gameOverState) Next(player *database.Player) (consts.StateID, error) {
 }
 
 // handleGameReset resets the room and starts a fresh game.
-func handleGameReset(player *database.Player, room *database.NewRoom) (consts.StateID, error) {
+func handleGameReset(room *database.NewRoom) (consts.StateID, error) {
 	seed := rand.Int63()
 	room.Lock()
 	room.Reset(seed)
@@ -59,7 +59,7 @@ func handleGameReset(player *database.Player, room *database.NewRoom) (consts.St
 	room.Unlock()
 
 	// Broadcast fresh GameStartingResponse to all players.
-	resp := buildGameStartingResponse(room, player)
+	resp := buildGameStartingResponse(room)
 	broadcastResponse(room, resp)
 
 	if roomType == database.RoomTypePve {
