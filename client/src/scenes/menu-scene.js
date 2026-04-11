@@ -29,6 +29,8 @@ export class MenuScene extends Phaser.Scene {
     this._onRoomJoinSuccess = this._onRoomJoinSuccess.bind(this);
     this._onRoomJoinFailFull = this._onRoomJoinFailFull.bind(this);
     this._onRoomJoinFailNotFound = this._onRoomJoinFailNotFound.bind(this);
+    /** @type {{ update: function(number, string): void }|null} live waiting-room handle */
+    this._waitingHandle = null;
   }
 
   create() {
@@ -55,9 +57,16 @@ export class MenuScene extends Phaser.Scene {
     eventBus.on(ClientEventCode.GAME_STARTING, this._onGameStarting);
   }
 
-  /** Server accepted the nickname — show the main lobby. @private */
-  _onNicknameSet(_data) {
-    showLobby();
+  /**
+   * Server responded to nickname submission.
+   * Only show lobby when nickname was accepted (invalidLength === 0).
+   * Rejected nicknames are handled by menu-ui.js which shows the error toast
+   * and re-renders the nickname screen directly.
+   * @private
+   */
+  _onNicknameSet(data) {
+    const invalidLength = data && typeof data === 'object' ? (data.invalidLength || 0) : 0;
+    if (invalidLength === 0) showLobby();
   }
 
   /** Server sent main menu options — show lobby UI. @private */
@@ -66,47 +75,44 @@ export class MenuScene extends Phaser.Scene {
   }
 
   /**
-   * Server sent available room list.
+   * Server sent available room list. menu-ui.js handles join/watch internally.
    * @param {{ rooms: Array }} data
    * @private
    */
   _onShowRooms(data) {
     const rooms = (data && data.rooms) ? data.rooms : [];
-    showRoomList(
-      rooms,
-      (roomId) => { /* phase-10 wires join button */ },
-      (roomId) => { /* phase-10 wires watch button */ },
-    );
+    showRoomList(rooms, null, null);
   }
 
   /**
-   * Room created — show waiting room for owner.
+   * Room created — show waiting room as owner.
+   * Store the handle so ROOM_JOIN_SUCCESS can push live player-count updates.
    * @param {{ roomId: number, ownerNickname: string }} data
    * @private
    */
   _onRoomCreateSuccess(data) {
-    showWaiting(
-      true,
-      data && data.ownerNickname ? data.ownerNickname : '',
-      1,
-      () => { /* phase-10: owner start button calls connectionService.sendGameStarting() */ },
-      () => { /* phase-10: leave button calls connectionService.sendClientExit() */ },
-    );
+    const ownerNickname = (data && data.ownerNickname) ? data.ownerNickname : '';
+    this._waitingHandle = showWaiting(true, ownerNickname, 1, null, null);
   }
 
   /**
-   * Join succeeded — show waiting room as non-owner.
-   * @param {{ roomId: number, ownerNickname: string, playerCount: number }} data
+   * Another player joined the owner's room — update the waiting room live.
+   * If this client IS the joiner, show the joiner waiting view.
+   * @param {{ roomId: number, ownerNickname: string, playerCount: number, joinerNickname: string }} data
    * @private
    */
   _onRoomJoinSuccess(data) {
-    showWaiting(
-      false,
-      data && data.ownerNickname ? data.ownerNickname : '',
-      data && data.playerCount ? data.playerCount : 2,
-      null,
-      () => { /* phase-10: leave button */ },
-    );
+    const ownerNickname = (data && data.ownerNickname) ? data.ownerNickname : '';
+    const count = (data && data.playerCount) ? data.playerCount : 2;
+    const joinerNickname = (data && data.joinerNickname) ? data.joinerNickname : '';
+
+    if (this._waitingHandle) {
+      // This client is the owner — a second player just joined, update the view
+      this._waitingHandle.update(count, joinerNickname);
+    } else {
+      // This client is the joiner — show passive waiting screen
+      this._waitingHandle = showWaiting(false, ownerNickname, count, null, null);
+    }
   }
 
   /** Room is full — notify user. @private */
@@ -125,6 +131,7 @@ export class MenuScene extends Phaser.Scene {
    * @private
    */
   _onGameStarting(data) {
+    this._waitingHandle = null;
     hideOverlay();
     this.scene.start('GameScene', { gameStarting: data });
   }

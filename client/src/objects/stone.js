@@ -1,53 +1,93 @@
 /**
- * Stone — stub Phaser game object for phase-09.
- * Phase-10 implements real circle rendering with gradient and animation.
+ * Stone — Phaser GameObject for a single Gomoku stone.
+ * Renders black or white circle with gradient effect and drop animation.
  * @module stone
  */
 
-/**
- * Stub Stone class. Tracks position and piece color but renders nothing.
- * GameScene calls destroy() on rematch — no-op here.
- */
-export class Stone {
+import Phaser from 'phaser';
+
+const STONE_RADIUS_RATIO = 0.43;
+
+export class Stone extends Phaser.GameObjects.Graphics {
   /**
    * @param {Phaser.Scene} scene
-   * @param {number} x - canvas X position
-   * @param {number} y - canvas Y position
+   * @param {number} x - pixel X
+   * @param {number} y - pixel Y
    * @param {string} piece - 'BLACK' or 'WHITE'
-   * @param {number} [cellSize] - grid cell size in pixels
-   * @param {boolean} [animate] - whether to animate placement
+   * @param {number} cellSize - board cell size for radius calc
+   * @param {boolean} [animate=true] - play drop animation
    */
   constructor(scene, x, y, piece, cellSize, animate = true) {
-    this.scene = scene;
-    this.x = x;
-    this.y = y;
+    super(scene);
+    this.setPosition(x, y);
     this.piece = piece;
-    this.cellSize = cellSize;
-    console.log('[stone stub] Stone created', { x, y, piece });
+    this.radius = cellSize * STONE_RADIUS_RATIO;
+
+    this._drawStone();
+    scene.add.existing(this);
+
+    if (animate) {
+      this.setScale(0);
+      scene.tweens.add({
+        targets: this,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 180,
+        ease: 'Back.easeOut',
+      });
+    }
   }
 
-  /** Set render depth (no-op in stub — depth has no effect without a display object). */
-  setDepth(_depth) { return this; }
+  /**
+   * Set render depth — delegates to Phaser Graphics base.
+   * @param {number} d
+   * @returns {this}
+   */
+  setDepth(d) {
+    super.setDepth(d);
+    return this;
+  }
 
-  /** Remove from scene. No-op in stub. */
-  destroy() {
-    console.log('[stone stub] Stone destroyed', { x: this.x, y: this.y });
+  /** @private */
+  _drawStone() {
+    this.clear();
+    const r = this.radius;
+
+    if (this.piece === 'BLACK') {
+      // Dark stone with highlight
+      this.fillStyle(0x222222, 1);
+      this.fillCircle(0, 0, r);
+      // Highlight
+      this.fillStyle(0x555555, 0.4);
+      this.fillCircle(-r * 0.25, -r * 0.25, r * 0.35);
+    } else {
+      // White stone with subtle border
+      this.fillStyle(0xf5f5f5, 1);
+      this.fillCircle(0, 0, r);
+      // Highlight
+      this.fillStyle(0xffffff, 0.6);
+      this.fillCircle(-r * 0.25, -r * 0.25, r * 0.3);
+      // Border
+      this.lineStyle(1, 0x999999, 0.8);
+      this.strokeCircle(0, 0, r);
+    }
   }
 }
 
 /**
- * Create a last-move marker graphic at the given canvas position.
- * Returns a minimal stub object with destroy() so GameScene lifecycle works.
- * Phase-10 replaces with a visible dot/ring graphic.
- * @param {Phaser.Scene} _scene
- * @param {number} x
- * @param {number} y
- * @returns {{ setDepth: function, destroy: function }}
+ * Create a last-move indicator — small red filled circle centered on the stone.
+ * Returns an object with `setDepth(d)` and `destroy()` matching GameScene lifecycle.
+ * @param {Phaser.Scene} scene
+ * @param {number} x - pixel X of the stone center
+ * @param {number} y - pixel Y of the stone center
+ * @returns {{ setDepth: function(number): object, destroy: function(): void }}
  */
-export function createLastMoveMarker(_scene, x, y) {
-  console.log('[stone stub] createLastMoveMarker()', { x, y });
+export function createLastMoveMarker(scene, x, y) {
+  const g = scene.add.graphics();
+  g.fillStyle(0xe94560, 1);
+  g.fillCircle(x, y, 4);
   return {
-    setDepth(_d) { return this; },
-    destroy() {},
+    setDepth(d) { g.setDepth(d); return this; },
+    destroy() { g.destroy(); },
   };
 }

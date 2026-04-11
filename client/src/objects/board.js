@@ -1,72 +1,108 @@
 /**
- * Board — stub Phaser object for phase-09.
- * Phase-10 implements real grid rendering, pixel↔grid conversion, and hover geometry.
+ * Board — Phaser GameObject that renders the 15x15 Gomoku grid.
+ * Draws wood background, grid lines, star points, and coordinate labels.
  * @module board
  */
 
-/**
- * Stub Board class. Instantiating it registers the container in the scene
- * but draws nothing. All coordinate helpers return safe default values so
- * GameScene code paths don't throw on null.
- */
-export class Board {
+import Phaser from 'phaser';
+
+const BOARD_SIZE = 15;
+const PADDING = 50;
+const STAR_POINTS = [[3, 3], [3, 11], [7, 7], [11, 3], [11, 11]];
+const WOOD_COLOR = 0xdcb35c;
+const LINE_COLOR = 0x8b6914;
+const LABEL_COLOR = '#5a4510';
+
+export class Board extends Phaser.GameObjects.Graphics {
   /**
    * @param {Phaser.Scene} scene
-   * @param {number} pixelSize - canvas dimension in pixels (e.g. 800)
+   * @param {number} canvasSize - total canvas pixel size (default 800)
    */
-  constructor(scene, pixelSize) {
-    this.scene = scene;
-    this.pixelSize = pixelSize;
-    this.size = 15; // board grid dimension
-    console.log('[board stub] Board created', { pixelSize });
-  }
-
-  /** @returns {number} pixel size of each grid cell */
-  getCellSize() {
-    return this.pixelSize / (this.size + 1);
+  constructor(scene, canvasSize = 800) {
+    super(scene);
+    this.canvasSize = canvasSize;
+    this.cellSize = (canvasSize - 2 * PADDING) / (BOARD_SIZE - 1);
+    scene.add.existing(this);
+    this.draw();
   }
 
   /**
-   * Convert column index to canvas X coordinate.
-   * @param {number} col
+   * Get pixel X for a board column.
+   * @param {number} col - 0-14
    * @returns {number}
    */
-  gridX(col) {
-    return this.getCellSize() * (col + 1);
-  }
+  gridX(col) { return PADDING + col * this.cellSize; }
 
   /**
-   * Convert row index to canvas Y coordinate.
-   * @param {number} row
+   * Get pixel Y for a board row.
+   * @param {number} row - 0-14
    * @returns {number}
    */
-  gridY(row) {
-    return this.getCellSize() * (row + 1);
-  }
+  gridY(row) { return PADDING + row * this.cellSize; }
 
   /**
-   * Convert canvas pixel coordinates to grid row/col.
-   * Returns null when the pointer is outside the board boundary.
-   * Phase-10 replaces with precise hit-testing.
-   * @param {number} x
-   * @param {number} y
-   * @returns {{ row: number, col: number }|null}
+   * Convert pixel coordinates to nearest grid intersection.
+   * @param {number} px - pixel X
+   * @param {number} py - pixel Y
+   * @returns {{ row: number, col: number }|null} - null if out of bounds
    */
-  pixelToGrid(x, y) {
-    const cell = this.getCellSize();
-    const col = Math.round(x / cell) - 1;
-    const row = Math.round(y / cell) - 1;
-    if (col < 0 || col >= this.size || row < 0 || row >= this.size) return null;
+  pixelToGrid(px, py) {
+    const col = Math.round((px - PADDING) / this.cellSize);
+    const row = Math.round((py - PADDING) / this.cellSize);
+    if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) return null;
     return { row, col };
   }
 
-  /**
-   * Place a piece marker at (row, col). No-op in stub — phase-10 renders.
-   * @param {number} row
-   * @param {number} col
-   * @param {string} piece - 'BLACK' or 'WHITE'
-   */
-  place(row, col, piece) {
-    console.log('[board stub] place()', { row, col, piece });
+  /** @returns {number} pixel size of one cell */
+  getCellSize() { return this.cellSize; }
+
+  /** Draw the full board (background, grid, stars, labels). */
+  draw() {
+    this.clear();
+    this._drawBackground();
+    this._drawGrid();
+    this._drawStarPoints();
+    this._drawLabels();
+  }
+
+  /** @private */
+  _drawBackground() {
+    this.fillStyle(WOOD_COLOR, 1);
+    this.fillRect(0, 0, this.canvasSize, this.canvasSize);
+    // Subtle grain lines
+    this.lineStyle(1, LINE_COLOR, 0.1);
+    for (let i = 0; i < this.canvasSize; i += 7) {
+      this.lineBetween(0, i, this.canvasSize, i);
+    }
+  }
+
+  /** @private */
+  _drawGrid() {
+    this.lineStyle(1, LINE_COLOR, 1);
+    for (let i = 0; i < BOARD_SIZE; i++) {
+      this.lineBetween(this.gridX(i), this.gridY(0), this.gridX(i), this.gridY(BOARD_SIZE - 1));
+      this.lineBetween(this.gridX(0), this.gridY(i), this.gridX(BOARD_SIZE - 1), this.gridY(i));
+    }
+  }
+
+  /** @private */
+  _drawStarPoints() {
+    this.fillStyle(LINE_COLOR, 1);
+    for (const [r, c] of STAR_POINTS) {
+      this.fillCircle(this.gridX(c), this.gridY(r), 4);
+    }
+  }
+
+  /** @private */
+  _drawLabels() {
+    for (let i = 0; i < BOARD_SIZE; i++) {
+      const letter = String.fromCharCode(65 + i);
+      this.scene.add.text(this.gridX(i), PADDING - 25, letter, {
+        fontSize: '12px', color: LABEL_COLOR, fontFamily: 'sans-serif',
+      }).setOrigin(0.5);
+      this.scene.add.text(PADDING - 25, this.gridY(i), String(i + 1), {
+        fontSize: '12px', color: LABEL_COLOR, fontFamily: 'sans-serif',
+      }).setOrigin(0.5);
+    }
   }
 }
