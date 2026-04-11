@@ -324,6 +324,203 @@ func TestFlow_Rematch_BothPlayersTransition(t *testing.T) {
 	}
 }
 
+// TestFlow_CreatePveAfterPvpLeave verifies the user-reported scenario:
+// after finishing a PVP game and leaving, the player can immediately
+// create a PVE room and play against the AI. Catches state-machine
+// residue that would block the transition from home → gamePve.
+func TestFlow_CreatePveAfterPvpLeave(t *testing.T) {
+	black, white, room := setupFinishedPvpRoom(t)
+	_ = white
+
+	// Black leaves the finished PVP room.
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_ClientExit{ClientExit: &protocol.ClientExitRequest{}},
+	}
+	next, err := runState(consts.StateGameOver, black)
+	if err != nil {
+		t.Fatalf("gameover exit: %v", err)
+	}
+	if next != consts.StateHome {
+		t.Fatalf("expected StateHome, got %d", next)
+	}
+	if black.RoomID != 0 {
+		t.Errorf("black.RoomID = %d after exit, want 0", black.RoomID)
+	}
+	drainSend(black)
+
+	// From home, send CreatePveRoom (medium difficulty).
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_CreatePveRoom{
+			CreatePveRoom: &protocol.CreatePveRoomRequest{Difficulty: 2},
+		},
+	}
+	next, err = runState(consts.StateHome, black)
+	if err != nil {
+		t.Fatalf("home create pve: %v", err)
+	}
+	if next != consts.StateGamePve {
+		t.Fatalf("expected StateGamePve, got %d", next)
+	}
+
+	// Verify the PVE room exists, black is in it, and GameStartingResponse
+	// was sent.
+	if black.RoomID == 0 {
+		t.Error("black.RoomID should be set to new PVE room")
+	}
+	if black.RoomID == room.ID {
+		t.Error("PVE room reused old PVP room ID")
+	}
+	pveRoom, ok := lobby.GetRoom(black.RoomID)
+	if !ok {
+		t.Fatal("new PVE room not in store")
+	}
+	if pveRoom.RoomType != lobby.RoomTypePve {
+		t.Errorf("new room type = %v, want PVE", pveRoom.RoomType)
+	}
+	if pveRoom.AI == nil {
+		t.Error("PVE room should have an AI instance")
+	}
+
+	gotStart := false
+	for _, r := range drainSend(black) {
+		if _, ok := r.Payload.(*protocol.Response_GameStarting); ok {
+			gotStart = true
+			break
+		}
+	}
+	if !gotStart {
+		t.Error("black did not receive GameStartingResponse for new PVE room")
+	}
+}
+
+// TestFlow_CreatePveAfterPvpRematch covers the specific residue case the
+// user flagged: PVP game → rematch → finish → leave → create PVE. The
+// rematch path mutates both RematchCh (closed + niled) and GameOverCh
+// (fresh channel), which if mishandled could leave the room in a dirty
+// state that blocks subsequent PVE creation.
+func TestFlow_CreatePveAfterPvpRematch(t *testing.T) {
+	black, white, room := setupFinishedPvpRoom(t)
+	_ = white
+
+	// Rematch: black clicks Play Again from gameoverState.
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_GameReset{GameReset: &protocol.GameResetRequest{}},
+	}
+	next, err := runState(consts.StateGameOver, black)
+	if err != nil {
+		t.Fatalf("rematch: %v", err)
+	}
+	if next != consts.StateGamePvp {
+		t.Fatalf("expected StateGamePvp after rematch, got %d", next)
+	}
+
+	// Simulate game 2 ending.
+	room.Lock()
+	room.Status = lobby.RoomStatusFinished
+	room.Unlock()
+
+	// Leave game 2.
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_ClientExit{ClientExit: &protocol.ClientExitRequest{}},
+	}
+	next, err = runState(consts.StateGameOver, black)
+	if err != nil {
+		t.Fatalf("leave game 2: %v", err)
+	}
+	if next != consts.StateHome {
+		t.Fatalf("expected StateHome, got %d", next)
+	}
+	if black.RoomID != 0 {
+		t.Errorf("black.RoomID = %d after leave, want 0", black.RoomID)
+	}
+	drainSend(black)
+
+	// Now create a PVE room.
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_CreatePveRoom{
+			CreatePveRoom: &protocol.CreatePveRoomRequest{Difficulty: 3},
+		},
+	}
+	next, err = runState(consts.StateHome, black)
+	if err != nil {
+		t.Fatalf("create pve after rematch: %v", err)
+	}
+	if next != consts.StateGamePve {
+		t.Fatalf("expected StateGamePve, got %d", next)
+	}
+
+	// Verify fresh PVE room state.
+	pveRoom, ok := lobby.GetRoom(black.RoomID)
+	if !ok {
+		t.Fatal("PVE room missing from store")
+	}
+	if pveRoom.RoomType != lobby.RoomTypePve {
+		t.Errorf("room type = %v, want PVE", pveRoom.RoomType)
+	}
+	if pveRoom.AI == nil {
+		t.Error("PVE room missing AI")
+	}
+	if pveRoom.Status != lobby.RoomStatusPlaying {
+		t.Errorf("PVE room Status = %d, want Playing", pveRoom.Status)
+	}
+	if pveRoom.Board.MoveCount() != 0 {
+		t.Errorf("new PVE board has %d moves, want 0", pveRoom.Board.MoveCount())
+	}
+}
+
+// TestFlow_CreatePveAfterPvpForfeit covers the variant where the player
+// forfeits a PVP game mid-play (via ClientExit while still in gamePvpState)
+// and then wants to create a PVE room. The exiting goroutine goes directly
+// to StateHome — state machine must be clean enough to handle CreatePveRoom.
+func TestFlow_CreatePveAfterPvpForfeit(t *testing.T) {
+	// Setup: two players in an active PVP game.
+	black := makeRegisteredPlayer(t, "black")
+	white := makeRegisteredPlayer(t, "white")
+	_ = white
+	room, err := lobby.CreatePvpRoom(black)
+	if err != nil {
+		t.Fatalf("CreatePvpRoom: %v", err)
+	}
+	if err := lobby.JoinRoom(room.ID, black); err != nil {
+		t.Fatalf("JoinRoom black: %v", err)
+	}
+	if err := lobby.JoinRoom(room.ID, white); err != nil {
+		t.Fatalf("JoinRoom white: %v", err)
+	}
+	room.Lock()
+	room.BlackPlayerID = black.ID
+	room.WhitePlayerID = white.ID
+	room.Status = lobby.RoomStatusPlaying
+	room.Unlock()
+
+	// Black forfeits via ClientExit while in gamePvpState.
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_ClientExit{ClientExit: &protocol.ClientExitRequest{}},
+	}
+	next, err := runState(consts.StateGamePvp, black)
+	if err != nil {
+		t.Fatalf("gamepvp exit: %v", err)
+	}
+	if next != consts.StateHome {
+		t.Fatalf("expected StateHome after forfeit, got %d", next)
+	}
+	drainSend(black)
+
+	// Create PVE room from home.
+	black.CmdCh <- &protocol.Request{
+		Payload: &protocol.Request_CreatePveRoom{
+			CreatePveRoom: &protocol.CreatePveRoomRequest{Difficulty: 1},
+		},
+	}
+	next, err = runState(consts.StateHome, black)
+	if err != nil {
+		t.Fatalf("home create pve after forfeit: %v", err)
+	}
+	if next != consts.StateGamePve {
+		t.Fatalf("expected StateGamePve, got %d", next)
+	}
+}
+
 // TestFlow_CreateRoomAfterPvpLeave verifies that after a PVP game ends and
 // the player leaves via gameoverState → StateHome, they can immediately
 // create a new room. Regression guard for the reported bug where clicking
