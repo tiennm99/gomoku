@@ -6,6 +6,60 @@ import (
 	"github.com/tiennm99/gomoku/server/protocol"
 )
 
+// sendRoomSnapshot sends the current room state to a newly-joined spectator.
+// Order: WatchGameSuccessResponse → GameStartingResponse → one GameMoveSuccessResponse per history entry.
+// Uses Snapshot() to avoid holding a lock while calling player.Send.
+func sendRoomSnapshot(player *database.Player, room *database.NewRoom) {
+	snap := room.Snapshot()
+
+	statusStr := "waiting"
+	switch room.Status { // read without lock: string constant; race-safe for a single int read
+	case database.RoomStatusPlaying:
+		statusStr = "playing"
+	case database.RoomStatusFinished:
+		statusStr = "finished"
+	}
+
+	_ = player.Send(&protocol.Response{
+		Payload: &protocol.Response_WatchGameSuccess{
+			WatchGameSuccess: &protocol.WatchGameSuccessResponse{
+				Owner:  snap.PlayerNames[snap.BlackPlayerID],
+				Status: statusStr,
+			},
+		},
+	})
+
+	blackName := snap.PlayerNames[snap.BlackPlayerID]
+	whiteName := snap.PlayerNames[snap.WhitePlayerID]
+	if blackName == "" {
+		blackName = "Unknown"
+	}
+	if whiteName == "" {
+		whiteName = "Unknown"
+	}
+
+	_ = player.Send(&protocol.Response{
+		Payload: &protocol.Response_GameStarting{
+			GameStarting: &protocol.GameStartingResponse{
+				RoomId:              int32(snap.ID),
+				BlackPlayerId:       int32(snap.BlackPlayerID),
+				BlackPlayerNickname: blackName,
+				WhitePlayerId:       int32(snap.WhitePlayerID),
+				WhitePlayerNickname: whiteName,
+				BoardSize:           int32(game.BoardSize),
+			},
+		},
+	})
+
+	for _, mv := range snap.MoveHistory {
+		nickname := snap.PlayerNames[mv.PlayerID]
+		if nickname == "" {
+			nickname = "Unknown"
+		}
+		_ = player.Send(buildMoveSuccessResponse(mv.Row, mv.Col, mv.Piece, mv.PlayerID, nickname))
+	}
+}
+
 // buildGameStartingResponse constructs a GameStartingResponse from room state.
 // Caller must hold at least room.RLock() or read under protection.
 // This function acquires RLock internally for safety.

@@ -36,6 +36,7 @@ func init() {
 	register(consts.StateGamePvp, &gamePvpState{})
 	register(consts.StateGamePve, &gamePveState{})
 	register(consts.StateGameOver, &gameOverState{})
+	register(consts.StateWatching, &watchingState{})
 }
 
 // Run is the state machine entry point. Spawned as a goroutine per player by

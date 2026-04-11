@@ -28,6 +28,9 @@ func (*homeState) Next(player *database.Player) (consts.StateID, error) {
 	case *protocol.Request_JoinRoom:
 		return handleJoinRoom(player, req)
 
+	case *protocol.Request_WatchGame:
+		return handleWatchGame(player, req)
+
 	case *protocol.Request_ClientExit:
 		return 0, ErrClientExit
 
@@ -161,6 +164,32 @@ func handleJoinRoom(player *database.Player, req *protocol.Request) (consts.Stat
 	broadcastJoined(room, player)
 
 	return consts.StateWaiting, nil
+}
+
+func handleWatchGame(player *database.Player, req *protocol.Request) (consts.StateID, error) {
+	roomID := int64(req.GetWatchGame().GetRoomId())
+
+	room, ok := database.GetNewRoom(roomID)
+	if !ok {
+		_ = player.Send(&protocol.Response{
+			Payload: &protocol.Response_RoomPlayFailNotFound{
+				RoomPlayFailNotFound: &protocol.RoomPlayFailNotFoundResponse{},
+			},
+		})
+		return consts.StateHome, nil
+	}
+
+	if err := database.WatchNewRoom(roomID, player); err != nil {
+		_ = player.Send(&protocol.Response{
+			Payload: &protocol.Response_RoomPlayFailNotFound{
+				RoomPlayFailNotFound: &protocol.RoomPlayFailNotFoundResponse{},
+			},
+		})
+		return consts.StateHome, nil
+	}
+
+	sendRoomSnapshot(player, room)
+	return consts.StateWatching, nil
 }
 
 // broadcastJoined notifies existing players in the room that joiner has arrived.

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tiennm99/gomoku/server/game"
+	newproto "github.com/tiennm99/gomoku/server/protocol"
 )
 
 // store is the package-level in-memory data store for the new domain model.
@@ -257,17 +258,79 @@ func LeaveNewRoom(player *Player) {
 		}
 	}
 
-	empty := len(r.Players) == 0 && len(r.Spectators) == 0
+	noPlayers := len(r.Players) == 0
 	roomID := r.ID
+
+	// Collect spectators to eject if all players have left.
+	// We do this under lock to get a consistent snapshot, then send after unlock.
+	var spectatorsToEject []*Player
+	if noPlayers && len(r.Spectators) > 0 {
+		spectatorsToEject = make([]*Player, 0, len(r.Spectators))
+		for _, sp := range r.Spectators {
+			spectatorsToEject = append(spectatorsToEject, sp)
+		}
+		// Clear spectator map so UnwatchNewRoom calls from their state machines are no-ops.
+		r.Spectators = make(map[int64]*Player)
+	}
+
+	empty := noPlayers && len(r.Spectators) == 0
 	r.Unlock()
 
 	player.RoomID = 0
 	player.Role = ""
 
+	// Notify ejected spectators after releasing room lock (never hold lock while sending).
+	for _, sp := range spectatorsToEject {
+		sp.RoomID = 0
+		sp.Role = ""
+		// Push a ClientExitResponse so the spectator's state machine can react.
+		// The watching state will receive this via player.CmdCh being unblocked
+		// only if the response triggers a CmdCh push — but ClientExitResponse is a
+		// *send* response, not a request. Push a synthetic WatchGameExit to CmdCh
+		// so watchingState.Next() wakes up and transitions to StateHome.
+		_ = sp.Send(ejectSpectatorResponse(roomID))
+		// Enqueue a WatchGameExit on the spectator's CmdCh so the watching state
+		// machine wakes up and transitions back to StateHome cleanly.
+		pushWatchGameExitToCmdCh(sp)
+	}
+
 	if empty {
 		store.mu.Lock()
 		deleteNewRoom(roomID)
 		store.mu.Unlock()
+	}
+}
+
+// ejectSpectatorResponse builds the ClientExitResponse sent when a room is closed.
+// Uses exit_client_id=0 and a sentinel nickname to signal "room closed" not a kick.
+func ejectSpectatorResponse(roomID int64) *newproto.Response {
+	return &newproto.Response{
+		Payload: &newproto.Response_ClientExit{
+			ClientExit: &newproto.ClientExitResponse{
+				RoomId:              int32(roomID),
+				ExitClientId:        0,
+				ExitClientNickname:  "room_closed",
+			},
+		},
+	}
+}
+
+// pushWatchGameExitToCmdCh enqueues a synthetic WatchGameExitRequest on the spectator's
+// CmdCh so the watchingState state machine unblocks and transitions to StateHome.
+// Non-blocking: drops silently if the channel is full or nil.
+func pushWatchGameExitToCmdCh(player *Player) {
+	if player.CmdCh == nil {
+		return
+	}
+	req := &newproto.Request{
+		Payload: &newproto.Request_WatchGameExit{
+			WatchGameExit: &newproto.WatchGameExitRequest{},
+		},
+	}
+	select {
+	case player.CmdCh <- req:
+	default:
+		// CmdCh full — spectator will time out or disconnect naturally.
 	}
 }
 

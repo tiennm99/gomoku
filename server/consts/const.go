@@ -17,6 +17,7 @@ const (
 	StateGamePvp
 	StateGamePve
 	StateGameOver
+	StateWatching
 
 	// Kept for backward compat (unused after phase-06 rewrite).
 	StateJoin       = 0 // collapsed into home
