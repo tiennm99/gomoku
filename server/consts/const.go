@@ -31,10 +31,39 @@ const (
 	GomokuPlayTimeout = 60 * time.Second
 )
 
-// Room properties.
+// Room properties (legacy TCP state machine — removed in phase-06).
 const (
 	RoomPropsPassword = "pwd"
 	RoomPropsShowIP   = "ip"
+)
+
+// RoomType constants for new domain (mirrors database.RoomTypePvp / RoomTypePve).
+const (
+	RoomTypePvp = 1
+	RoomTypePve = 2
+)
+
+// Player status constants for new domain.
+const (
+	StatusIdle     = 0
+	StatusWaiting  = 1
+	StatusPlaying  = 2
+	StatusWatching = 3
+	StatusOffline  = 4
+)
+
+// Room status constants for new domain.
+const (
+	RoomStatusWaiting  = 1
+	RoomStatusPlaying  = 2
+	RoomStatusFinished = 3
+)
+
+// AI difficulty levels for PVE rooms.
+const (
+	DifficultyEasy   = 1
+	DifficultyMedium = 2
+	DifficultyHard   = 3
 )
 
 type Error struct {
