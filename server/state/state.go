@@ -1,83 +1,75 @@
+// Package state implements the per-player state machine.
+// Each player goroutine runs Run(player) which loops through registered states
+// until ErrClientExit is returned or the cmdCh is closed.
 package state
 
 import (
-	"strings"
+	"errors"
 
-	"github.com/tiennm99/gomoku/server/pkg/log"
-	"github.com/tiennm99/gomoku/server/pkg/async"
 	"github.com/tiennm99/gomoku/server/consts"
 	"github.com/tiennm99/gomoku/server/database"
-	"github.com/tiennm99/gomoku/server/state/game"
+	"github.com/tiennm99/gomoku/server/pkg/log"
 )
 
-var states = map[consts.StateID]State{}
+// ErrClientExit is the sentinel returned by any state to signal a clean exit.
+var ErrClientExit = errors.New("client exit")
+
+// State is the interface each game state implements.
+// Next processes one iteration: reads from player.CmdCh, mutates state,
+// sends responses, and returns the next StateID (or ErrClientExit).
+type State interface {
+	Next(player *database.Player) (next consts.StateID, err error)
+}
+
+var registry = map[consts.StateID]State{}
+
+// register adds a state to the registry. Called from init() in each state file.
+func register(id consts.StateID, s State) {
+	registry[id] = s
+}
 
 func init() {
-	register(consts.StateWelcome, &welcome{})
-	register(consts.StateHome, &home{})
-	register(consts.StateJoin, &join{})
-	register(consts.StateCreate, &create{})
-	register(consts.StateWaiting, &waiting{})
-	register(consts.StateGomokuGame, &game.GomokuGame{})
+	register(consts.StateWelcome, &welcomeState{})
+	register(consts.StateSetNickname, &setNicknameState{})
+	register(consts.StateHome, &homeState{})
+	register(consts.StateWaiting, &waitingState{})
+	register(consts.StateGamePvp, &gamePvpState{})
+	register(consts.StateGamePve, &gamePveState{})
+	register(consts.StateGameOver, &gameOverState{})
 }
 
-func register(id consts.StateID, state State) {
-	states[id] = state
-}
-
-type State interface {
-	Next(player *database.Player) (consts.StateID, error)
-	Exit(player *database.Player) consts.StateID
-}
-
+// Run is the state machine entry point. Spawned as a goroutine per player by
+// server.go. Loops calling state.Next(player) until ErrClientExit or an
+// unregistered state is encountered.
+//
+// On normal exit it removes the player from any room they occupy.
 func Run(player *database.Player) {
-	player.State(consts.StateWelcome)
+	current := consts.StateWelcome
 	defer func() {
-		if err := recover(); err != nil {
-			async.PrintStackTrace(err)
+		// Cleanup: remove from room if still in one.
+		if player.RoomID != 0 {
+			database.LeaveNewRoom(player)
 		}
-		log.Infof("player %s state machine break up.\n", player)
+		database.RemovePlayer(player.ID)
+		log.Infof("[state] player %d state machine exited\n", player.ID)
 	}()
-	loopCount := 0
+
 	for {
-		loopCount++
-		if loopCount%100 == 0 {
-			log.Infof("[State.Run] Player %d loop count: %d, current state: %d\n", player.ID, loopCount, player.GetState())
+		s, ok := registry[current]
+		if !ok {
+			log.Errorf("[state] player %d: unregistered state %d, exiting\n", player.ID, current)
+			return
 		}
-		state := states[player.GetState()]
-		stateId, err := state.Next(player)
+
+		next, err := s.Next(player)
 		if err != nil {
-			if err1, ok := err.(consts.Error); ok {
-				if err1.Exit {
-					stateId = state.Exit(player)
-				}
-			} else {
-				log.Error(err)
-				state.Exit(player)
-				break
+			if errors.Is(err, ErrClientExit) {
+				return
 			}
+			// Non-exit errors: log and exit to avoid stuck goroutine.
+			log.Errorf("[state] player %d: state %d returned error: %v\n", player.ID, current, err)
+			return
 		}
-		if stateId > 0 {
-			player.State(stateId)
-		}
+		current = next
 	}
-}
-
-func isExit(signal string) bool {
-	signal = strings.ToLower(signal)
-	return isX(signal, "exit", "e")
-}
-
-func isLs(signal string) bool {
-	return isX(signal, "ls")
-}
-
-func isX(signal string, x ...string) bool {
-	signal = strings.ToLower(signal)
-	for _, v := range x {
-		if v == signal {
-			return true
-		}
-	}
-	return false
 }

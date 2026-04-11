@@ -1,219 +1,181 @@
 package state
 
 import (
-	"bytes"
-	"fmt"
-	"strconv"
-	"strings"
-	"time"
+	"math/rand"
 
-	"github.com/tiennm99/gomoku/server/pkg/log"
 	"github.com/tiennm99/gomoku/server/consts"
 	"github.com/tiennm99/gomoku/server/database"
-	"github.com/tiennm99/gomoku/server/state/game"
+	"github.com/tiennm99/gomoku/server/game"
+	"github.com/tiennm99/gomoku/server/pkg/log"
+	"github.com/tiennm99/gomoku/server/protocol"
 )
 
-type waiting struct{}
+// waitingState handles the pre-game lobby for PVP rooms.
+//
+// Owner path: loops on CmdCh accepting GameStartingRequest (only when
+// room.PlayerCount() == 2). On valid start, randomises colors, broadcasts
+// GameStartingResponse to both players, transitions to StateGamePvp.
+//
+// Joiner path: loops on CmdCh. Transitions to StateGamePvp when it receives
+// a GameStartingRequest (the owner's broadcast pushes it via the start channel).
+// The implementation uses a StartCh (chan struct{}) on the room so the joiner
+// can select on both CmdCh and the room's start signal without polling.
+type waitingState struct{}
 
-func (s *waiting) Next(player *database.Player) (consts.StateID, error) {
-	room := database.GetRoom(player.RoomID)
-	if room == nil {
-		return 0, consts.ErrorsExist
+func (*waitingState) Next(player *database.Player) (consts.StateID, error) {
+	room, ok := database.GetNewRoom(player.RoomID)
+	if !ok {
+		log.Errorf("[waiting] player %d: room %d not found\n", player.ID, player.RoomID)
+		return consts.StateHome, nil
 	}
-	s.Backfill(room)
 
-	access, err := s.waitingForStart(player, room)
-	if err != nil {
-		return 0, err
+	isOwner := room.IsOwner(player.ID)
+	if isOwner {
+		return ownerWait(player, room)
 	}
-	if access {
-		switch room.Type {
-		case consts.GameTypeGomoku:
-			return consts.StateGomokuGame, nil
-		}
-	}
-	return s.Exit(player), nil
+	return joinerWait(player, room)
 }
 
-func (s *waiting) Exit(player *database.Player) consts.StateID {
-	room := database.GetRoom(player.RoomID)
-	if room != nil {
-		isOwner := room.Creator == player.ID
-		database.LeaveRoom(room.ID, player.ID)
-		database.Broadcast(room.ID, fmt.Sprintf("%s exited room! room current has %d players\n", player.Name, room.Players))
-		if isOwner {
-			newOwner := database.GetPlayer(room.Creator)
-			database.Broadcast(room.ID, fmt.Sprintf("%s become new owner\n", newOwner.Name))
+// ownerWait loops until the owner triggers a valid GameStartingRequest or exits.
+func ownerWait(player *database.Player, room *database.NewRoom) (consts.StateID, error) {
+	for {
+		req, ok := <-player.CmdCh
+		if !ok {
+			leaveRoom(player, room)
+			return 0, ErrClientExit
 		}
-		s.Backfill(room)
+
+		switch req.Payload.(type) {
+		case *protocol.Request_GameStarting:
+			room.RLock()
+			count := room.PlayerCount()
+			room.RUnlock()
+
+			if count < 2 {
+				// Not enough players — reject and stay.
+				_ = player.Send(&protocol.Response{
+					Payload: &protocol.Response_RoomPlayFailNotFound{
+						RoomPlayFailNotFound: &protocol.RoomPlayFailNotFoundResponse{},
+					},
+				})
+				continue
+			}
+
+			// Randomise color assignment for fairness.
+			assignColors(room)
+
+			// Broadcast GameStartingResponse to all players in room.
+			resp := buildGameStartingResponse(room, player)
+			broadcastResponse(room, resp)
+
+			// Mark room as playing.
+			room.Lock()
+			room.Status = database.RoomStatusPlaying
+			room.CurrentTurn = game.Black
+			// Signal joiner via StartCh if present.
+			if room.StartCh != nil {
+				close(room.StartCh)
+				room.StartCh = nil
+			}
+			room.Unlock()
+
+			return consts.StateGamePvp, nil
+
+		case *protocol.Request_ClientExit:
+			leaveRoom(player, room)
+			return 0, ErrClientExit
+
+		default:
+			log.Errorf("[waiting/owner] player %d: unexpected %T, ignoring\n", player.ID, req.Payload)
+		}
 	}
-	return consts.StateHome
 }
 
-func (*waiting) Backfill(room *database.Room) {
-	if room.State == consts.RoomStateRunning {
+// joinerWait blocks until the owner starts the game (via StartCh) or the joiner exits.
+func joinerWait(player *database.Player, room *database.NewRoom) (consts.StateID, error) {
+	room.RLock()
+	startCh := room.StartCh
+	room.RUnlock()
+
+	for {
+		if startCh == nil {
+			// StartCh not set or already closed — check status.
+			room.RLock()
+			status := room.Status
+			room.RUnlock()
+			if status == database.RoomStatusPlaying {
+				return consts.StateGamePvp, nil
+			}
+			// Fall back to CmdCh-only select.
+			startCh = make(chan struct{}) // never closed; effectively disables the case
+		}
+
+		select {
+		case <-startCh:
+			// Owner started the game.
+			return consts.StateGamePvp, nil
+
+		case req, ok := <-player.CmdCh:
+			if !ok {
+				leaveRoom(player, room)
+				return 0, ErrClientExit
+			}
+			switch req.Payload.(type) {
+			case *protocol.Request_ClientExit:
+				leaveRoom(player, room)
+				return 0, ErrClientExit
+			default:
+				// Non-exit requests ignored in joiner waiting state.
+				log.Errorf("[waiting/joiner] player %d: unexpected %T, ignoring\n", player.ID, req.Payload)
+			}
+		}
+	}
+}
+
+// assignColors randomly assigns Black/White to the two players in a PVP room.
+// Caller must NOT hold room.Lock() before calling — acquires it internally.
+func assignColors(room *database.NewRoom) {
+	room.Lock()
+	playerIDs := make([]int64, 0, 2)
+	for id := range room.Players {
+		playerIDs = append(playerIDs, id)
+	}
+	room.Unlock()
+
+	if len(playerIDs) < 2 {
 		return
 	}
-	newPlayer := database.Backfill(room.ID)
-	if newPlayer != nil {
-		database.Broadcast(room.ID, fmt.Sprintf("%s has joined room! room current has %d players\n", newPlayer.Name, room.Players))
-	}
-}
 
-func (*waiting) Kicking(player *database.Player) {
-	room := database.GetRoom(player.RoomID)
-	if room != nil {
-		database.Broadcast(room.ID, fmt.Sprintf("%s has been kicked!\n", player.Name))
-		database.Kicking(room.ID, player.ID)
-		database.Broadcast(room.ID, fmt.Sprintf("room current has %d players\n", room.Players))
-	}
-}
+	// Shuffle to randomise which player gets Black.
+	rand.Shuffle(len(playerIDs), func(i, j int) {
+		playerIDs[i], playerIDs[j] = playerIDs[j], playerIDs[i]
+	})
 
-func (s *waiting) waitingForStart(player *database.Player, room *database.Room) (bool, error) {
-	access := false
-	player.StartTransaction()
-	defer player.StopTransaction()
-	loopCount := 0
-	for {
-		loopCount++
-		if loopCount%100 == 0 {
-			log.Infof("[waitingForStart] Player %d (Room %d) loop count: %d, room.State: %d, access: %v\n", player.ID, player.RoomID, loopCount, room.State, access)
-		}
-		signal, err := player.AskForStringWithoutTransaction(time.Second)
-		if err != nil && err != consts.ErrorsTimeout {
-			return access, err
-		}
-
-		if !database.IsValidPlayer(room.ID, player.ID) {
-			return false, consts.ErrorsPlayerNotInRoom
-		}
-
-		if room.State == consts.RoomStateRunning && player.Role == database.RolePlayer {
-			access = true
-			break
-		}
-		signal = strings.TrimSpace(strings.ToLower(signal))
-		if signal == "" {
-			continue
-		}
-
-		segments := strings.Split(signal, " ")
-		if len(segments) == 1 {
-			if segments[0] == "ls" || segments[0] == "v" {
-				viewRoomPlayers(room, player)
-				continue
-			} else if segments[0] == "start" || signal == "s" {
-				if room.Creator == player.ID {
-					if room.Players <= 1 {
-						_ = player.WriteError(consts.ErrorsGamePlayersInsufficient)
-						continue
-					}
-					err = startGame(player, room)
-					if err != nil {
-						return access, err
-					}
-					access = true
-					break
-				}
-			}
-		} else if len(segments) == 2 {
-			if segments[0] == "kicking" || segments[0] == "kill" || segments[0] == "k" {
-				if room.Creator == player.ID {
-					kickedId, _ := strconv.ParseInt(segments[1], 10, 64)
-					if kickedId == player.ID {
-						_ = player.WriteError(consts.ErrorsCannotKickYourself)
-						continue
-					}
-					kickedPlayer := database.GetPlayer(kickedId)
-					if kickedPlayer == nil || kickedPlayer.RoomID != room.ID {
-						_ = player.WriteError(consts.ErrorsPlayerNotInRoom)
-						continue
-					}
-					s.Kicking(kickedPlayer)
-					continue
-				}
-			}
-		} else if len(segments) == 3 && room.Creator == player.ID {
-			database.SetRoomProps(room, segments[1], segments[2])
-			continue
-		}
-
-		if room.EnableChat {
-			if room.State == consts.RoomStateRunning {
-				_ = player.WriteString(fmt.Sprintf("%s\n", consts.ErrorsChatUnopenedDuringGame.Error()))
-			} else {
-				database.BroadcastChat(player, fmt.Sprintf("%s [%s] say: %s\n", player.Name, player.Role, signal))
-			}
-		} else {
-			_ = player.WriteString(fmt.Sprintf("%s\n", consts.ErrorsChatUnopened.Error()))
-		}
-	}
-	return access, nil
-}
-
-func startGame(player *database.Player, room *database.Room) (err error) {
 	room.Lock()
-	defer room.Unlock()
-	switch room.Type {
-	case consts.GameTypeGomoku:
-		room.Game, err = game.InitGomokuGame(room)
-	}
-	if err != nil {
-		_ = player.WriteError(err)
-		return err
-	}
-	room.State = consts.RoomStateRunning
-	return nil
+	room.BlackPlayerID = playerIDs[0]
+	room.WhitePlayerID = playerIDs[1]
+	room.Unlock()
 }
 
-func viewRoomPlayers(room *database.Room, currPlayer *database.Player) {
-	buf := bytes.Buffer{}
-	buf.WriteString(fmt.Sprintf("Room ID: %d\n", room.ID))
-	buf.WriteString("Players:\n")
-	for playerId := range database.RoomPlayers(room.ID) {
-		player := database.GetPlayer(playerId)
-		if room.EnableShowIP {
-			buf.WriteString(fmt.Sprintf("%s [%s], score: %d, id: %d, ip: %s\n", player.Name, player.Role, player.Amount, player.ID, maskIP(player.IP)))
-		} else {
-			buf.WriteString(fmt.Sprintf("%s [%s], score: %d, id: %d\n", player.Name, player.Role, player.Amount, player.ID))
-		}
+// leaveRoom removes player from their current room cleanly.
+func leaveRoom(player *database.Player, room *database.NewRoom) {
+	database.LeaveNewRoom(player)
+	// Notify remaining players.
+	room.RLock()
+	targets := make([]*database.Player, 0, len(room.Players))
+	for _, p := range room.Players {
+		targets = append(targets, p)
 	}
-
-	buf.WriteString("\nSpectators:\n")
-	for spectatorId := range database.RoomSpectators(room.ID) {
-		spectator := database.GetPlayer(spectatorId)
-		if room.EnableShowIP {
-			buf.WriteString(fmt.Sprintf("%s [spectator], score: %d, id: %d, ip: %s\n", spectator.Name, spectator.Amount, spectator.ID, maskIP(spectator.IP)))
-		} else {
-			buf.WriteString(fmt.Sprintf("%s [spectator], score: %d, id: %d\n", spectator.Name, spectator.Amount, spectator.ID))
-		}
+	room.RUnlock()
+	for _, p := range targets {
+		_ = p.Send(&protocol.Response{
+			Payload: &protocol.Response_GameReady{
+				GameReady: &protocol.GameReadyResponse{
+					ClientNickname: player.Name,
+					Status:         "left",
+					ClientId:       int32(player.ID),
+				},
+			},
+		})
 	}
-
-	buf.WriteString("\nSettings:\n")
-	buf.WriteString(fmt.Sprintf("%-5s%-5v\n", "ip:", sprintPropsState(room.EnableShowIP)))
-	pwd := room.Password
-	if pwd != "" {
-		if room.Creator != currPlayer.ID {
-			pwd = "********"
-		}
-	} else {
-		pwd = "off"
-	}
-	buf.WriteString(fmt.Sprintf("%-5s%-20v\n", "pwd", pwd))
-	_ = currPlayer.WriteString(buf.String())
-}
-
-func sprintPropsState(on bool) string {
-	if on {
-		return "on"
-	}
-	return "off"
-}
-
-func maskIP(ip string) string {
-	parts := strings.Split(ip, ".")
-	if len(parts) == 4 {
-		return parts[0] + "." + parts[1] + ".*.*"
-	}
-	return "*.*.*.*"
 }

@@ -11,11 +11,17 @@ type StateID int
 const (
 	_ StateID = iota
 	StateWelcome
+	StateSetNickname
 	StateHome
-	StateJoin
-	StateCreate
 	StateWaiting
-	StateGomokuGame
+	StateGamePvp
+	StateGamePve
+	StateGameOver
+
+	// Kept for backward compat (unused after phase-06 rewrite).
+	StateJoin       = 0 // collapsed into home
+	StateCreate     = 0 // collapsed into home
+	StateGomokuGame = 0 // replaced by StateGamePvp / StateGamePve
 )
 
 const (

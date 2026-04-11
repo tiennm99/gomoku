@@ -88,9 +88,8 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	// Writer goroutine: serialises all WS writes.
 	go wr.run()
 
-	// State machine goroutine: legacy loop reads from player.data (phase-06 replaces).
-	// We spawn it so the architecture plumbing is in place; it will block waiting
-	// for legacy input which never arrives from the new network path until phase-06.
+	// State machine goroutine: reads typed *protocol.Request from player.CmdCh.
+	// Stateful requests are routed here by Dispatch; stateless ones handled inline.
 	go state.Run(player)
 
 	// Reader loop: blocks until WS close or error, then cleans up.
