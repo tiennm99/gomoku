@@ -116,6 +116,11 @@ class GameStateService {
 
     eventBus.on(ClientEventCode.GAME_STARTING, (data) => {
       this.resetBoard();
+      // A fresh game-starting signal always means this client is a player,
+      // not a spectator. Clear stale flag in case a previous watch session
+      // left it set (e.g., user transitioned out of watching via a path
+      // that didn't emit CLIENT_EXIT).
+      this.isSpectating = false;
       this.roomId = data.roomId;
       this.blackPlayerId = data.blackPlayerId;
       this.blackPlayerNickname = data.blackPlayerNickname;

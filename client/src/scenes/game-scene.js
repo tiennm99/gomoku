@@ -242,7 +242,7 @@ export class GameScene extends Phaser.Scene {
     showGameHud();
   }
 
-  /** Unsubscribe all event bus listeners. @private */
+  /** Unsubscribe all event bus listeners and Phaser input handlers. @private */
   _cleanup() {
     eventBus.off(ClientEventCode.GAME_MOVE_SUCCESS, this._onMoveSuccess);
     eventBus.off(ClientEventCode.GAME_MOVE_INVALID, this._onMoveInvalid);
@@ -253,6 +253,24 @@ export class GameScene extends Phaser.Scene {
     eventBus.off(ClientEventCode.GAME_OVER, this._onGameOver);
     eventBus.off(ClientEventCode.CLIENT_EXIT, this._onClientExit);
     eventBus.off(ClientEventCode.GAME_STARTING, this._onGameStarting);
+
+    // Defensive: drop Phaser input listeners in case the scene lifecycle
+    // doesn't fully clean them (observed stale pointerdown between PVP→PVE
+    // transitions). Safe to call even if the plugin is already torn down.
+    if (this.input) {
+      this.input.off('pointerdown', this._handleClick, this);
+      this.input.off('pointermove', this._handleHover, this);
+    }
+
+    // Drop references to destroyed Phaser objects so a subsequent create()
+    // gets a fully fresh scene tree. stones[] may hold references that the
+    // scene shutdown already destroyed; clearing here prevents accidental
+    // reuse of stale handles by any late-firing event listener.
+    this.stones = [];
+    this.lastMarker = null;
+    this.board = null;
+    this.hoverGraphic = null;
+    this.hoverPos = null;
   }
 
   shutdown() {
