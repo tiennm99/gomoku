@@ -69,6 +69,17 @@ type NewRoom struct {
 	Difficulty int      // 1=easy, 2=medium, 3=hard
 	AI         *game.AI // nil for PVP rooms
 
+	// StartCh is closed by the owner's waitingState when a valid GameStartingRequest
+	// is accepted. The joiner's waitingState selects on this channel to detect game start
+	// without polling. Created in CreatePvpRoom; nil for PVE rooms (no waiting state).
+	StartCh chan struct{}
+
+	// GameOverCh is closed by whichever player goroutine detects game-over first.
+	// Other player goroutines select on it to unblock from CmdCh and transition to
+	// StateGameOver without waiting for a user message.
+	// Created in CreatePvpRoom; nil for PVE rooms (single player, no concurrent goroutine).
+	GameOverCh chan struct{}
+
 	CreatedAt  time.Time
 	LastActive time.Time
 }

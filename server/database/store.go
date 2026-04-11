@@ -88,6 +88,8 @@ func CreatePvpRoom(owner *Player) (*NewRoom, error) {
 		Players:       make(map[int64]*Player),
 		Spectators:    make(map[int64]*Player),
 		MoveHistory:   nil,
+		StartCh:       make(chan struct{}),
+		GameOverCh:    make(chan struct{}),
 		CreatedAt:     time.Now(),
 		LastActive:    time.Now(),
 	}
@@ -319,32 +321,9 @@ func UnwatchNewRoom(player *Player) {
 	}
 }
 
-// BroadcastToNewRoom calls each player's sendFn in Players + Spectators,
-// skipping any IDs listed in excludePlayerIDs.
-// Safe to call without holding any lock — acquires RLock internally.
-// If sendFn is nil (phase-05 not yet wired) the call is a no-op for that player.
-func BroadcastToNewRoom(room *NewRoom, msg string, excludePlayerIDs ...int64) {
-	exclude := make(map[int64]bool, len(excludePlayerIDs))
-	for _, id := range excludePlayerIDs {
-		exclude[id] = true
-	}
-
-	room.RLock()
-	targets := make([]*Player, 0, len(room.Players)+len(room.Spectators))
-	for id, p := range room.Players {
-		if !exclude[id] {
-			targets = append(targets, p)
-		}
-	}
-	for id, p := range room.Spectators {
-		if !exclude[id] {
-			targets = append(targets, p)
-		}
-	}
-	room.RUnlock()
-
-	// Send outside the lock to avoid holding room lock while doing I/O.
-	for _, p := range targets {
-		_ = p.WriteString(msg)
-	}
+// BroadcastToNewRoom is a placeholder kept for BroadcastEvent compatibility.
+// The new state machine uses state.broadcastResponse (typed protobuf) instead.
+// String-based broadcast is no longer supported after phase-06.
+func BroadcastToNewRoom(_ *NewRoom, _ string, _ ...int64) {
+	// no-op: all broadcasts now use typed *protocol.Response via player.Send
 }
