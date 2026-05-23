@@ -10,7 +10,7 @@
     "proto:gen": "pbjs -t static-module -w es6 -o src/generated/protocol.js ../common/proto/request.proto ../common/proto/response.proto && pbts -o src/generated/protocol.d.ts src/generated/protocol.js"
   },
   "dependencies": {
-    "phaser": "^3.87.0",
+    "phaser": "^4.1.0",
     "protobufjs": "^7.5.5"
   },
   "devDependencies": {
