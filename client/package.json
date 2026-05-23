@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "phaser": "^3.87.0",
-    "protobufjs": "^7.5.5"
+    "protobufjs": "^7.5.8"
   },
   "devDependencies": {
     "protobufjs-cli": "^1.2.1",
