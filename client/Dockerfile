@@ -2,7 +2,7 @@
 
 # Build stage: Vite production build
 # Uses pre-committed src/generated/protocol.js — no protoc needed here
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /src
 
 # Cache npm install separately from source changes
